@@ -1,0 +1,14 @@
+[
+  { 
+    "name": "LTFM - Istanbul Airport", 
+    "lat": 41.2619, 
+    "lon": 28.7368, 
+    "icao": "LTFM" 
+  },
+  { 
+    "name": "OLBA - Beirut–Rafic Hariri Int'l", 
+    "lat": 33.8209, 
+    "lon": 35.4883, 
+    "icao": "OLBA" 
+  }
+]

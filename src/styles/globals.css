@@ -4,3 +4,17 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+
+
+/* In your global stylesheet (e.g., globals.css) */
+
+/* Targets the aircraft label */
+.leaflet-aircraft-icon .aircraft-tag {
+  /* Default opacity is already set to 40% inline */
+  transition: background-color 0.1s ease;
+}
+
+/* Increases opacity when the entire marker area is hovered */
+.leaflet-aircraft-icon:hover .aircraft-tag {
+  background-color: rgba(0, 0, 0, 0.8) !important; /* 80% opacity on hover */
+}
