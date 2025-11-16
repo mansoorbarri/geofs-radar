@@ -254,21 +254,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const headingControlRef = useRef<HeadingModeControl | null>(null);
 
   useEffect(() => {
-    if (!mapInstance) return;
-
-    const headingControl = new HeadingModeControl(
-      {},
-      setIsHeadingMode,
-    );
-    mapInstance.addControl(headingControl);
-    headingControlRef.current = headingControl;
-
-    return () => {
-      mapInstance?.removeControl(headingControl);
-    };
-  }, []);
-
-  useEffect(() => {
     if (headingControlRef.current) {
       headingControlRef.current.updateState(isHeadingMode);
     }
@@ -288,6 +273,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }).addTo(mapInstance);
 
       flightPlanLayerGroup = L.layerGroup().addTo(mapInstance);
+
+      const headingControl = new HeadingModeControl({}, setIsHeadingMode);
+      mapInstance.addControl(headingControl);
+      headingControlRef.current = headingControl;
 
       mapInstance.on('click', (e) => {
         const target = e.originalEvent.target as HTMLElement;
