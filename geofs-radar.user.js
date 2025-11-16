@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GeoFS ATC Radar
 // @namespace    http://tampermonkey.net/
-// @version      0.0.6
+// @version      0.0.7
 // @description  A ATC Radar for GeoFS which works like FlightRadar24.
 // @match        http://*/geofs.php*
 // @match        https://*/geofs.php*
@@ -273,7 +273,7 @@
     flightUI.style.cssText = `
       position: fixed;
       bottom: 280px;
-      right: 10px;
+      left: 10px;
       background: linear-gradient(145deg, #2c3e50, #34495e);
       padding: 20px;
       border-radius: 12px;
