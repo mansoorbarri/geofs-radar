@@ -5,8 +5,8 @@
 // @description  A ATC Radar for GeoFS which works like FlightRadar24.
 // @match        http://*/geofs.php*
 // @match        https://*/geofs.php*
-// @updateURL    https://raw.githubusercontent.com/mansoorbarri/geofs-radar/main/user.js
-// @downloadURL  https://raw.githubusercontent.com/mansoorbarri/geofs-radar/main/user.js
+// @updateURL    https://github.com/mansoorbarri/geofs-radar/raw/refs/heads/main/geofs-radar.user.js
+// @downloadURL  https://github.com/mansoorbarri/geofs-radar/raw/refs/heads/main/geofs-radar.user.js
 // @grant        none
 // ==/UserScript==
 
