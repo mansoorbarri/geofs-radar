@@ -309,64 +309,81 @@ const MapComponent: React.FC<MapComponentProps> = ({
         .bindPopup(popupContent);
     });
 
-    const drawFlightPlan = (aircraft: PositionUpdate) => {
-      if (!mapInstance || !aircraft.flightPlan || !flightPlanLayerGroup) return;
+const drawFlightPlan = (aircraft: PositionUpdate) => {
+  if (!mapInstance || !aircraft.flightPlan || !flightPlanLayerGroup) return;
 
-      try {
-        flightPlanLayerGroup.clearLayers();
+  try {
+    flightPlanLayerGroup.clearLayers();
 
-        const waypoints = JSON.parse(aircraft.flightPlan);
+    const waypoints = JSON.parse(aircraft.flightPlan);
 
-        if (waypoints.length === 0) return;
+    if (waypoints.length === 0) return;
 
-        const activeWaypointIndex = findActiveWaypointIndex(
-          aircraft,
-          waypoints,
-        );
-        const coordinates: L.LatLngTuple[] = [];
+    const activeWaypointIndex = findActiveWaypointIndex(
+      aircraft,
+      waypoints,
+    );
+    const coordinates: L.LatLngTuple[] = [];
 
-        waypoints.forEach((wp: any, index: number) => {
-          if (wp.lat && wp.lon) {
-            coordinates.push([wp.lat, wp.lon]);
+    waypoints.forEach((wp: any, index: number) => {
+      if (wp.lat && wp.lon) {
+        coordinates.push([wp.lat, wp.lon]);
 
-            const popupContent = `
-                        <strong>Waypoint: ${wp.ident}</strong> (${wp.type})<br>
-                        Altitude: ${wp.alt ? wp.alt + ' ft' : 'N/A'}<br>
-                        Speed: ${wp.spd ? wp.spd + ' kt' : 'N/A'}
-                    `;
+        const popupContent = `
+          <strong>Waypoint: ${wp.ident}</strong> (${wp.type})<br>
+          Altitude: ${wp.alt ? wp.alt + ' ft' : 'N/A'}<br>
+          Speed: ${wp.spd ? wp.spd + ' kt' : 'N/A'}
+        `;
 
-            const icon =
-              index === activeWaypointIndex ? ActiveWaypointIcon : WaypointIcon;
+        const icon =
+          index === activeWaypointIndex ? ActiveWaypointIcon : WaypointIcon;
 
-            const waypointMarker = L.marker([wp.lat, wp.lon], {
-              icon: icon,
-              title: wp.ident,
-            })
-              .bindPopup(popupContent)
-              .addTo(flightPlanLayerGroup!);
+        const waypointMarker = L.marker([wp.lat, wp.lon], {
+          icon: icon,
+          title: wp.ident,
+        })
+          .bindPopup(popupContent)
+          .addTo(flightPlanLayerGroup!);
 
-            waypointMarker.on('click', (e) => {
-              L.DomEvent.stopPropagation(e);
-            });
-          }
+        waypointMarker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
         });
-
-        if (coordinates.length < 2) return;
-
-        const polyline = L.polyline(coordinates, {
-          color: '#ff00ff',
-          weight: 5,
-          opacity: 0.7,
-          dashArray: '10, 5',
-        });
-
-        flightPlanLayerGroup.addLayer(polyline);
-
-        mapInstance.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-      } catch (error) {
-        console.error('Error drawing flight plan:', error);
       }
-    };
+    });
+
+    if (coordinates.length < 2) return;
+
+    // Draw completed route (from start to aircraft position)
+    if (activeWaypointIndex > 0) {
+      const completedCoords = coordinates.slice(0, activeWaypointIndex + 1);
+      const completedPolyline = L.polyline(completedCoords, {
+        color: '#00ff00', // Green for completed
+        weight: 5,
+        opacity: 0.7,
+        dashArray: '10, 5',
+      });
+      flightPlanLayerGroup.addLayer(completedPolyline);
+    }
+
+    // Draw remaining route (from aircraft position to end)
+    if (activeWaypointIndex >= 0 && activeWaypointIndex < coordinates.length - 1) {
+      const remainingCoords = coordinates.slice(activeWaypointIndex);
+      const remainingPolyline = L.polyline(remainingCoords, {
+        color: '#ff00ff', // Magenta for remaining
+        weight: 5,
+        opacity: 0.7,
+        dashArray: '10, 5',
+      });
+      flightPlanLayerGroup.addLayer(remainingPolyline);
+    }
+
+    // Fit bounds to entire route
+    const fullPolyline = L.polyline(coordinates, { opacity: 0 });
+    mapInstance.fitBounds(fullPolyline.getBounds(), { padding: [50, 50] });
+  } catch (error) {
+    console.error('Error drawing flight plan:', error);
+  }
+};
 
     aircrafts.forEach((aircraft) => {
       const icon = getAircraftDivIcon(aircraft);
