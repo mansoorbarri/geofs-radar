@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GeoFS ATC Radar
 // @namespace    http://tampermonkey.net/
-// @version      0.0.7
+// @version      0.0.8
 // @description  A ATC Radar for GeoFS which works like FlightRadar24.
 // @match        http://*/geofs.php*
 // @match        https://*/geofs.php*
@@ -13,7 +13,7 @@
 (function () {
   'use strict';
 
-  const API_URL = 'http://localhost:3000/api/atc/position';
+  const API_URL = 'https://geofs-radar.vercel.app/api/atc/position';
   const SEND_INTERVAL_MS = 5000;
 
   function log(...args) {
