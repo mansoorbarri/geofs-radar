@@ -76,7 +76,7 @@ const Sidebar = React.memo(({ aircraft }: { aircraft: PositionUpdate & { altMSL?
             <div style={{ padding: '0 0 0 0', flexGrow: 1, overflowY: 'auto' }}>
                 
                 <div style={{ marginBottom: '15px', paddingTop: '10px' }}>
-                    <p><strong>FLIGHT:</strong> {aircraft.flightNo || 'N/A'}</p>
+                    <p><strong>CALLSIGN:</strong> {aircraft.flightNo || 'N/A'}</p>
                     <p><strong>FROM:</strong> {aircraft.departure || 'N/A'} <strong>TO:</strong> {aircraft.arrival || 'N/A'}</p>
                 </div>
 
