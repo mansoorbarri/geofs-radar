@@ -125,9 +125,9 @@ const Sidebar = React.memo(({ aircraft, onWaypointClick }: {
         }
     }, [aircraft.flightPlan, onWaypointClick]);
 
-    const displayAlt = isOnGround ? `${altAGL.toFixed(0)} ft AGL` : 
-                       altMSL >= 18000 ? `FL${Math.round(altMSL / 100)}` :
-                       `${altAGL.toFixed(0)} ft AGL`;
+    const displayAltMSL = altMSL >= 18000 
+        ? `FL${Math.round(altMSL / 100)}` 
+        : `${altMSL.toFixed(0)} ft`;
 
     return (
         <div style={{ 
@@ -260,10 +260,25 @@ const Sidebar = React.memo(({ aircraft, onWaypointClick }: {
                             letterSpacing: '0.5px',
                             fontWeight: '600'
                         }}>
-                            Altitude
+                            Altitude MSL
                         </div>
                         <div style={{ fontSize: '14px', fontWeight: '600' }}>
-                            {displayAlt}
+                            {displayAltMSL}
+                        </div>
+                    </div>
+                    <div>
+                        <div style={{ 
+                            fontSize: '10px', 
+                            color: 'rgba(255,255,255,0.5)',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            fontWeight: '600'
+                        }}>
+                            Altitude AGL
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: '600' }}>
+                            {altAGL.toFixed(0)} ft
                         </div>
                     </div>
                     <div>

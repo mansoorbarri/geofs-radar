@@ -23,6 +23,9 @@ let aircraftMarkersLayer: L.LayerGroup | null = null;
 let airportMarkersLayer: L.LayerGroup | null = null;
 let isInitialLoad = true;
 
+const aircraftHistoryRef = { current: new Map<string, L.LatLngTuple[]>() };
+let historyLayerGroup: L.LayerGroup | null = null;
+
 const WaypointIcon = L.divIcon({
   html: `
     <div style="
@@ -192,6 +195,7 @@ const findActiveWaypointIndex = (aircraft: PositionUpdate, waypoints: any[]): nu
 
   const currentLat = aircraft.lat;
   const currentLon = aircraft.lon;
+  const currentHeading = aircraft.heading;
 
   let closestWaypointIndex = -1;
   let minDistanceKm = Infinity;
@@ -208,8 +212,27 @@ const findActiveWaypointIndex = (aircraft: PositionUpdate, waypoints: any[]): nu
     }
   }
 
+  if (minDistanceKm > 100) {
+    return -1;
+  }
+
   if (minDistanceKm < 50 && closestWaypointIndex < waypoints.length - 1) {
-    return closestWaypointIndex + 1;
+    const nextWp = waypoints[closestWaypointIndex + 1];
+    if (nextWp.lat && nextWp.lon) {
+      const bearingToNext = calculateBearing(
+        currentLat,
+        currentLon,
+        nextWp.lat,
+        nextWp.lon
+      );
+      
+      let headingDiff = Math.abs(currentHeading - bearingToNext);
+      if (headingDiff > 180) headingDiff = 360 - headingDiff;
+      
+      if (headingDiff < 90) {
+        return closestWaypointIndex + 1;
+      }
+    }
   }
 
   return closestWaypointIndex;
@@ -297,53 +320,83 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, [isHeadingMode]);
 
   useEffect(() => {
-  if (!mapInstance) {
-    const worldBounds = L.latLngBounds(
-      L.latLng(-85, -180),
-      L.latLng(85, 180)
-    );
+    if (!mapInstance) {
+      const worldBounds = L.latLngBounds(
+        L.latLng(-85, -180),
+        L.latLng(85, 180)
+      );
 
-    mapInstance = L.map('map-container', {
-      zoomAnimation: true,
-      minZoom: 3,
-      maxZoom: 18,
-      maxBounds: worldBounds,
-      maxBoundsViscosity: 1.0,
-    }).setView([20, 0], 3);
+      mapInstance = L.map('map-container', {
+        zoomAnimation: true,
+        minZoom: 3,
+        maxZoom: 18,
+        maxBounds: worldBounds,
+        maxBoundsViscosity: 1.0,
+      }).setView([20, 0], 3);
 
-    L.tileLayer('https://mt0.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-      attribution: 'Esri, Garmin, FAO, USGS, NPS',
-      maxZoom: 18,
-      minZoom: 3,
-      transparent: true,
-      pane: 'overlayPane',
-      noWrap: true,
-      bounds: worldBounds,
-    }).addTo(mapInstance);
+      L.tileLayer('https://mt0.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+        attribution: 'Esri, Garmin, FAO, USGS, NPS',
+        maxZoom: 18,
+        minZoom: 3,
+        transparent: true,
+        pane: 'overlayPane',
+        noWrap: true,
+        bounds: worldBounds,
+      }).addTo(mapInstance);
 
-    flightPlanLayerGroup = L.layerGroup().addTo(mapInstance);
-    aircraftMarkersLayer = L.layerGroup().addTo(mapInstance);
-    airportMarkersLayer = L.layerGroup().addTo(mapInstance);
+      flightPlanLayerGroup = L.layerGroup().addTo(mapInstance);
+      aircraftMarkersLayer = L.layerGroup().addTo(mapInstance);
+      airportMarkersLayer = L.layerGroup().addTo(mapInstance);
+      historyLayerGroup = L.layerGroup().addTo(mapInstance);
 
-    const headingControl = new HeadingModeControl({}, setIsHeadingMode);
-    mapInstance.addControl(headingControl);
-    headingControlRef.current = headingControl;
+      const headingControl = new HeadingModeControl({}, setIsHeadingMode);
+      mapInstance.addControl(headingControl);
+      headingControlRef.current = headingControl;
 
-    mapInstance.on('click', (e) => {
-      const target = e.originalEvent.target as HTMLElement;
-      if (
-        !target.closest('.leaflet-marker-icon') &&
-        !target.closest('.leaflet-popup-pane') &&
-        !target.closest('.leaflet-control') &&
-        flightPlanLayerGroup
-      ) {
-        flightPlanLayerGroup.clearLayers();
-        currentSelectedAircraftRef.current = null;
-        hasZoomedToFlightPlan.current = false;
-        onAircraftSelect(null);
+      mapInstance.on('click', (e) => {
+        const target = e.originalEvent.target as HTMLElement;
+        if (
+          !target.closest('.leaflet-marker-icon') &&
+          !target.closest('.leaflet-popup-pane') &&
+          !target.closest('.leaflet-control') &&
+          flightPlanLayerGroup &&
+          historyLayerGroup
+        ) {
+          flightPlanLayerGroup.clearLayers();
+          historyLayerGroup.clearLayers();
+          currentSelectedAircraftRef.current = null;
+          hasZoomedToFlightPlan.current = false;
+          onAircraftSelect(null);
+        }
+      });
+    }
+
+    aircrafts.forEach((aircraft) => {
+      const aircraftId = aircraft.id || aircraft.callsign;
+      const currentPosition: L.LatLngTuple = [aircraft.lat, aircraft.lon];
+      
+      if (!aircraftHistoryRef.current.has(aircraftId)) {
+        aircraftHistoryRef.current.set(aircraftId, [currentPosition]);
+      } else {
+        const history = aircraftHistoryRef.current.get(aircraftId)!;
+        const lastPosition = history[history.length - 1];
+        
+        if (lastPosition && (lastPosition[0] !== currentPosition[0] || lastPosition[1] !== currentPosition[1])) {
+          history.push(currentPosition);
+          
+          if (history.length > 500) {
+            history.shift();
+          }
+        }
       }
     });
-  }
+
+    const currentAircraftIds = new Set(aircrafts.map(ac => ac.id || ac.callsign));
+    for (const [id] of aircraftHistoryRef.current) {
+      if (!currentAircraftIds.has(id)) {
+        aircraftHistoryRef.current.delete(id);
+      }
+    }
 
     if (airportMarkersLayer) {
       airportMarkersLayer.clearLayers();
@@ -361,82 +414,99 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
 
     const drawFlightPlan = (aircraft: PositionUpdate, shouldZoom = false) => {
-        if (!mapInstance || !aircraft.flightPlan || !flightPlanLayerGroup) return;
+      if (!mapInstance || !flightPlanLayerGroup || !historyLayerGroup) return;
 
       try {
         flightPlanLayerGroup.clearLayers();
+        historyLayerGroup.clearLayers();
         currentSelectedAircraftRef.current = aircraft.id || aircraft.callsign;
 
-        const waypoints = JSON.parse(aircraft.flightPlan);
+        const aircraftId = aircraft.id || aircraft.callsign;
+        const history = aircraftHistoryRef.current.get(aircraftId) || [];
 
-        if (waypoints.length === 0) return;
-
-        const activeWaypointIndex = findActiveWaypointIndex(aircraft, waypoints);
-        const coordinates: L.LatLngTuple[] = [];
-
-        waypoints.forEach((wp: any, index: number) => {
-          if (wp.lat && wp.lon) {
-            coordinates.push([wp.lat, wp.lon]);
-
-            const popupContent = `
-              <div style="font-family: system-ui; padding: 4px;">
-                <strong style="color: #f542e3; font-size: 14px;">${wp.ident}</strong>
-                <div style="font-size: 11px; color: #666; margin-top: 2px;">${wp.type}</div>
-                <div style="margin-top: 6px; font-size: 12px;">
-                  <div>Alt: <strong>${wp.alt ? wp.alt + ' ft' : 'N/A'}</strong></div>
-                  <div>Speed: <strong>${wp.spd ? wp.spd + ' kt' : 'N/A'}</strong></div>
-                </div>
-              </div>
-            `;
-
-            const icon = index === activeWaypointIndex ? ActiveWaypointIcon : WaypointIcon;
-
-            const waypointMarker = L.marker([wp.lat, wp.lon], {
-              icon: icon,
-              title: wp.ident,
-              zIndexOffset: 100,
-            })
-              .bindPopup(popupContent)
-              .addTo(flightPlanLayerGroup!);
-
-            waypointMarker.on('click', (e) => {
-              L.DomEvent.stopPropagation(e);
-            });
-          }
-        });
-
-        if (coordinates.length < 2) return;
-
-        const aircraftPosition: L.LatLngTuple = [aircraft.lat, aircraft.lon];
-
-        if (activeWaypointIndex >= 0) {
-          const completedCoords = coordinates.slice(0, activeWaypointIndex + 1);
-          completedCoords.push(aircraftPosition);
-          
-          const completedPolyline = L.polyline(completedCoords, {
+        if (history.length >= 2) {
+          const historyPolyline = L.polyline(history, {
             color: '#00ff00',
-            weight: 5,
-            opacity: 0.7,
-            dashArray: '10, 5',
+            weight: 4,
+            opacity: 0.8,
+            smoothFactor: 1,
           });
-          flightPlanLayerGroup.addLayer(completedPolyline);
+          historyLayerGroup.addLayer(historyPolyline);
         }
 
-        if (activeWaypointIndex >= 0 && activeWaypointIndex < coordinates.length) {
-          const remainingCoords = [aircraftPosition, ...coordinates.slice(activeWaypointIndex + 1)];
-          
-          const remainingPolyline = L.polyline(remainingCoords, {
-            color: '#ff00ff',
-            weight: 5,
-            opacity: 0.7,
-            dashArray: '10, 5',
-          });
-          flightPlanLayerGroup.addLayer(remainingPolyline);
+        if (aircraft.flightPlan) {
+          const waypoints = JSON.parse(aircraft.flightPlan);
+
+          if (waypoints.length > 0) {
+            const coordinates: L.LatLngTuple[] = [];
+            const activeWaypointIndex = findActiveWaypointIndex(aircraft, waypoints);
+
+            waypoints.forEach((wp: any, index: number) => {
+              if (wp.lat && wp.lon) {
+                coordinates.push([wp.lat, wp.lon]);
+
+                const popupContent = `
+                  <div style="font-family: system-ui; padding: 4px;">
+                    <strong style="color: #f542e3; font-size: 14px;">${wp.ident}</strong>
+                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${wp.type}</div>
+                    <div style="margin-top: 6px; font-size: 12px;">
+                      <div>Alt: <strong>${wp.alt ? wp.alt + ' ft' : 'N/A'}</strong></div>
+                      <div>Speed: <strong>${wp.spd ? wp.spd + ' kt' : 'N/A'}</strong></div>
+                    </div>
+                  </div>
+                `;
+
+                const icon = index === activeWaypointIndex ? ActiveWaypointIcon : WaypointIcon;
+
+                const waypointMarker = L.marker([wp.lat, wp.lon], {
+                  icon: icon,
+                  title: wp.ident,
+                  zIndexOffset: 100,
+                })
+                  .bindPopup(popupContent)
+                  .addTo(flightPlanLayerGroup!);
+
+                waypointMarker.on('click', (e) => {
+                  L.DomEvent.stopPropagation(e);
+                });
+              }
+            });
+
+            if (coordinates.length >= 2) {
+              const plannedPolyline = L.polyline(coordinates, {
+                color: '#ff00ff',
+                weight: 3,
+                opacity: 0.6,
+                dashArray: '10, 5',
+              });
+              flightPlanLayerGroup.addLayer(plannedPolyline);
+            }
+          }
         }
 
         if (shouldZoom) {
-          const fullPolyline = L.polyline(coordinates, { opacity: 0 });
-          mapInstance.fitBounds(fullPolyline.getBounds(), { padding: [50, 50] });
+          const allBounds: L.LatLng[] = [];
+          
+          if (history.length > 0) {
+            history.forEach(pos => allBounds.push(L.latLng(pos[0], pos[1])));
+          }
+          
+          if (aircraft.flightPlan) {
+            try {
+              const waypoints = JSON.parse(aircraft.flightPlan);
+              waypoints.forEach((wp: any) => {
+                if (wp.lat && wp.lon) {
+                  allBounds.push(L.latLng(wp.lat, wp.lon));
+                }
+              });
+            } catch (e) {}
+          }
+          
+          if (allBounds.length > 0) {
+            const bounds = L.latLngBounds(allBounds);
+            mapInstance.fitBounds(bounds, { padding: [50, 50] });
+          }
+          
           hasZoomedToFlightPlan.current = true;
         }
       } catch (error) {
