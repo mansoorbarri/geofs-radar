@@ -104,65 +104,16 @@ export default function ATCPage() {
   const [selectedAircraft, setSelectedAircraft] = useState<PositionUpdate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   
-  const hasAircraft = useRef<boolean>(false);
-  const fetchInterval = useRef<number>(5000);
-  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const abortControllerRef = useRef<AbortController | undefined>(undefined);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = useRef(0);
+  
   useViewerTracker({ enabled: true });
 
   const handleAircraftSelect = useCallback((aircraft: PositionUpdate | null) => {
     setSelectedAircraft(aircraft);
-  }, []);
-
-  const fetchAircraft = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    abortControllerRef.current = new AbortController();
-    
-    try {
-      const response = await fetch('/api/atc/position', {
-        signal: abortControllerRef.current.signal,
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const processedAircraft: PositionUpdate[] = data.aircraft?.map((ac: any) => ({
-        ...ac,
-        ts: ac.ts || Date.now(),
-      })) || [];
-      
-      const currentlyHasAircraft = processedAircraft.length > 0;
-      
-      if (currentlyHasAircraft !== hasAircraft.current) {
-        hasAircraft.current = currentlyHasAircraft;
-        fetchInterval.current = currentlyHasAircraft ? 3000 : 5000;
-        
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = setInterval(fetchAircraft, fetchInterval.current);
-        }
-      }
-      
-      setAircrafts(processedAircraft);
-      setError(null);
-      
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        console.error(e);
-        setError('Failed to load aircraft data. Check the API status.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
   }, []);
 
   const fetchAirports = useCallback(async () => {
@@ -172,25 +123,78 @@ export default function ATCPage() {
       const airportArray: Airport[] = Object.values(airportMap);
       setAirports(airportArray);
     } catch (e) {
-      console.warn("Could not load airports.json. Ensure file exists in /public directory.");
+      console.warn("Could not load airports.json");
     }
   }, []);
 
-  useEffect(() => {
-    fetchAircraft();
-    fetchAirports();
-    
-    intervalRef.current = setInterval(fetchAircraft, fetchInterval.current);
+  const connectToStream = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+    console.log('Connecting to SSE stream...');
+    setConnectionStatus('connecting');
+    
+    const eventSource = new EventSource('/api/atc/stream');
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('✓ SSE connection established');
+      setConnectionStatus('connected');
+      setError(null);
+      reconnectAttempts.current = 0;
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        const processedAircraft: PositionUpdate[] = data.aircraft?.map((ac: any) => ({
+          ...ac,
+          ts: ac.ts || Date.now(),
+        })) || [];
+
+        setAircrafts(processedAircraft);
+        setIsLoading(false);
+        setError(null);
+      } catch (e) {
+        console.error('Error parsing SSE data:', e);
       }
     };
-  }, [fetchAircraft, fetchAirports]);
+
+    eventSource.onerror = () => {
+      console.error('SSE connection error');
+      setConnectionStatus('disconnected');
+      eventSource.close();
+
+      const backoffTime = Math.min(
+        1000 * Math.pow(2, reconnectAttempts.current),
+        30000
+      );
+      reconnectAttempts.current++;
+
+      setError(`Connection lost. Reconnecting in ${backoffTime / 1000}s...`);
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        console.log(`Reconnect attempt #${reconnectAttempts.current}`);
+        connectToStream();
+      }, backoffTime);
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchAirports();
+    connectToStream();
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [fetchAirports, connectToStream]);
 
   useEffect(() => {
     if (selectedAircraft && aircrafts.length > 0) {
@@ -206,14 +210,30 @@ export default function ATCPage() {
     }
   }, [aircrafts, selectedAircraft]);
 
-  const sidebarStyle = {
-    transform: selectedAircraft ? 'translateX(0)' : 'translateX(300px)',
-    transition: 'transform 0.3s ease',
-  };
-
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 10000,
+        padding: '8px 12px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        backgroundColor: connectionStatus === 'connected' 
+          ? 'rgba(16, 185, 129, 0.9)' 
+          : connectionStatus === 'connecting'
+          ? 'rgba(251, 191, 36, 0.9)'
+          : 'rgba(239, 68, 68, 0.9)',
+        color: 'white',
+        fontWeight: 'bold',
+      }}>
+        {connectionStatus === 'connected' && '● Live'}
+        {connectionStatus === 'connecting' && '◐ Connecting...'}
+        {connectionStatus === 'disconnected' && '○ Disconnected'}
+      </div>
+
       <div style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>
         {isLoading && aircrafts.length === 0 ? (
           <div style={{ textAlign: 'center', paddingTop: '50px', background: '#333', color: '#fff' }}>Loading initial data...</div>
@@ -226,7 +246,16 @@ export default function ATCPage() {
         )}
       </div>
 
-      <div style={{ ...sidebarStyle, position: 'absolute', top: 0, right: 0, zIndex: 99997, width: '300px', height: '100%' }}>
+      <div style={{
+        transform: selectedAircraft ? 'translateX(0)' : 'translateX(300px)',
+        transition: 'transform 0.3s ease',
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 99997,
+        width: '300px',
+        height: '100%',
+      }}>
         {selectedAircraft && <Sidebar aircraft={selectedAircraft} />}
       </div>
 

@@ -17,21 +17,90 @@ export interface PositionUpdate {
   vspeed: string;
   nextWaypoint: string;
   ts: number;
+  lastSeen: number;
 }
 
-export const activeAircraft = new Map<string, PositionUpdate & { lastSeen: number }>();
+type Subscriber = (aircraft: Map<string, PositionUpdate>) => void;
 
-let cleanupInterval: NodeJS.Timeout | null = null;
+class AircraftStore {
+  private store = new Map<string, PositionUpdate>();
+  private subscribers = new Set<Subscriber>();
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
-if (!cleanupInterval) {
-  cleanupInterval = setInterval(() => {
-    const now = Date.now();
-    const timeout = 30000;
-    for (const [id, data] of activeAircraft.entries()) {
-      if (now - data.lastSeen > timeout) {
-        activeAircraft.delete(id);
-        console.log(`[ATC-API] Removed stale aircraft: ${id}`);
-      }
+  constructor() {
+    this.startCleanup();
+  }
+
+  set(id: string, data: PositionUpdate) {
+    this.store.set(id, data);
+    this.notifySubscribers();
+  }
+
+  get(id: string) {
+    return this.store.get(id);
+  }
+
+  has(id: string) {
+    return this.store.has(id);
+  }
+
+  delete(id: string) {
+    const existed = this.store.delete(id);
+    if (existed) {
+      this.notifySubscribers();
     }
-  }, 5000);
+    return existed;
+  }
+
+  entries() {
+    return this.store.entries();
+  }
+
+  values() {
+    return this.store.values();
+  }
+
+  subscribe(callback: Subscriber) {
+    this.subscribers.add(callback);
+    return () => this.subscribers.delete(callback);
+  }
+
+  private notifySubscribers() {
+    this.subscribers.forEach(callback => callback(this.store));
+  }
+
+  getAll() {
+    return Array.from(this.store.values());
+  }
+
+  private startCleanup() {
+    if (this.cleanupInterval) return;
+
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      const timeout = 30000;
+      let removed = false;
+
+      for (const [id, data] of this.store.entries()) {
+        if (now - data.lastSeen > timeout) {
+          this.store.delete(id);
+          console.log(`[ATC-API] Removed stale aircraft: ${id}`);
+          removed = true;
+        }
+      }
+
+      if (removed) {
+        this.notifySubscribers();
+      }
+    }, 5000);
+  }
+
+  stopCleanup() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+  }
 }
+
+export const activeAircraft = new AircraftStore();
