@@ -1,20 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { type PositionUpdate } from '~/lib/aircraft-store';
-
-interface MapComponentProps {
-  aircrafts: PositionUpdate[];
-  airports: Airport[];
-  onAircraftSelect: (aircraft: PositionUpdate | null) => void;
-  selectedWaypointIndex?: number | null;
-}
 
 interface Airport {
   name: string;
   lat: number;
   lon: number;
   icao: string;
+}
+
+interface MapComponentProps {
+  aircrafts: PositionUpdate[];
+  airports: Airport[];
+  onAircraftSelect: (aircraft: PositionUpdate | null) => void;
+  selectedWaypointIndex?: number | null;
+  selectedAirport?: Airport | undefined;
+  setDrawFlightPlanOnMap: (
+    func: (aircraft: PositionUpdate, shouldZoom?: boolean) => void
+  ) => void;
 }
 
 let mapInstance: L.Map | null = null;
@@ -88,7 +92,7 @@ const getAircraftDivIcon = (aircraft: PositionUpdate & { altMSL?: number }) => {
 
   const tagStyle = `
     position: absolute;
-    top: ${(planeSize / 2) - (tagHeight / 2)}px;
+    top: ${planeSize / 2 - tagHeight / 2}px;
     left: ${planeSize + tagHorizontalSpacing}px;
 
     width: ${tagWidth}px;
@@ -108,19 +112,27 @@ const getAircraftDivIcon = (aircraft: PositionUpdate & { altMSL?: number }) => {
   const altMSL = aircraft.altMSL ?? aircraft.alt;
   const altAGL = aircraft.alt;
   const isOnGround = altAGL < 100;
-  const displayAlt = isOnGround ? `${altAGL.toFixed(0)}ft AGL` : 
-                     altMSL >= 18000 ? `FL${Math.round(altMSL / 100)}` :
-                     `${altAGL.toFixed(0)}ft AGL`;
+  const displayAlt = isOnGround
+    ? `${altAGL.toFixed(0)}ft AGL`
+    : altMSL >= 18000
+      ? `FL${Math.round(altMSL / 100)}`
+      : `${altAGL.toFixed(0)}ft AGL`;
 
   const detailContent = `
     <div style="font-size: 12px; font-weight: bold; color: #fff;">
-      ${aircraft.callsign || aircraft.flightNo || 'N/A'} (${aircraft.flightNo || 'N/A'})
+      ${aircraft.callsign || aircraft.flightNo || 'N/A'} (${
+    aircraft.flightNo || 'N/A'
+  })
     </div>
     <div style="font-size: 10px; opacity: 0.9;">
-      ${displayAlt} | HDG ${aircraft.heading.toFixed(0)}° | ${aircraft.speed.toFixed(0)}kt
+      ${displayAlt} | HDG ${aircraft.heading.toFixed(0)}° | ${aircraft.speed.toFixed(
+    0
+  )}kt
     </div>
     <div style="font-size: 10px; opacity: 0.8;">
-      SQK: ${aircraft.squawk || 'N/A'} | ${aircraft.departure || 'UNK'} → ${aircraft.arrival || 'UNK'}
+      SQK: ${aircraft.squawk || 'N/A'} | ${aircraft.departure || 'UNK'} → ${
+    aircraft.arrival || 'UNK'
+  }
     </div>
   `;
 
@@ -128,7 +140,9 @@ const getAircraftDivIcon = (aircraft: PositionUpdate & { altMSL?: number }) => {
     html: `
       <div style="${containerStyle}" class="aircraft-marker-container">
         <img src="${iconUrl}"
-             style="width:${planeSize}px; height:${planeSize}px; transform:rotate(${aircraft.heading || 0}deg); display: block;"
+             style="width:${planeSize}px; height:${planeSize}px; transform:rotate(${
+      aircraft.heading || 0
+    }deg); display: block;"
              alt="${aircraft.callsign}"
         />
         <div class="aircraft-tag" style="${tagStyle}">
@@ -144,7 +158,8 @@ const getAircraftDivIcon = (aircraft: PositionUpdate & { altMSL?: number }) => {
 };
 
 const AirportIcon = L.icon({
-  iconUrl: 'https://i0.wp.com/microshare.io/wp-content/uploads/2024/04/airport2-icon.png?resize=510%2C510&ssl=1',
+  iconUrl:
+    'https://i0.wp.com/microshare.io/wp-content/uploads/2024/04/airport2-icon.png?resize=510%2C510&ssl=1',
   iconSize: [30, 30],
   iconAnchor: [16, 16],
   popupAnchor: [0, -16],
@@ -154,15 +169,15 @@ const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ): number => {
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -173,10 +188,10 @@ const calculateBearing = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ): number => {
-  const toRad = (deg: number) => deg * Math.PI / 180;
-  const toDeg = (rad: number) => rad * 180 / Math.PI;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const toDeg = (rad: number) => (rad * 180) / Math.PI;
 
   const φ1 = toRad(lat1);
   const φ2 = toRad(lat2);
@@ -190,7 +205,10 @@ const calculateBearing = (
   return (θ + 360) % 360;
 };
 
-const findActiveWaypointIndex = (aircraft: PositionUpdate, waypoints: any[]): number => {
+const findActiveWaypointIndex = (
+  aircraft: PositionUpdate,
+  waypoints: any[]
+): number => {
   if (waypoints.length < 1) return -1;
 
   const currentLat = aircraft.lat;
@@ -225,10 +243,10 @@ const findActiveWaypointIndex = (aircraft: PositionUpdate, waypoints: any[]): nu
         nextWp.lat,
         nextWp.lon
       );
-      
+
       let headingDiff = Math.abs(currentHeading - bearingToNext);
       if (headingDiff > 180) headingDiff = 360 - headingDiff;
-      
+
       if (headingDiff < 90) {
         return closestWaypointIndex + 1;
       }
@@ -246,7 +264,10 @@ class HeadingModeControl extends L.Control {
   private _toggleHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClickHandler: (event: Event) => void;
 
-  constructor(options: L.ControlOptions, toggleHeadingMode: React.Dispatch<React.SetStateAction<boolean>>) {
+  constructor(
+    options: L.ControlOptions,
+    toggleHeadingMode: React.Dispatch<React.SetStateAction<boolean>>
+  ) {
     super(options);
     this._toggleHeadingMode = toggleHeadingMode;
     this._boundClickHandler = (event: Event) => {
@@ -303,6 +324,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   aircrafts,
   airports,
   onAircraftSelect,
+  selectedAirport,
+  setDrawFlightPlanOnMap,
 }) => {
   const [isHeadingMode, setIsHeadingMode] = useState<boolean>(false);
   const headingStartPointRef = useRef<L.LatLng | null>(null);
@@ -312,12 +335,129 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const headingControlRef = useRef<HeadingModeControl | null>(null);
   const currentSelectedAircraftRef = useRef<string | null>(null);
   const hasZoomedToFlightPlan = useRef<boolean>(false);
+  const selectedAirportMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (headingControlRef.current) {
       headingControlRef.current.updateState(isHeadingMode);
     }
   }, [isHeadingMode]);
+
+  const drawFlightPlan = useCallback(
+    (aircraft: PositionUpdate, shouldZoom = false) => {
+      if (!mapInstance || !flightPlanLayerGroup || !historyLayerGroup) return;
+
+      try {
+        flightPlanLayerGroup.clearLayers();
+        historyLayerGroup.clearLayers();
+        currentSelectedAircraftRef.current = aircraft.id || aircraft.callsign;
+
+        const aircraftId = aircraft.id || aircraft.callsign;
+        const history = aircraftHistoryRef.current.get(aircraftId) || [];
+
+        if (history.length >= 2) {
+          const historyPolyline = L.polyline(history, {
+            color: '#00ff00',
+            weight: 4,
+            opacity: 0.8,
+            smoothFactor: 1,
+          });
+          historyLayerGroup.addLayer(historyPolyline);
+        }
+
+        if (aircraft.flightPlan) {
+          const waypoints = JSON.parse(aircraft.flightPlan);
+
+          if (waypoints.length > 0) {
+            const coordinates: L.LatLngTuple[] = [];
+            const activeWaypointIndex = findActiveWaypointIndex(
+              aircraft,
+              waypoints
+            );
+
+            waypoints.forEach((wp: any, index: number) => {
+              if (wp.lat && wp.lon) {
+                coordinates.push([wp.lat, wp.lon]);
+
+                const popupContent = `
+                  <div style="font-family: system-ui; padding: 4px;">
+                    <strong style="color: #f542e3; font-size: 14px;">${wp.ident}</strong>
+                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${wp.type}</div>
+                    <div style="margin-top: 6px; font-size: 12px;">
+                      <div>Alt: <strong>${
+                        wp.alt ? wp.alt + ' ft' : 'N/A'
+                      }</strong></div>
+                      <div>Speed: <strong>${
+                        wp.spd ? wp.spd + ' kt' : 'N/A'
+                      }</strong></div>
+                    </div>
+                  </div>
+                `;
+
+                const icon =
+                  index === activeWaypointIndex
+                    ? ActiveWaypointIcon
+                    : WaypointIcon;
+
+                const waypointMarker = L.marker([wp.lat, wp.lon], {
+                  icon: icon,
+                  title: wp.ident,
+                  zIndexOffset: 100,
+                })
+                  .bindPopup(popupContent)
+                  .addTo(flightPlanLayerGroup!);
+
+                waypointMarker.on('click', (e) => {
+                  L.DomEvent.stopPropagation(e);
+                });
+              }
+            });
+
+            if (coordinates.length >= 2) {
+              const plannedPolyline = L.polyline(coordinates, {
+                color: '#ff00ff',
+                weight: 3,
+                opacity: 0.6,
+                dashArray: '10, 5',
+              });
+              flightPlanLayerGroup.addLayer(plannedPolyline);
+            }
+          }
+        }
+
+        if (shouldZoom) {
+          const allBounds: L.LatLng[] = [];
+
+          if (history.length > 0) {
+            history.forEach((pos) =>
+              allBounds.push(L.latLng(pos[0], pos[1]))
+            );
+          }
+
+          if (aircraft.flightPlan) {
+            try {
+              const waypoints = JSON.parse(aircraft.flightPlan);
+              waypoints.forEach((wp: any) => {
+                if (wp.lat && wp.lon) {
+                  allBounds.push(L.latLng(wp.lat, wp.lon));
+                }
+              });
+            } catch (e) {}
+          }
+
+          if (allBounds.length > 0) {
+            const bounds = L.latLngBounds(allBounds);
+            mapInstance.fitBounds(bounds, { padding: [50, 50] });
+          }
+
+          hasZoomedToFlightPlan.current = true;
+        }
+      } catch (error) {
+        console.error('Error drawing flight plan:', error);
+      }
+    },
+    [onAircraftSelect]
+  );
 
   useEffect(() => {
     if (!mapInstance) {
@@ -353,6 +493,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
       mapInstance.addControl(headingControl);
       headingControlRef.current = headingControl;
 
+      setDrawFlightPlanOnMap(drawFlightPlan);
+
       mapInstance.on('click', (e) => {
         const target = e.originalEvent.target as HTMLElement;
         if (
@@ -374,16 +516,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
     aircrafts.forEach((aircraft) => {
       const aircraftId = aircraft.id || aircraft.callsign;
       const currentPosition: L.LatLngTuple = [aircraft.lat, aircraft.lon];
-      
+
       if (!aircraftHistoryRef.current.has(aircraftId)) {
         aircraftHistoryRef.current.set(aircraftId, [currentPosition]);
       } else {
         const history = aircraftHistoryRef.current.get(aircraftId)!;
         const lastPosition = history[history.length - 1];
-        
-        if (lastPosition && (lastPosition[0] !== currentPosition[0] || lastPosition[1] !== currentPosition[1])) {
+
+        if (
+          lastPosition &&
+          (lastPosition[0] !== currentPosition[0] ||
+            lastPosition[1] !== currentPosition[1])
+        ) {
           history.push(currentPosition);
-          
+
           if (history.length > 500) {
             history.shift();
           }
@@ -391,7 +537,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     });
 
-    const currentAircraftIds = new Set(aircrafts.map(ac => ac.id || ac.callsign));
+    const currentAircraftIds = new Set(
+      aircrafts.map((ac) => ac.id || ac.callsign)
+    );
     for (const [id] of aircraftHistoryRef.current) {
       if (!currentAircraftIds.has(id)) {
         aircraftHistoryRef.current.delete(id);
@@ -400,7 +548,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     if (airportMarkersLayer) {
       airportMarkersLayer.clearLayers();
-      
+
       airports.forEach((airport) => {
         const popupContent = `**Airport:** ${airport.name}<br>(${airport.icao})`;
 
@@ -412,107 +560,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
           .bindPopup(popupContent);
       });
     }
-
-    const drawFlightPlan = (aircraft: PositionUpdate, shouldZoom = false) => {
-      if (!mapInstance || !flightPlanLayerGroup || !historyLayerGroup) return;
-
-      try {
-        flightPlanLayerGroup.clearLayers();
-        historyLayerGroup.clearLayers();
-        currentSelectedAircraftRef.current = aircraft.id || aircraft.callsign;
-
-        const aircraftId = aircraft.id || aircraft.callsign;
-        const history = aircraftHistoryRef.current.get(aircraftId) || [];
-
-        if (history.length >= 2) {
-          const historyPolyline = L.polyline(history, {
-            color: '#00ff00',
-            weight: 4,
-            opacity: 0.8,
-            smoothFactor: 1,
-          });
-          historyLayerGroup.addLayer(historyPolyline);
-        }
-
-        if (aircraft.flightPlan) {
-          const waypoints = JSON.parse(aircraft.flightPlan);
-
-          if (waypoints.length > 0) {
-            const coordinates: L.LatLngTuple[] = [];
-            const activeWaypointIndex = findActiveWaypointIndex(aircraft, waypoints);
-
-            waypoints.forEach((wp: any, index: number) => {
-              if (wp.lat && wp.lon) {
-                coordinates.push([wp.lat, wp.lon]);
-
-                const popupContent = `
-                  <div style="font-family: system-ui; padding: 4px;">
-                    <strong style="color: #f542e3; font-size: 14px;">${wp.ident}</strong>
-                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${wp.type}</div>
-                    <div style="margin-top: 6px; font-size: 12px;">
-                      <div>Alt: <strong>${wp.alt ? wp.alt + ' ft' : 'N/A'}</strong></div>
-                      <div>Speed: <strong>${wp.spd ? wp.spd + ' kt' : 'N/A'}</strong></div>
-                    </div>
-                  </div>
-                `;
-
-                const icon = index === activeWaypointIndex ? ActiveWaypointIcon : WaypointIcon;
-
-                const waypointMarker = L.marker([wp.lat, wp.lon], {
-                  icon: icon,
-                  title: wp.ident,
-                  zIndexOffset: 100,
-                })
-                  .bindPopup(popupContent)
-                  .addTo(flightPlanLayerGroup!);
-
-                waypointMarker.on('click', (e) => {
-                  L.DomEvent.stopPropagation(e);
-                });
-              }
-            });
-
-            if (coordinates.length >= 2) {
-              const plannedPolyline = L.polyline(coordinates, {
-                color: '#ff00ff',
-                weight: 3,
-                opacity: 0.6,
-                dashArray: '10, 5',
-              });
-              flightPlanLayerGroup.addLayer(plannedPolyline);
-            }
-          }
-        }
-
-        if (shouldZoom) {
-          const allBounds: L.LatLng[] = [];
-          
-          if (history.length > 0) {
-            history.forEach(pos => allBounds.push(L.latLng(pos[0], pos[1])));
-          }
-          
-          if (aircraft.flightPlan) {
-            try {
-              const waypoints = JSON.parse(aircraft.flightPlan);
-              waypoints.forEach((wp: any) => {
-                if (wp.lat && wp.lon) {
-                  allBounds.push(L.latLng(wp.lat, wp.lon));
-                }
-              });
-            } catch (e) {}
-          }
-          
-          if (allBounds.length > 0) {
-            const bounds = L.latLngBounds(allBounds);
-            mapInstance.fitBounds(bounds, { padding: [50, 50] });
-          }
-          
-          hasZoomedToFlightPlan.current = true;
-        }
-      } catch (error) {
-        console.error('Error drawing flight plan:', error);
-      }
-    };
 
     if (aircraftMarkersLayer) {
       aircraftMarkersLayer.clearLayers();
@@ -537,7 +584,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     if (currentSelectedAircraftRef.current) {
       const selectedAircraft = aircrafts.find(
-        ac => (ac.id || ac.callsign) === currentSelectedAircraftRef.current
+        (ac) => (ac.id || ac.callsign) === currentSelectedAircraftRef.current
       );
       if (selectedAircraft) {
         drawFlightPlan(selectedAircraft, false);
@@ -545,7 +592,72 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
 
     isInitialLoad = false;
-  }, [aircrafts, airports, onAircraftSelect]);
+  }, [
+    aircrafts,
+    airports,
+    onAircraftSelect,
+    drawFlightPlan,
+    setDrawFlightPlanOnMap,
+  ]);
+
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    if (selectedAirport) {
+      mapInstance.setView([selectedAirport.lat, selectedAirport.lon], 12);
+
+      if (selectedAirportMarkerRef.current) {
+        mapInstance.removeLayer(selectedAirportMarkerRef.current);
+      }
+      selectedAirportMarkerRef.current = L.marker(
+        [selectedAirport.lat, selectedAirport.lon],
+        {
+          icon: L.divIcon({
+            className: 'selected-airport-marker',
+            html: `
+              <div style="
+                background-color: #3b82f6;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-weight: bold;
+                white-space: nowrap;
+                border: 2px solid white;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+                transform: translate(-50%, -100%);
+              ">
+                ${selectedAirport.icao}
+              </div>
+              <div style="
+                width: 0;
+                height: 0;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-top: 8px solid #3b82f6;
+                position: absolute;
+                bottom: 0px;
+                left: 50%;
+                transform: translateX(-50%);
+              "></div>
+            `,
+            iconSize: [80, 40],
+            iconAnchor: [40, 40],
+          }),
+          zIndexOffset: 2000,
+        }
+      )
+        .addTo(mapInstance)
+        .bindPopup(
+          `<strong>${selectedAirport.name}</strong><br>${selectedAirport.icao}`
+        )
+        .openPopup();
+    } else {
+      if (selectedAirportMarkerRef.current) {
+        mapInstance.removeLayer(selectedAirportMarkerRef.current);
+        selectedAirportMarkerRef.current = null;
+      }
+    }
+  }, [selectedAirport]);
 
   useEffect(() => {
     if (!mapInstance) return;
@@ -591,13 +703,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
         start.lat,
         start.lng,
         end.lat,
-        end.lng,
+        end.lng
       );
       const heading = calculateBearing(
         start.lat,
         start.lng,
         end.lat,
-        end.lng,
+        end.lng
       );
 
       const tooltipContent = `
