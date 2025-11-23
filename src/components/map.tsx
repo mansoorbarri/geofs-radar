@@ -8,7 +8,7 @@ interface Airport {
   lat: number;
   lon: number;
   icao: string;
-  frequencies?: Array<{ type: string; frequency: string }>;
+  frequencies?: { type: string; frequency: string }[];
 }
 
 interface MapComponentProps {
