@@ -208,7 +208,7 @@ const getRadarAircraftDivIcon = (
   const totalWidth = dotSize + headingLineLength + labelOffsetFromDot + labelWidth;
   const totalHeight = Math.max(dotSize, labelHeight);
 
-  const anchorX = dotSize / 2;
+  const anchorX = dotSize / 2; // Anchor the icon at the center of the dot
   const anchorY = totalHeight / 2;
 
   const altMSL = aircraft.altMSL ?? aircraft.alt;
@@ -253,20 +253,23 @@ const getRadarAircraftDivIcon = (
 
         <div style="
           position: absolute;
+          /* Position the line so its origin (left-middle) is at the center of the dot */
           top: ${totalHeight / 2 - 1}px;
           left: ${dotSize / 2}px;
           width: ${headingLineLength}px;
           height: 2px;
           background-color: #00ff00;
-          transform-origin: 0% 50%;
-          transform: rotate(${aircraft.heading || 0}deg);
+          transform-origin: 0% 50%; /* Rotate around its left-middle point */
+          /* Convert aviation heading (0=N, 90=E) to CSS rotation (0=R, 90=D) */
+          transform: rotate(${90 - (aircraft.heading || 0)}deg);
           z-index: 1;
         "></div>
 
         <div class="aircraft-label" style="
           position: absolute;
           top: ${(totalHeight - labelHeight) / 2}px;
-          left: ${dotSize + headingLineLength / 2 + labelOffsetFromDot}px;
+          /* Adjust label left to accommodate the transformed heading line */
+          left: ${dotSize + headingLineLength + labelOffsetFromDot}px;
           width: ${labelWidth}px;
           padding: 2px 4px;
           background-color: rgba(0, 0, 0, 0.6);
@@ -288,7 +291,7 @@ const getRadarAircraftDivIcon = (
     `,
     className: 'leaflet-radar-aircraft-icon',
     iconSize: [totalWidth, totalHeight],
-    iconAnchor: [anchorX, anchorY],
+    iconAnchor: [anchorX, anchorY], // Anchor at the center of the dot
     popupAnchor: [0, -dotSize / 2],
   });
 };
