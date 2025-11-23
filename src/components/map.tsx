@@ -30,6 +30,7 @@ let historyLayerGroup: L.LayerGroup | null = null;
 
 let satelliteHybridLayer: L.TileLayer | null = null;
 let radarBaseLayer: L.TileLayer | null = null;
+let openAIPLayer: L.TileLayer | null = null;
 
 const aircraftHistoryRef = { current: new Map<string, L.LatLngTuple[]>() };
 
@@ -204,30 +205,16 @@ const getRadarAircraftDivIcon = (
   const headingLineLength = 15;
   const labelHeight = 35;
   const labelWidth = 100;
-  // Offset label from the right edge of the dot
   const labelOffsetFromDot = 20;
-
-  // Calculate total width based on dot, the longest possible extension for the line (or simply the dot's space)
-  // and the label. The line's rotation means it could extend in any direction,
-  // but for iconSize we need a bounding box. Let's assume the label is placed
-  // to the right of the dot, and the line rotates from the dot.
-  // The icon's 'width' needs to accommodate the dot, any max line extension, and the label.
-  // For a simple dot + line + label, a static totalWidth might be easier, but remember
-  // the line's rotation means it might extend left or right from the dot's center.
-  // However, Leaflet's `iconSize` acts as the overall bounding box for the entire HTML.
-  // The `totalWidth` needs to be large enough to contain the dot + line + label
-  // when the line is at its most "right-pointing" for positioning the label.
-  // For the actual `iconSize`, it would be more accurate to calculate the bounding
-  // box of the dot and the rotated line, but for this setup, the label drives the width.
 
   const totalEffectiveWidthForPositioning = dotSize + labelOffsetFromDot + labelWidth;
   const totalWidth = Math.max(
     totalEffectiveWidthForPositioning,
-    dotSize + headingLineLength // Ensure space for the line
+    dotSize + headingLineLength
   );
-  const totalHeight = Math.max(dotSize, labelHeight, headingLineLength); // Also ensure height for line if it points up/down
+  const totalHeight = Math.max(dotSize, labelHeight, headingLineLength);
 
-  const anchorX = dotSize / 2; // Anchor at the center of the dot
+  const anchorX = dotSize / 2;
   const anchorY = totalHeight / 2;
 
   const altMSL = aircraft.altMSL ?? aircraft.alt;
@@ -260,7 +247,6 @@ const getRadarAircraftDivIcon = (
       ">
         <div style="
           position: absolute;
-          /* Center the dot vertically within totalHeight */
           top: ${(totalHeight - dotSize) / 2}px;
           left: 0;
           width: ${dotSize}px;
@@ -273,23 +259,19 @@ const getRadarAircraftDivIcon = (
 
         <div style="
           position: absolute;
-          /* Position the line so its origin (left-middle) is at the center of the dot */
-          top: ${totalHeight / 2 - 1}px; /* Adjusted for line height 2px */
-          left: ${dotSize / 2}px; /* Starts at the horizontal center of the dot */
+          top: ${totalHeight / 2 - 1}px;
+          left: ${dotSize / 2}px;
           width: ${headingLineLength}px;
           height: 2px;
           background-color: #00ff00;
-          transform-origin: 0% 50%; /* Rotate around its left-middle point */
-          /* Convert aviation heading (0=N, 90=E) to CSS rotation (0=R, 90=D) */
+          transform-origin: 0% 50%;
           transform: rotate(${(aircraft.heading || 0) - 90}deg);
           z-index: 1;
         "></div>
 
         <div class="aircraft-label" style="
           position: absolute;
-          /* Center label vertically relative to total height */
           top: ${(totalHeight - labelHeight) / 2}px;
-          /* Position label relative to the right of the dot */
           left: ${dotSize + labelOffsetFromDot}px;
           width: ${labelWidth}px;
           padding: 2px 4px;
@@ -311,10 +293,6 @@ const getRadarAircraftDivIcon = (
       </div>
     `,
     className: 'leaflet-radar-aircraft-icon',
-    // The iconSize should encompass all elements at their maximum extent.
-    // If the label is always to the right, and the dot is at 0,0,
-    // then the width is (dot + line in its longest horizontal state + label).
-    // The height is the tallest element.
     iconSize: [dotSize + headingLineLength + labelOffsetFromDot + labelWidth, totalHeight],
     iconAnchor: [anchorX, anchorY],
     popupAnchor: [0, -dotSize / 2],
@@ -565,6 +543,70 @@ class RadarModeControl extends L.Control {
   }
 }
 
+class OpenAIPControl extends L.Control {
+  public options = {
+    position: 'topleft' as L.ControlPosition,
+  };
+  public _container: HTMLDivElement | null = null;
+  private _toggleOpenAIP: React.Dispatch<React.SetStateAction<boolean>>;
+  private _boundClickHandler: (event: Event) => void;
+
+  constructor(
+    options: L.ControlOptions,
+    toggleOpenAIP: React.Dispatch<React.SetStateAction<boolean>>
+  ) {
+    super(options);
+    this._toggleOpenAIP = toggleOpenAIP;
+    this._boundClickHandler = (event: Event) => {
+      this._toggleOpenAIP((prev) => !prev);
+    };
+  }
+
+  onAdd(map: L.Map): HTMLDivElement {
+    const container = L.DomUtil.create('div');
+    container.style.cssText = `
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      cursor: pointer;
+      background-color: white;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-radius: 4px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+      transition: all 0.2s ease;
+      font-size: 16px;
+      font-weight: bold;
+    `;
+    container.title = 'Toggle OpenAIP Layer';
+    container.innerHTML = '&#x1F30D;';
+
+    L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
+    L.DomEvent.on(container, 'click', L.DomEvent.preventDefault);
+    L.DomEvent.on(container, 'click', this._boundClickHandler);
+    this._container = container;
+    return container;
+  }
+
+  onRemove(map: L.Map) {
+    if (this._container) {
+      L.DomEvent.off(this._container, 'click', this._boundClickHandler);
+    }
+  }
+
+  updateState(enabled: boolean) {
+    if (this._container) {
+      if (enabled) {
+        this._container.style.backgroundColor = '#28a745';
+        this._container.style.color = 'white';
+      } else {
+        this._container.style.backgroundColor = 'white';
+        this._container.style.color = 'black';
+      }
+    }
+  }
+}
+
 const MapComponent: React.FC<MapComponentProps> = ({
   aircrafts,
   airports,
@@ -574,6 +616,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
   const [isHeadingMode, setIsHeadingMode] = useState<boolean>(false);
   const [isRadarMode, setIsRadarMode] = useState<boolean>(false);
+  const [isOpenAIPEnabled, setIsOpenAIPEnabled] = useState<boolean>(false);
 
   const headingStartPointRef = useRef<L.LatLng | null>(null);
   const headingLineRef = useRef<L.Polyline | null>(null);
@@ -581,6 +624,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const headingMarkerRef = useRef<L.Marker | null>(null);
   const headingControlRef = useRef<HeadingModeControl | null>(null);
   const radarControlRef = useRef<RadarModeControl | null>(null);
+  const openAIPControlRef = useRef<OpenAIPControl | null>(null);
   const currentSelectedAircraftRef = useRef<string | null>(null);
   const hasZoomedToFlightPlan = useRef<boolean>(false);
   const selectedAirportMarkerRef = useRef<L.Marker | null>(null);
@@ -592,7 +636,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (radarControlRef.current) {
       radarControlRef.current.updateState(isRadarMode);
     }
-  }, [isHeadingMode, isRadarMode]);
+    if (openAIPControlRef.current) {
+      openAIPControlRef.current.updateState(isOpenAIPEnabled);
+    }
+  }, [isHeadingMode, isRadarMode, isOpenAIPEnabled]);
 
   const drawFlightPlan = useCallback(
     (aircraft: PositionUpdate, shouldZoom = false) => {
@@ -746,7 +793,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
           maxZoom: 18,
           minZoom: 3,
           transparent: true,
-          pane: 'overlayPane',
           noWrap: true,
           bounds: worldBounds,
         }
@@ -758,6 +804,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
           subdomains: 'abcd',
+          maxZoom: 19,
+          minZoom: 3,
+          noWrap: true,
+          bounds: worldBounds,
+        }
+      );
+
+      openAIPLayer = L.tileLayer(
+        'https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=409a25682b90c26541b6c25493950e17',
+        {
+          attribution: '&copy; <a href="https://www.openaip.net/">OpenAIP</a>',
           maxZoom: 19,
           minZoom: 3,
           noWrap: true,
@@ -780,6 +837,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
       mapInstance.addControl(radarControl);
       radarControlRef.current = radarControl;
 
+      const openAIPControl = new OpenAIPControl({}, setIsOpenAIPEnabled);
+      mapInstance.addControl(openAIPControl);
+      openAIPControlRef.current = openAIPControl;
+
       setDrawFlightPlanOnMap(drawFlightPlan);
 
       mapInstance.on('click', (e) => {
@@ -800,7 +861,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       });
     }
 
-    if (satelliteHybridLayer && radarBaseLayer) {
+    if (satelliteHybridLayer && radarBaseLayer && openAIPLayer) {
       if (isRadarMode) {
         if (mapInstance.hasLayer(satelliteHybridLayer)) {
           mapInstance.removeLayer(satelliteHybridLayer);
@@ -814,6 +875,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
         }
         if (!mapInstance.hasLayer(satelliteHybridLayer)) {
           mapInstance.addLayer(satelliteHybridLayer);
+        }
+      }
+
+      if (isOpenAIPEnabled) {
+        if (!mapInstance.hasLayer(openAIPLayer)) {
+          mapInstance.addLayer(openAIPLayer);
+        }
+        openAIPLayer.bringToFront();
+      } else {
+        if (mapInstance.hasLayer(openAIPLayer)) {
+          mapInstance.removeLayer(openAIPLayer);
         }
       }
     }
@@ -942,6 +1014,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     drawFlightPlan,
     setDrawFlightPlanOnMap,
     isRadarMode,
+    isOpenAIPEnabled,
   ]);
 
   useEffect(() => {
@@ -1127,7 +1200,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       map.off('mouseup', handleMouseUp);
       map.dragging.enable();
       map.getContainer().style.cursor = '';
-    };
+    }
 
     return () => {
       map.off('mousedown', handleMouseDown);
@@ -1138,49 +1211,48 @@ const MapComponent: React.FC<MapComponentProps> = ({
     };
   }, [isHeadingMode, isRadarMode]);
 
-return (
-  <>
-    <style jsx global>{`
-      .heading-tooltip {
-        background-color: rgba(0, 0, 0, 0.7) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 4px !important;
-        padding: 8px !important;
-        font-size: 12px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-        pointer-events: none !important;
-      }
-      .heading-tooltip::before {
-        display: none !important;
-      }
-      
-      /* Airport popup styles */
-      .leaflet-popup-content-wrapper {
-        background-color: rgba(0, 0, 0, 0.9) !important;
-        color: #00ffff !important;
-        border-radius: 8px !important;
-      }
-      .leaflet-popup-tip {
-        background-color: rgba(0, 0, 0, 0.9) !important;
-      }
-      
-      .radar-popup .leaflet-popup-content-wrapper {
-        background-color: rgba(0, 0, 0, 0.8) !important;
-        color: #00ff00 !important;
-        border: 1px solid #00ff00 !important;
-        box-shadow: 0 0 8px rgba(0, 255, 0, 0.5) !important;
-      }
-      .radar-popup .leaflet-popup-tip {
-        background-color: rgba(0, 0, 0, 0.8) !important;
-        border-top: 1px solid #00ff00 !important;
-        border-left: 1px solid transparent !important;
-        border-right: 1px solid transparent !important;
-      }
-    `}</style>
-    <div id="map-container" style={{ height: '100%', width: '100%' }} />
-  </>
-);
+  return (
+    <>
+      <style jsx global>{`
+        .heading-tooltip {
+          background-color: rgba(0, 0, 0, 0.7) !important;
+          color: white !important;
+          border: none !important;
+          border-radius: 4px !important;
+          padding: 8px !important;
+          font-size: 12px !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+          pointer-events: none !important;
+        }
+        .heading-tooltip::before {
+          display: none !important;
+        }
+        
+        .leaflet-popup-content-wrapper {
+          background-color: rgba(0, 0, 0, 0.9) !important;
+          color: #00ffff !important;
+          border-radius: 8px !important;
+        }
+        .leaflet-popup-tip {
+          background-color: rgba(0, 0, 0, 0.9) !important;
+        }
+        
+        .radar-popup .leaflet-popup-content-wrapper {
+          background-color: rgba(0, 0, 0, 0.8) !important;
+          color: #00ff00 !important;
+          border: 1px solid #00ff00 !important;
+          box-shadow: 0 0 8px rgba(0, 255, 0, 0.5) !important;
+        }
+        .radar-popup .leaflet-popup-tip {
+          background-color: rgba(0, 0, 0, 0.8) !important;
+          border-top: 1px solid #00ff00 !important;
+          border-left: 1px solid transparent !important;
+          border-right: 1px solid transparent !important;
+        }
+      `}</style>
+      <div id="map-container" style={{ height: '100%', width: '100%' }} />
+    </>
+  );
 };
 
 export default MapComponent;
