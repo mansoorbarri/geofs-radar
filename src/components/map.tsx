@@ -809,8 +809,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapInstance) {
       const worldBounds = L.latLngBounds(
-        L.latLng(-85, -180),
-        L.latLng(85, 180)
+        L.latLng(-85, -360),
+        L.latLng(85, 360)
       );
 
       mapInstance = L.map('map-container', {
@@ -818,7 +818,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         minZoom: 3,
         maxZoom: 18,
         maxBounds: worldBounds,
-        maxBoundsViscosity: 1.0,
+        // maxBoundsViscosity: 1.0,
       }).setView([20, 0], 3);
 
       satelliteHybridLayer = L.tileLayer(
@@ -828,7 +828,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
           maxZoom: 18,
           minZoom: 3,
           transparent: true,
-          noWrap: true,
           bounds: worldBounds,
         }
       );
@@ -839,9 +838,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
           subdomains: 'abcd',
-          maxZoom: 19,
+          maxZoom: 18,
           minZoom: 3,
-          noWrap: true,
           bounds: worldBounds,
         }
       );
