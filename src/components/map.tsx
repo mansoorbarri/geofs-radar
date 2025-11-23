@@ -34,6 +34,8 @@ let openAIPLayer: L.TileLayer | null = null;
 
 const aircraftHistoryRef = { current: new Map<string, L.LatLngTuple[]>() };
 
+const EMERGENCY_SQUAWKS = new Set(['7700', '7600', '7500']);
+
 const WaypointIcon = L.divIcon({
   html: `
     <div style="
@@ -136,8 +138,52 @@ const getAircraftDivIcon = (
       ? `FL${Math.round(altMSL / 100)}`
       : `${altAGL.toFixed(0)}ft AGL`;
 
+  const isEmergency = aircraft.squawk && EMERGENCY_SQUAWKS.has(aircraft.squawk);
+
+  const planeStyle = `
+    position: absolute;
+    top: ${(totalHeight - planeSize) / 2}px;
+    left: 0;
+    width:${planeSize}px;
+    height:${planeSize}px;
+    transform:rotate(${aircraft.heading || 0}deg);
+    transform-origin: 50% 50%;
+    display: block;
+    z-index: 2;
+    ${
+      isEmergency
+        ? `
+        filter: hue-rotate(200deg) brightness(1.5) saturate(2); /* Change color slightly to red */
+        animation: emergency-plane-pulse 1s infinite alternate;
+        border: 2px solid #ff0000;
+        box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+        border-radius: 50%; /* Make border circular for effect */
+      `
+        : ''
+    }
+  `;
+
+  const tagStyle = `
+    position: absolute;
+    top: ${(totalHeight - tagHeight) / 2}px;
+    left: ${planeSize + tagOffsetFromPlane}px;
+    width: ${tagWidth}px;
+    padding: 4px 6px;
+    background-color: ${isEmergency ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.4)'};
+    color: #fff;
+    border-radius: 4px;
+    white-space: normal;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    line-height: 1.3;
+    z-index: 1000;
+    pointer-events: none;
+    ${isEmergency ? 'border: 1px solid white;' : ''}
+  `;
+
   const detailContent = `
     <div style="font-size: 12px; font-weight: bold; color: #fff;">
+      ${isEmergency ? '&#x26A0; EMERGENCY &#x26A0;<br/>' : ''}
       ${aircraft.callsign || aircraft.flightNo || 'N/A'} (${
     aircraft.flightNo || 'N/A'
   })
@@ -158,35 +204,10 @@ const getAircraftDivIcon = (
     html: `
       <div style="position: relative; width: ${totalWidth}px; height: ${totalHeight}px;">
         <img src="${iconUrl}"
-             style="
-               position: absolute;
-               top: ${(totalHeight - planeSize) / 2}px;
-               left: 0;
-               width:${planeSize}px;
-               height:${planeSize}px;
-               transform:rotate(${aircraft.heading || 0}deg);
-               transform-origin: 50% 50%;
-               display: block;
-               z-index: 2;
-             "
+             style="${planeStyle}"
              alt="${aircraft.callsign}"
         />
-        <div class="aircraft-tag" style="
-          position: absolute;
-          top: ${(totalHeight - tagHeight) / 2}px;
-          left: ${planeSize + tagOffsetFromPlane}px;
-          width: ${tagWidth}px;
-          padding: 4px 6px;
-          background-color: rgba(0, 0, 0, 0.4);
-          color: #fff;
-          border-radius: 4px;
-          white-space: normal;
-          text-align: center;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.6);
-          line-height: 1.3;
-          z-index: 1000;
-          pointer-events: none;
-        ">
+        <div class="aircraft-tag" style="${tagStyle}">
           ${detailContent}
         </div>
       </div>
@@ -204,7 +225,7 @@ const getRadarAircraftDivIcon = (
   const dotSize = 8;
   const headingLineLength = 15;
   const labelHeight = 35;
-  const labelWidth = 100;
+  const labelWidth = 90;
   const labelOffsetFromDot = 20;
 
   const totalEffectiveWidthForPositioning = dotSize + labelOffsetFromDot + labelWidth;
@@ -226,9 +247,63 @@ const getRadarAircraftDivIcon = (
       ? `FL${Math.round(altMSL / 100)}`
       : `${altAGL.toFixed(0)}AGL`;
 
+  const isEmergency = aircraft.squawk && EMERGENCY_SQUAWKS.has(aircraft.squawk);
+
+  const dotColor = isEmergency ? '#ff0000' : '#00ff00';
+  const lineColor = isEmergency ? '#ff0000' : '#00ff00';
+  const labelBorderColor = isEmergency ? '#ff0000' : '#00ff00';
+  const labelTextColor = isEmergency ? '#ff0000' : '#00ff00';
+  const labelShadowColor = isEmergency ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 255, 0, 0.5)';
+
+  const dotStyle = `
+    position: absolute;
+    top: ${(totalHeight - dotSize) / 2}px;
+    left: 0;
+    width: ${dotSize}px;
+    height: ${dotSize}px;
+    background-color: ${dotColor};
+    border-radius: 50%;
+    box-shadow: 0 0 5px ${labelShadowColor};
+    z-index: 2;
+    ${isEmergency ? 'animation: radar-emergency-pulse 1s infinite alternate;' : ''}
+  `;
+
+  const headingLineStyle = `
+    position: absolute;
+    top: ${totalHeight / 2 - 1}px;
+    left: ${dotSize / 2}px;
+    width: ${headingLineLength}px;
+    height: 2px;
+    background-color: ${lineColor};
+    transform-origin: 0% 50%;
+    transform: rotate(${(aircraft.heading || 0) - 90}deg);
+    z-index: 1;
+  `;
+
+  const labelStyle = `
+    position: absolute;
+    top: ${(totalHeight - labelHeight) / 2}px;
+    left: ${dotSize + labelOffsetFromDot}px;
+    width: ${labelWidth}px;
+    padding: 2px 4px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: ${labelTextColor};
+    border: 1px solid ${labelBorderColor};
+    border-radius: 2px;
+    white-space: nowrap;
+    text-align: left;
+    font-family: 'monospace', 'Courier New', monospace;
+    font-size: 10px;
+    line-height: 1.2;
+    box-shadow: 0 0 3px ${labelShadowColor};
+    z-index: 1000;
+    pointer-events: none;
+    ${isEmergency ? 'font-weight: bold;' : ''}
+  `;
+
   const detailContent = `
     <div style="font-weight: bold;">
-      ${aircraft.flightNo || aircraft.callsign || 'N/A'}
+      ${isEmergency ? 'EMRGNCY ' : ''}${aircraft.flightNo || aircraft.callsign || 'N/A'}
     </div>
     <div>
       ${displayAlt} ${aircraft.heading.toFixed(0)}°
@@ -245,49 +320,9 @@ const getRadarAircraftDivIcon = (
         width: ${totalWidth}px;
         height: ${totalHeight}px;
       ">
-        <div style="
-          position: absolute;
-          top: ${(totalHeight - dotSize) / 2}px;
-          left: 0;
-          width: ${dotSize}px;
-          height: ${dotSize}px;
-          background-color: #00ff00;
-          border-radius: 50%;
-          box-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
-          z-index: 2;
-        "></div>
-
-        <div style="
-          position: absolute;
-          top: ${totalHeight / 2 - 1}px;
-          left: ${dotSize / 2}px;
-          width: ${headingLineLength}px;
-          height: 2px;
-          background-color: #00ff00;
-          transform-origin: 0% 50%;
-          transform: rotate(${(aircraft.heading || 0) - 90}deg);
-          z-index: 1;
-        "></div>
-
-        <div class="aircraft-label" style="
-          position: absolute;
-          top: ${(totalHeight - labelHeight) / 2}px;
-          left: ${dotSize + labelOffsetFromDot}px;
-          width: ${labelWidth}px;
-          padding: 2px 4px;
-          background-color: rgba(0, 0, 0, 0.6);
-          color: #00ff00;
-          border: 1px solid #00ff00;
-          border-radius: 2px;
-          white-space: nowrap;
-          text-align: left;
-          font-family: 'monospace', 'Courier New', monospace;
-          font-size: 10px;
-          line-height: 1.2;
-          box-shadow: 0 0 3px rgba(0,255,0,0.5);
-          z-index: 1000;
-          pointer-events: none;
-        ">
+        <div style="${dotStyle}"></div>
+        <div style="${headingLineStyle}"></div>
+        <div class="aircraft-label" style="${labelStyle}">
           ${detailContent}
         </div>
       </div>
@@ -1219,6 +1254,68 @@ const MapComponent: React.FC<MapComponentProps> = ({
           color: white !important;
           border: none !important;
           border-radius: 4px !important;
+          padding: 8px !important;
+          font-size: 12px !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+          pointer-events: none !important;
+        }
+        .heading-tooltip::before {
+          display: none !important;
+        }
+        
+        .leaflet-popup-content-wrapper {
+          background-color: rgba(0, 0, 0, 0.9) !important;
+          color: #00ffff !important;
+          border-radius: 8px !important;
+        }
+        .leaflet-popup-tip {
+          background-color: rgba(0, 0, 0, 0.9) !important;
+        }
+        
+        .radar-popup .leaflet-popup-content-wrapper {
+          background-color: rgba(0, 0, 0, 0.8) !important;
+          color: #00ff00 !important;
+          border: 1px solid #00ff00 !important;
+          box-shadow: 0 0 8px rgba(0, 255, 0, 0.5) !important;
+        }
+        .radar-popup .leaflet-popup-tip {
+          background-color: rgba(0, 0, 0, 0.8) !important;
+          border-top: 1px solid #00ff00 !important;
+          border-left: 1px solid transparent !important;
+          border-right: 1px solid transparent !important;
+        }
+
+        @keyframes emergency-plane-pulse {
+          0% {
+            box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            transform: rotateZ(${aircraft.heading || 0}deg) scale(1);
+          }
+          100% {
+            box-shadow: 0 0 15px #ff0000, 0 0 25px #ff0000, 0 0 30px #ff0000;
+            transform: rotateZ(${aircraft.heading || 0}deg) scale(1.1);
+          }
+        }
+
+        @keyframes radar-emergency-pulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+          }
+          50% {
+            transform: scale(1.3);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.9);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+          }
+        }
+
+        .heading-tooltip {
+          background-color: rgba(0, 0, 0, 0.7) !important;
+          color: white !important;
+          border: none !important;
+          border-radius: 44px !important;
           padding: 8px !important;
           font-size: 12px !important;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
