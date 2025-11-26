@@ -231,7 +231,7 @@
     flightUI.style.cssText = `
       position: fixed;
       top: 50px;
-      left: 10px;
+      right: 10px;
       background: linear-gradient(145deg, #2c3e50, #34495e);
       padding: 20px;
       border-radius: 12px;
