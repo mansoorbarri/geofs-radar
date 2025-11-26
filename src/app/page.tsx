@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import dynamic from 'next/dynamic';
 import { type PositionUpdate } from '~/lib/aircraft-store';
-// import { useViewerTracker } from '~/hooks/use-viewer-counter';
+import { TbPlaneInflight, TbPlaneDeparture,TbPlane, TbPlaneArrival } from 'react-icons/tb';
 
 interface Airport {
   name: string;
@@ -29,6 +29,27 @@ const DynamicMapComponent = dynamic(() => import('~/components/map'), {
   ),
 });
 
+const getFlightPhase = (
+  altAGL: number,
+  vspeed: number,
+  flightPlan: string | undefined
+) => {
+  const isOnGround = altAGL < 100;
+  const isClimbing = vspeed > 200;
+  const isDescending = vspeed < -200;
+
+  if (isOnGround) return 'onGround';
+  if (isClimbing) return 'climbing';
+  if (isDescending) {
+    if (flightPlan && altAGL < 5000) {
+      return 'landing';
+    }
+    return 'descending';
+  }
+  if (altAGL > 5000) return 'cruising';
+  return 'unknown';
+};
+
 const Sidebar = React.memo(
   ({
     aircraft,
@@ -47,6 +68,51 @@ const Sidebar = React.memo(
     const altMSL = aircraft.altMSL ?? aircraft.alt;
     const altAGL = aircraft.alt;
     const isOnGround = altAGL < 100;
+
+    const currentFlightPhase = useMemo(
+      () =>
+        getFlightPhase(
+          altAGL,
+          aircraft.vspeed,
+          aircraft.flightPlan
+        ),
+      [altAGL, aircraft.vspeed, aircraft.flightPlan]
+    );
+
+    const getPhaseIconComponent = (phase: string) => {
+      const iconProps = { size: 24, strokeWidth: 1.5, color: '#fff' }; // Common props for icons
+      switch (phase) {
+        case 'onGround':
+          return <TbPlane {...iconProps} />;
+        case 'climbing':
+          return <TbPlaneDeparture {...iconProps} />;
+        case 'cruising':
+          return <TbPlaneInflight {...iconProps} />;
+        case 'descending':
+          return <TbPlaneArrival {...iconProps} />; // Can reuse for landing/descending
+        case 'landing':
+          return <TbPlaneArrival {...iconProps} />;
+        default:
+          return <TbPlane {...iconProps} />;
+      }
+    };
+
+    const getPhaseText = (phase: string) => {
+      switch (phase) {
+        case 'onGround':
+          return 'Ground';
+        case 'climbing':
+          return 'Climbing';
+        case 'cruising':
+          return 'Cruising';
+        case 'descending':
+          return 'Descending';
+        case 'landing':
+          return 'Landing';
+        default:
+          return 'In Flight';
+      }
+    };
 
     const handleTouchStart = (e: React.TouchEvent) => {
       if (!isMobile || !e.touches[0]) return;
@@ -302,6 +368,7 @@ const Sidebar = React.memo(
             overflowY: isMobile && !isExpanded ? 'hidden' : 'auto',
           }}
         >
+          {/* Flight Number Block (remains at the top) */}
           <div
             style={{
               padding: '14px',
@@ -327,22 +394,27 @@ const Sidebar = React.memo(
             </div>
           </div>
 
+          {/* New container for From - Icon - To */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
             }}
           >
+            {/* From Airport */}
             <div
               style={{
+                flex: 1,
                 padding: '14px',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 borderRadius: '10px',
                 border: '1px solid rgba(16, 185, 129, 0.2)',
+                textAlign: 'center',
               }}
             >
-              <div
+              {/* <div
                 style={{
                   fontSize: '11px',
                   color: 'rgba(255,255,255,0.6)',
@@ -353,20 +425,52 @@ const Sidebar = React.memo(
                 }}
               >
                 From
-              </div>
+              </div> */}
               <div style={{ fontSize: '16px', fontWeight: '600' }}>
                 {aircraft.departure || 'UNK'}
               </div>
             </div>
+
+            {/* Airplane Icon and Status */}
             <div
               style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 5px',
+                flexShrink: 0,
+                width: '60px',
+                color: '#fff', // Ensure the icons are white
+              }}
+            >
+              {getPhaseIconComponent(currentFlightPhase)}
+              <span
+                style={{
+                  fontSize: '9px',
+                  color: 'rgba(255,255,255,0.5)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginTop: '4px',
+                  textAlign: 'center',
+                }}
+              >
+                {getPhaseText(currentFlightPhase)}
+              </span>
+            </div>
+
+            {/* To Airport */}
+            <div
+              style={{
+                flex: 1,
                 padding: '14px',
                 backgroundColor: 'rgba(245, 158, 11, 0.1)',
                 borderRadius: '10px',
                 border: '1px solid rgba(245, 158, 11, 0.2)',
+                textAlign: 'center',
               }}
             >
-              <div
+              {/* <div
                 style={{
                   fontSize: '11px',
                   color: 'rgba(255,255,255,0.6)',
@@ -377,7 +481,7 @@ const Sidebar = React.memo(
                 }}
               >
                 To
-              </div>
+              </div> */}
               <div style={{ fontSize: '16px', fontWeight: '600' }}>
                 {aircraft.arrival || 'UNK'}
               </div>
@@ -570,8 +674,6 @@ export default function ATCPage() {
   const drawFlightPlanOnMapRef = useRef<
     ((aircraft: PositionUpdate, shouldZoom?: boolean) => void) | null
   >(null);
-
-  // useViewerTracker({ enabled: true }); // Commented out this line to disable viewer tracking
 
   useEffect(() => {
     const checkMobile = () => {
@@ -901,7 +1003,6 @@ export default function ATCPage() {
             style={{
               textAlign: 'center',
               paddingTop: '50px',
-              // background: '#333',
               color: '#333',
             }}
           >
