@@ -772,33 +772,33 @@ const MapComponent: React.FC<MapComponentProps> = ({
           }
         }
 
-        if (shouldZoom) {
-          const allBounds: L.LatLng[] = [];
+        // if (shouldZoom) {
+        //   const allBounds: L.LatLng[] = [];
 
-          if (history.length > 0) {
-            history.forEach((pos) =>
-              allBounds.push(L.latLng(pos[0], pos[1]))
-            );
-          }
+        //   if (history.length > 0) {
+        //     history.forEach((pos) =>
+        //       allBounds.push(L.latLng(pos[0], pos[1]))
+        //     );
+        //   }
 
-          if (aircraft.flightPlan) {
-            try {
-              const waypoints = JSON.parse(aircraft.flightPlan);
-              waypoints.forEach((wp: any) => {
-                if (wp.lat && wp.lon) {
-                  allBounds.push(L.latLng(wp.lat, wp.lon));
-                }
-              });
-            } catch (e) {}
-          }
+        //   if (aircraft.flightPlan) {
+        //     try {
+        //       const waypoints = JSON.parse(aircraft.flightPlan);
+        //       waypoints.forEach((wp: any) => {
+        //         if (wp.lat && wp.lon) {
+        //           allBounds.push(L.latLng(wp.lat, wp.lon));
+        //         }
+        //       });
+        //     } catch (e) {}
+        //   }
 
-          if (allBounds.length > 0) {
-            const bounds = L.latLngBounds(allBounds);
-            mapInstance.fitBounds(bounds, { padding: [50, 50] });
-          }
+        //   if (allBounds.length > 0) {
+        //     const bounds = L.latLngBounds(allBounds);
+        //     mapInstance.fitBounds(bounds, { padding: [50, 50] });
+        //   }
 
-          hasZoomedToFlightPlan.current = true;
-        }
+        //   hasZoomedToFlightPlan.current = true;
+        // }
       } catch (error) {
         console.error('Error drawing flight plan:', error);
       }
