@@ -14,7 +14,7 @@
   'use strict';
 
   const API_URL = 'https://geofs-radar.vercel.app/api/atc/position';
-  const SEND_INTERVAL_MS = 5000;
+  const SEND_INTERVAL_MS = 10000;
 
   const UI_CONTAINER_ID = 'geofs-atc-radar-flightInfoUI';
   const DEP_INPUT_ID = 'atc-depInput';
