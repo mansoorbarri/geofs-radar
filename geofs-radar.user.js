@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GeoFS ATC Radar
 // @namespace    http://tampermonkey.net/
-// @version      1.0.4
+// @version      1.0.5
 // @description  An ATC Radar for GeoFS which works like FlightRadar24.
 // @match        http://*/geofs.php*
 // @match        https://*/geofs.php*
@@ -259,7 +259,7 @@
           <input id="${ARR_INPUT_ID}" placeholder="ICAO" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="4">
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <label style="width: 40px; font-weight: 500; color: #bdc3c7;">Flt#:</label>
+          <label style="width: 40px; font-weight: 500; color: #bdc3c7;">Callsign:</label>
           <input id="${FLT_INPUT_ID}" placeholder="ABC123" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="8">
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">

@@ -387,7 +387,7 @@ const Sidebar = React.memo(
                 fontWeight: '600',
               }}
             >
-              Flight Number
+              Callsign
             </div>
             <div style={{ fontSize: '16px', fontWeight: '600' }}>
               {aircraft.flightNo || 'N/A'}
