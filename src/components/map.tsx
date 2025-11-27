@@ -363,9 +363,14 @@ const calculateDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
+  unit: 'km' | 'miles' = 'km'
 ): number => {
-  const R = 6371;
+  const R_km = 6371;
+  const R_miles = 3958.8;
+
+  const R = unit === 'miles' ? R_miles : R_km;
+
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -449,6 +454,7 @@ const findActiveWaypointIndex = (
 
   return closestWaypointIndex;
 };
+
 
 class HeadingModeControl extends L.Control {
   public options = {
@@ -1152,12 +1158,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
         }).addTo(map);
       }
 
-      const distance = calculateDistance(
-        start.lat,
-        start.lng,
-        end.lat,
-        end.lng
-      );
+      // Calculate distance in both km and miles
+      const distanceKm = calculateDistance(start.lat, start.lng, end.lat, end.lng, 'km');
+      const distanceMiles = calculateDistance(start.lat, start.lng, end.lat, end.lng, 'miles');
+
       const heading = calculateBearing(
         start.lat,
         start.lng,
@@ -1170,7 +1174,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           Heading: ${heading.toFixed(1)}°
         </div>
         <div>
-          Distance: ${distance.toFixed(1)} km
+          Distance: ${distanceKm.toFixed(1)} km / ${distanceMiles.toFixed(1)} miles
         </div>
       `;
 
@@ -1187,7 +1191,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           .addTo(map);
       }
     };
-
+    
     const handleMouseUp = () => {
       if (!isHeadingMode) return;
 
