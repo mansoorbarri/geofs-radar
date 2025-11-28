@@ -13,7 +13,7 @@
 (function () {
   'use strict';
 
-  const API_URL = 'https://geofs-radar.vercel.app/api/atc/position';
+  const API_URL = 'https://radar.xyzmani.com/api/atc/position';
   const SEND_INTERVAL_MS = 10000;
 
   const UI_CONTAINER_ID = 'geofs-atc-radar-flightInfoUI';
