@@ -781,8 +781,8 @@ export default function ATCPage() {
         ac.flightNo?.toLowerCase().includes(lowerCaseSearchTerm) ||
         ac.departure?.toLowerCase().includes(lowerCaseSearchTerm) ||
         ac.arrival?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (ac.squawk && ac.squawk.toLowerCase().includes(lowerCaseSearchTerm))
-      ) {
+        (ac.squawk?.toLowerCase().includes(lowerCaseSearchTerm))
+        ) {
         results.push(ac);
       }
     });
