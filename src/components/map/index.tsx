@@ -31,6 +31,7 @@ interface MapComponentProps {
   setDrawFlightPlanOnMap: (
     func: (aircraft: PositionUpdate, shouldZoom?: boolean) => void,
   ) => void;
+  onMapReady?: () => void;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({
