@@ -64,7 +64,7 @@ export function GET(req: NextRequest) {
           clearInterval(heartbeatInterval);
           unsubscribe();
         }
-      }, 30000);
+      }, 3500);
 
       req.signal.addEventListener('abort', () => {
         clearInterval(heartbeatInterval);
