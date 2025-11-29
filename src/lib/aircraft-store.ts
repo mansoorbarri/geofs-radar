@@ -25,11 +25,6 @@ type Subscriber = (aircraft: Map<string, PositionUpdate>) => void;
 class AircraftStore {
   private store = new Map<string, PositionUpdate>();
   private subscribers = new Set<Subscriber>();
-  private cleanupInterval: NodeJS.Timeout | null = null;
-
-  constructor() {
-    this.startCleanup();
-  }
 
   set(id: string, data: PositionUpdate) {
     this.store.set(id, data);
@@ -71,35 +66,6 @@ class AircraftStore {
 
   getAll() {
     return Array.from(this.store.values());
-  }
-
-  private startCleanup() {
-    if (this.cleanupInterval) return;
-
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      const timeout = 10000;
-      let removed = false;
-
-      for (const [id, data] of this.store.entries()) {
-        if (now - data.lastSeen > timeout) {
-          this.store.delete(id);
-          console.log(`[ATC-API] Removed stale aircraft: ${id}`);
-          removed = true;
-        }
-      }
-
-      if (removed) {
-        this.notifySubscribers();
-      }
-    }, 5000);
-  }
-
-  stopCleanup() {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
   }
 }
 

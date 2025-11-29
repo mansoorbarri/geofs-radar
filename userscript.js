@@ -258,21 +258,21 @@
         Flight Info
       </div>
       <div style="display: grid; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
           <label style="width: 40px; font-weight: 500; color: #bdc3c7;">Dep:</label>
-          <input id="${DEP_INPUT_ID}" placeholder="ICAO" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="4">
+          <input id="${DEP_INPUT_ID}" ... >
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
           <label style="width: 40px; font-weight: 500; color: #bdc3c7;">Arr:</label>
-          <input id="${ARR_INPUT_ID}" placeholder="ICAO" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="4">
+          <input id="${ARR_INPUT_ID}" ... >
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
           <label style="width: 40px; font-weight: 500; color: #bdc3c7;">Callsign:</label>
-          <input id="${FLT_INPUT_ID}" placeholder="ABC123" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="8">
+          <input id="${FLT_INPUT_ID}" ... >
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
           <label style="width: 40px; font-weight: 500; color: #bdc3c7;">SQK:</label>
-          <input id="${SQK_INPUT_ID}" placeholder="7000" style="flex: 1; padding: 8px; border: none; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; font-size: 12px; outline: none; transition: background 0.3s;" maxlength="4">
+          <input id="${SQK_INPUT_ID}" ... >
         </div>
       </div>
       <div style="display: flex; gap: 8px; margin-top: 15px;">
@@ -282,6 +282,9 @@
         <button id="${CLEAR_BTN_ID}" style="padding: 10px 12px; background: linear-gradient(145deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(231,76,60,0.3);">
           Clear
         </button>
+      </div>
+      <div id="${STATUS_INDICATOR_ID}" style="margin-top: 10px; text-align: center; font-size: 11px; color: #e74c3c; font-weight: 500;">
+        Flight info required
       </div>
       <div id="${STATUS_INDICATOR_ID}" style="margin-top: 10px; text-align: center; font-size: 11px; color: #e74c3c; font-weight: 500;">
         Flight info required
