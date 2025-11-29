@@ -12,72 +12,75 @@ export const useAircraftStream = () => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
+  const lastMessageTime = useRef<number>(Date.now());
+  const watchdogIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const connectToStream = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
+    if (eventSourceRef.current) eventSourceRef.current.close();
 
     setConnectionStatus("connecting");
 
-    const eventSourceUrl =
+    const url =
       process.env.NODE_ENV === "development"
         ? "https://radar.xyzmani.com/api/atc/stream"
         : "/api/atc/stream";
 
-    const eventSource = new EventSource(eventSourceUrl);
-    eventSourceRef.current = eventSource;
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
 
-    eventSource.onopen = () => {
+    es.onopen = () => {
       setConnectionStatus("connected");
       setError(null);
       reconnectAttempts.current = 0;
     };
 
-    eventSource.onmessage = (event) => {
+    es.onmessage = (event) => {
       try {
+        lastMessageTime.current = Date.now();
         const data = JSON.parse(event.data);
-
-        const processedAircraft: PositionUpdate[] =
-          data.aircraft?.map((ac: any) => ({
-            ...ac,
-            ts: ac.ts || Date.now(),
-          })) || [];
-
-        setAircrafts(processedAircraft);
+        const processed: PositionUpdate[] =
+          data.aircraft?.map((ac: any) => ({ ...ac, ts: ac.ts || Date.now() })) ||
+          [];
+        setAircrafts(processed);
         setIsLoading(false);
         setError(null);
-      } catch (e) {}
+      } catch {}
     };
 
-    eventSource.onerror = () => {
+    es.onerror = () => {
       setConnectionStatus("disconnected");
-      eventSource.close();
-
-      const backoffTime = Math.min(
-        1000 * Math.pow(2, reconnectAttempts.current),
-        30000,
-      );
-      reconnectAttempts.current++;
-
-      setError(`Connection lost. Reconnecting in ${backoffTime / 1000}s...`);
-
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connectToStream();
-      }, backoffTime);
+      es.close();
+      scheduleReconnect();
     };
+
+    startWatchdog();
   }, []);
+
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    const backoff = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+    reconnectAttempts.current++;
+    setError(`Connection lost. Reconnecting in ${backoff / 1000}s...`);
+    reconnectTimeoutRef.current = setTimeout(() => connectToStream(), backoff);
+  }, [connectToStream]);
+
+  const startWatchdog = useCallback(() => {
+    if (watchdogIntervalRef.current) clearInterval(watchdogIntervalRef.current);
+    watchdogIntervalRef.current = setInterval(() => {
+      if (Date.now() - lastMessageTime.current > 30000) {
+        setConnectionStatus("disconnected");
+        if (eventSourceRef.current) eventSourceRef.current.close();
+        scheduleReconnect();
+      }
+    }, 10000);
+  }, [scheduleReconnect, scheduleReconnect]);
 
   useEffect(() => {
     connectToStream();
-
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      if (eventSourceRef.current) eventSourceRef.current.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (watchdogIntervalRef.current) clearInterval(watchdogIntervalRef.current);
     };
   }, [connectToStream]);
 
