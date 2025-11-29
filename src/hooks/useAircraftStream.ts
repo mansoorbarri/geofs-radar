@@ -22,7 +22,7 @@ export const useAircraftStream = () => {
     console.log('Connecting to SSE stream...');
     setConnectionStatus('connecting');
 
-    const eventSource = new EventSource('https://radar.xyzmani.com/api/atc/stream');
+    const eventSource = new EventSource('/api/atc/stream');
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
