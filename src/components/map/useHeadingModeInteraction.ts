@@ -18,6 +18,13 @@ export const useHeadingModeInteraction = ({
   const headingTooltipRef = useRef<L.Tooltip | null>(null);
   const headingMarkerRef = useRef<L.Marker | null>(null);
 
+  const cleanupHeadingModeRef = useRef<(() => void) | undefined>(undefined);
+
+  const handleGlobalMouseUp = useCallback(() => {
+    if (!mapInstance.current || !isHeadingMode) return;
+    cleanupHeadingModeRef.current?.();
+  }, [mapInstance, isHeadingMode]);
+
   const cleanupHeadingMode = useCallback(() => {
     const map = mapInstance.current;
     if (!map) return;
@@ -45,12 +52,11 @@ export const useHeadingModeInteraction = ({
     map.off('mousemove');
     map.off('mousedown');
     document.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [mapInstance]);
+  }, [mapInstance, handleGlobalMouseUp]);
 
-  const handleGlobalMouseUp = useCallback(() => {
-    if (!mapInstance.current || !isHeadingMode) return;
-    cleanupHeadingMode();
-  }, [mapInstance, isHeadingMode, cleanupHeadingMode]);
+  useEffect(() => {
+    cleanupHeadingModeRef.current = cleanupHeadingMode;
+  }, [cleanupHeadingMode]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -150,4 +156,5 @@ export const useHeadingModeInteraction = ({
       map.off('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isHeadingMode, isRadarMode, mapInstance, cleanupHeadingMode, handleGlobalMouseUp])};
+  }, [isHeadingMode, isRadarMode, mapInstance, cleanupHeadingMode, handleGlobalMouseUp]);
+};
