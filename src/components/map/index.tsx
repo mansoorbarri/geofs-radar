@@ -21,7 +21,7 @@ import { MetarPanel } from "./MetarPanel";
 export interface Airport {
   name: string;
   lat: number;
-  lon: string;
+  lon: number;
   icao: string;
   frequencies?: { type: string; frequency: string }[];
 }
@@ -65,15 +65,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
     onAircraftSelectRef.current = onAircraftSelect;
   }, [onAircraftSelect]);
 
-  // Pass a *truly* static empty function to useMapInitialization.
-  // The actual click handler will be attached later in a separate useEffect.
   const mapRefs = useMapInitialization({
     mapContainerId: "map-container",
     setIsHeadingMode,
     setIsRadarMode,
     setIsOpenAIPEnabled,
     setIsWeatherOverlayEnabled,
-    onMapClick: useCallback((e: L.LeafletMouseEvent) => {}, []), // <--- CRITICAL: Stable empty function for initial map setup
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onMapClick: useCallback((e: L.LeafletMouseEvent) => {}, []),
     setHeadingControlRef: headingControlRef,
     setRadarControlRef: radarControlRef,
     setOpenAIPControlRef: openAIPControlRef,
@@ -89,7 +88,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setSelectedAircraftId,
   });
 
-  // The actual map click handler, now completely independent of initial map creation
   const stableOnMapClick = useCallback(
     (e: L.LeafletMouseEvent) => {
       const target = e.originalEvent.target as HTMLElement;
@@ -104,29 +102,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
         mapRefs.historyLayerGroup.current.clearLayers();
         currentSelectedAircraftRef.current = null;
         setSelectedAircraftId(null);
-        onAircraftSelectRef.current(null); // Access via ref
+        onAircraftSelectRef.current(null);
       }
     },
     [setSelectedAircraftId, currentSelectedAircraftRef],
   );
 
-  // This useEffect *attaches* the actual click handler AFTER the map has been created
   useEffect(() => {
     if (mapRefs.mapInstance.current) {
-      // Clean up any previously attached (empty) click handler from initial setup
-      // and attach the truly stable one.
-      // This will only run once after initial map creation.
-      mapRefs.mapInstance.current.off("click"); // Remove any placeholder handler
+      mapRefs.mapInstance.current.off("click");
       mapRefs.mapInstance.current.on("click", stableOnMapClick);
     }
-    // Cleanup for when component unmounts
     return () => {
       if (mapRefs.mapInstance.current) {
         mapRefs.mapInstance.current.off("click", stableOnMapClick);
       }
     };
-  }, [mapRefs.mapInstance, stableOnMapClick]); // mapRefs.mapInstance (the ref) and stableOnMapClick are stable.
-
+  }, [mapRefs.mapInstance, stableOnMapClick]);
 
   useMapLayersAndMarkers({
     mapInstance: mapRefs.mapInstance,
