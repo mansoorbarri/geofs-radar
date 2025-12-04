@@ -4,17 +4,20 @@ import {
   HeadingModeControl,
   RadarModeControl,
   OpenAIPControl,
-} from "./MapControls";
+  WeatherOverlayControl,
+} from "~/components/map/MapControls";
 
 interface UseMapInitializationProps {
   mapContainerId: string;
   setIsHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
   setIsRadarMode: React.Dispatch<React.SetStateAction<boolean>>;
   setIsOpenAIPEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsWeatherOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setHeadingControlRef: React.MutableRefObject<HeadingModeControl | null>;
   setRadarControlRef: React.MutableRefObject<RadarModeControl | null>;
   setOpenAIPControlRef: React.MutableRefObject<OpenAIPControl | null>;
+  setWeatherControlRef: React.MutableRefObject<WeatherOverlayControl | null>;
 }
 
 interface MapRefs {
@@ -26,6 +29,7 @@ interface MapRefs {
   satelliteHybridLayer: React.MutableRefObject<L.TileLayer | null>;
   radarBaseLayer: React.MutableRefObject<L.TileLayer | null>;
   openAIPLayer: React.MutableRefObject<L.TileLayer | null>;
+  weatherOverlayLayer: React.MutableRefObject<L.TileLayer | null>;
 }
 
 export const useMapInitialization = ({
@@ -33,10 +37,12 @@ export const useMapInitialization = ({
   setIsHeadingMode,
   setIsRadarMode,
   setIsOpenAIPEnabled,
+  setIsWeatherOverlayEnabled,
   onMapClick,
   setHeadingControlRef,
   setRadarControlRef,
   setOpenAIPControlRef,
+  setWeatherControlRef,
 }: UseMapInitializationProps): MapRefs => {
   const mapInstance = useRef<L.Map | null>(null);
   const flightPlanLayerGroup = useRef<L.LayerGroup | null>(null);
@@ -47,6 +53,7 @@ export const useMapInitialization = ({
   const satelliteHybridLayer = useRef<L.TileLayer | null>(null);
   const radarBaseLayer = useRef<L.TileLayer | null>(null);
   const openAIPLayer = useRef<L.TileLayer | null>(null);
+  const weatherOverlayLayer = useRef<L.TileLayer | null>(null);
 
   useEffect(() => {
     if (mapInstance.current) return;
@@ -58,9 +65,17 @@ export const useMapInitialization = ({
       minZoom: 3,
       maxZoom: 18,
       maxBounds: worldBounds,
+      attributionControl: false,
     }).setView([20, 0], 3);
 
     mapInstance.current = map;
+
+    L.control
+      .attribution({
+        prefix:
+          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      })
+      .addTo(map);
 
     satelliteHybridLayer.current = L.tileLayer(
       "https://mt0.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
@@ -113,25 +128,23 @@ export const useMapInitialization = ({
     map.addControl(openAIPControl);
     setOpenAIPControlRef.current = openAIPControl;
 
+    const weatherControl = new WeatherOverlayControl(
+      {},
+      setIsWeatherOverlayEnabled,
+    );
+    map.addControl(weatherControl);
+    setWeatherControlRef.current = weatherControl;
+
     map.on("click", onMapClick);
 
     return () => {
       if (mapInstance.current) {
+        mapInstance.current.off("click", onMapClick);
         mapInstance.current.remove();
         mapInstance.current = null;
       }
     };
-  }, [
-    // ADDING ALL THESE DEPENDENCIES MAKES THE MAP RE-RENDER IN A LOOP
-    // mapContainerId,
-    // setIsHeadingMode,
-    // setIsRadarMode,
-    // setIsOpenAIPEnabled,
-    // onMapClick,
-    // setHeadingControlRef,
-    // setRadarControlRef,
-    // setOpenAIPControlRef,
-  ]);
+  }, [mapContainerId, onMapClick]);
 
   return {
     mapInstance,
@@ -142,5 +155,6 @@ export const useMapInitialization = ({
     satelliteHybridLayer,
     radarBaseLayer,
     openAIPLayer,
+    weatherOverlayLayer,
   };
 };

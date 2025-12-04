@@ -1,4 +1,3 @@
-// components/map/MapControls.ts
 import L from "leaflet";
 import React from "react";
 
@@ -185,6 +184,71 @@ export class OpenAIPControl extends L.Control {
     if (this._container) {
       if (enabled) {
         this._container.style.backgroundColor = "#28a745";
+        this._container.style.color = "white";
+      } else {
+        this._container.style.backgroundColor = "white";
+        this._container.style.color = "black";
+      }
+    }
+  }
+}
+
+export class WeatherOverlayControl extends L.Control {
+  public options = {
+    position: "topleft" as L.ControlPosition,
+  };
+  public _container: HTMLDivElement | null = null;
+  private _toggleWeatherOverlay: React.Dispatch<React.SetStateAction<boolean>>;
+  private _boundClickHandler: (event: Event) => void;
+
+  constructor(
+    options: L.ControlOptions,
+    toggleWeatherOverlay: React.Dispatch<React.SetStateAction<boolean>>,
+  ) {
+    super(options);
+    this._toggleWeatherOverlay = toggleWeatherOverlay;
+    this._boundClickHandler = (event: Event) => {
+      this._toggleWeatherOverlay((prev) => !prev);
+    };
+  }
+
+  onAdd(map: L.Map): HTMLDivElement {
+    const container = L.DomUtil.create("div");
+    container.style.cssText = `
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      cursor: pointer;
+      background-color: white;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-radius: 4px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+      transition: all 0.2s ease;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 5px;
+    `;
+    container.title = "Toggle Weather Overlay";
+    container.innerHTML = "&#x26C5;"; // Cloud with rain emoji or a suitable weather icon
+
+    L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
+    L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
+    L.DomEvent.on(container, "click", this._boundClickHandler);
+    this._container = container;
+    return container;
+  }
+
+  onRemove(map: L.Map) {
+    if (this._container) {
+      L.DomEvent.off(this._container, "click", this._boundClickHandler);
+    }
+  }
+
+  updateState(enabled: boolean) {
+    if (this._container) {
+      if (enabled) {
+        this._container.style.backgroundColor = "#6a0dad"; // Purple for weather
         this._container.style.color = "white";
       } else {
         this._container.style.backgroundColor = "white";

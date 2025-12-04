@@ -11,15 +11,17 @@ import {
   HeadingModeControl,
   RadarModeControl,
   OpenAIPControl,
-} from "./MapControls";
+  WeatherOverlayControl,
+} from "~/components/map/MapControls";
 import { MapGlobalStyles } from "~/styles/MapGlobalStyles";
 import { useMetarOverlay } from "~/hooks/useMetarOverlay";
+import { useWeatherOverlayLayer } from "~/hooks/useWeatherOverlayLayer";
 import { MetarPanel } from "./MetarPanel";
 
 export interface Airport {
   name: string;
   lat: number;
-  lon: number;
+  lon: string;
   icao: string;
   frequencies?: { type: string; frequency: string }[];
 }
@@ -46,6 +48,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [isHeadingMode, setIsHeadingMode] = useState(false);
   const [isRadarMode, setIsRadarMode] = useState(false);
   const [isOpenAIPEnabled, setIsOpenAIPEnabled] = useState(false);
+  const [isWeatherOverlayEnabled, setIsWeatherOverlayEnabled] = useState(false);
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(
     null,
   );
@@ -55,28 +58,26 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const headingControlRef = useRef<HeadingModeControl | null>(null);
   const radarControlRef = useRef<RadarModeControl | null>(null);
   const openAIPControlRef = useRef<OpenAIPControl | null>(null);
+  const weatherControlRef = useRef<WeatherOverlayControl | null>(null);
 
+  const onAircraftSelectRef = useRef(onAircraftSelect);
+  useEffect(() => {
+    onAircraftSelectRef.current = onAircraftSelect;
+  }, [onAircraftSelect]);
+
+  // Pass a *truly* static empty function to useMapInitialization.
+  // The actual click handler will be attached later in a separate useEffect.
   const mapRefs = useMapInitialization({
     mapContainerId: "map-container",
     setIsHeadingMode,
     setIsRadarMode,
     setIsOpenAIPEnabled,
-    onMapClick: (e: L.LeafletMouseEvent) => {
-      const target = e.originalEvent.target as HTMLElement;
-      if (
-        !target.closest(".leaflet-marker-icon") &&
-        !target.closest(".leaflet-popup-pane") &&
-        !target.closest(".leaflet-control") &&
-        mapRefs.flightPlanLayerGroup.current &&
-        mapRefs.historyLayerGroup.current
-      ) {
-        mapRefs.flightPlanLayerGroup.current.clearLayers();
-        mapRefs.historyLayerGroup.current.clearLayers();
-      }
-    },
+    setIsWeatherOverlayEnabled,
+    onMapClick: useCallback((e: L.LeafletMouseEvent) => {}, []), // <--- CRITICAL: Stable empty function for initial map setup
     setHeadingControlRef: headingControlRef,
     setRadarControlRef: radarControlRef,
     setOpenAIPControlRef: openAIPControlRef,
+    setWeatherControlRef: weatherControlRef,
   });
 
   const { drawFlightPlan, currentSelectedAircraftRef } = useFlightPlanDrawing({
@@ -84,10 +85,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     flightPlanLayerGroup: mapRefs.flightPlanLayerGroup,
     historyLayerGroup: mapRefs.historyLayerGroup,
     isRadarMode,
-    onAircraftSelect,
+    onAircraftSelect: onAircraftSelectRef.current,
     setSelectedAircraftId,
   });
 
+  // The actual map click handler, now completely independent of initial map creation
   const stableOnMapClick = useCallback(
     (e: L.LeafletMouseEvent) => {
       const target = e.originalEvent.target as HTMLElement;
@@ -102,28 +104,29 @@ const MapComponent: React.FC<MapComponentProps> = ({
         mapRefs.historyLayerGroup.current.clearLayers();
         currentSelectedAircraftRef.current = null;
         setSelectedAircraftId(null);
-        onAircraftSelect(null);
+        onAircraftSelectRef.current(null); // Access via ref
       }
     },
-    [
-      onAircraftSelect,
-      mapRefs,
-      currentSelectedAircraftRef,
-      setSelectedAircraftId,
-    ],
+    [setSelectedAircraftId, currentSelectedAircraftRef],
   );
 
+  // This useEffect *attaches* the actual click handler AFTER the map has been created
   useEffect(() => {
     if (mapRefs.mapInstance.current) {
-      mapRefs.mapInstance.current.off("click");
+      // Clean up any previously attached (empty) click handler from initial setup
+      // and attach the truly stable one.
+      // This will only run once after initial map creation.
+      mapRefs.mapInstance.current.off("click"); // Remove any placeholder handler
       mapRefs.mapInstance.current.on("click", stableOnMapClick);
     }
+    // Cleanup for when component unmounts
     return () => {
       if (mapRefs.mapInstance.current) {
         mapRefs.mapInstance.current.off("click", stableOnMapClick);
       }
     };
-  }, [mapRefs.mapInstance, stableOnMapClick]);
+  }, [mapRefs.mapInstance, stableOnMapClick]); // mapRefs.mapInstance (the ref) and stableOnMapClick are stable.
+
 
   useMapLayersAndMarkers({
     mapInstance: mapRefs.mapInstance,
@@ -139,7 +142,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     selectedAircraftId,
     currentSelectedAircraftRef,
     drawFlightPlan,
-    onAircraftSelect,
+    onAircraftSelect: onAircraftSelectRef.current,
   });
 
   useSelectedAirportHandling({
@@ -154,6 +157,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     isRadarMode,
   });
 
+  useWeatherOverlayLayer({
+    mapInstance: mapRefs.mapInstance,
+    isWeatherOverlayEnabled,
+  });
+
   useEffect(() => {
     if (headingControlRef.current)
       headingControlRef.current.updateState(isHeadingMode);
@@ -161,14 +169,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
       radarControlRef.current.updateState(isRadarMode);
     if (openAIPControlRef.current)
       openAIPControlRef.current.updateState(isOpenAIPEnabled);
-  }, [isHeadingMode, isRadarMode, isOpenAIPEnabled]);
+    if (weatherControlRef.current)
+      weatherControlRef.current.updateState(isWeatherOverlayEnabled);
+  }, [isHeadingMode, isRadarMode, isOpenAIPEnabled, isWeatherOverlayEnabled]);
 
   useEffect(() => {
     setDrawFlightPlanOnMap(drawFlightPlan);
   }, [drawFlightPlan, setDrawFlightPlanOnMap]);
 
-  // Use your actual hook
-  const metar = useMetarOverlay(mapRefs.mapInstance, icaoInput || selectedAirport?.icao);
+  const metar = useMetarOverlay(
+    mapRefs.mapInstance,
+    icaoInput || selectedAirport?.icao,
+  );
 
   return (
     <>
