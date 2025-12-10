@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import dynamic from "next/dynamic";
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
@@ -13,6 +19,20 @@ import { Sidebar } from "~/components/atc/sidebar";
 import Loading from "~/components/loading";
 import { useUtcTime } from "~/hooks/useUtcTime";
 import { useTimer } from "~/hooks/useTimer";
+import {
+  ENABLE_EASTER_EGGS,
+  maybeAddSecretAircraft,
+  maybeSpawnUFO,
+  maybeAddTopGunAircraft,
+  detectSupersonicAircraft,
+  injectRainbowRadar,
+  useKonamiCode,
+  showNewYearMessage,
+  handleClockDoubleClick,
+  enableNightOps,
+  rotateMapOnSecretCallsign,
+  enableKeyboardEasterEggs,
+} from "~/lib/easter-eggs";
 
 interface Airport {
   name: string;
@@ -45,9 +65,7 @@ export default function ATCPage() {
   );
   const time = useUtcTime();
   const { formattedTime, isRunning, start, stop, reset } = useTimer();
-
   const [showTimerPopup, setShowTimerPopup] = useState(false);
-
   const drawFlightPlanOnMapRef = useRef<
     ((aircraft: PositionUpdate, shouldZoom?: boolean) => void) | null
   >(null);
@@ -57,7 +75,6 @@ export default function ATCPage() {
     },
     [],
   );
-
   const handleAircraftSelect = useCallback(
     (aircraft: PositionUpdate | null) => {
       setSelectedAircraft(aircraft);
@@ -66,11 +83,9 @@ export default function ATCPage() {
     },
     [],
   );
-
   const handleWaypointClick = useCallback((_waypoint: any, index: number) => {
     setSelectedWaypointIndex(index);
   }, []);
-
   const handleSearchBarAircraftSelect = useCallback(
     (aircraft: PositionUpdate) => {
       setSelectedAircraft(aircraft);
@@ -80,7 +95,6 @@ export default function ATCPage() {
     },
     [setSearchTerm],
   );
-
   const handleSearchBarAirportSelect = useCallback(
     (airport: Airport) => {
       setSelectedAirport(airport);
@@ -90,7 +104,6 @@ export default function ATCPage() {
     },
     [setSearchTerm],
   );
-
   useEffect(() => {
     if (selectedAircraft && aircrafts.length > 0) {
       const updatedAircraft = aircrafts.find(
@@ -106,16 +119,31 @@ export default function ATCPage() {
       }
     }
   }, [aircrafts, selectedAircraft]);
-
   const selectedAirportFromSearch = searchResults.find(
     (r) =>
       !("callsign" in r) &&
       searchTerm &&
       r.icao.toLowerCase() === searchTerm.toLowerCase(),
   ) as Airport | undefined;
-
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-
+  useEffect(() => {
+    if (!ENABLE_EASTER_EGGS) return;
+    useKonamiCode(() => {
+      injectRainbowRadar();
+      enableNightOps();
+    });
+    enableKeyboardEasterEggs();
+    showNewYearMessage();
+  }, []);
+  const augmentedAircrafts = useMemo(() => {
+    let updated = [...aircrafts];
+    updated = maybeAddSecretAircraft(updated);
+    updated = maybeSpawnUFO(updated);
+    updated = maybeAddTopGunAircraft(updated);
+    detectSupersonicAircraft(updated);
+    rotateMapOnSecretCallsign(updated);
+    return updated;
+  }, [aircrafts]);
   return (
     <div
       style={{
@@ -146,7 +174,6 @@ export default function ATCPage() {
           />
         </div>
       )}
-
       <div
         style={{
           position: "absolute",
@@ -155,9 +182,11 @@ export default function ATCPage() {
           zIndex: 10000,
         }}
       >
-        <ConnectionStatusIndicator status={connectionStatus} isMobile={isMobile} />
+        <ConnectionStatusIndicator
+          status={connectionStatus}
+          isMobile={isMobile}
+        />
       </div>
-
       <div
         style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }}
       >
@@ -165,7 +194,7 @@ export default function ATCPage() {
           <Loading />
         ) : (
           <DynamicMapComponent
-            aircrafts={aircrafts}
+            aircrafts={augmentedAircrafts}
             airports={airports}
             onAircraftSelect={handleAircraftSelect}
             selectedWaypointIndex={selectedWaypointIndex}
@@ -175,8 +204,6 @@ export default function ATCPage() {
           />
         )}
       </div>
-
-      {/* UTC TIME + POPUP TIMER */}
       <div
         style={{
           position: "absolute",
@@ -190,10 +217,10 @@ export default function ATCPage() {
           fontSize: "15px",
         }}
         onClick={() => setShowTimerPopup((p) => !p)}
+        onDoubleClick={handleClockDoubleClick}
       >
         {time} UTC
       </div>
-
       {showTimerPopup && (
         <div
           style={{
@@ -264,7 +291,6 @@ export default function ATCPage() {
           </div>
         </div>
       )}
-
       {selectedAircraft && (
         <div
           style={{
