@@ -46,7 +46,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {searchTerm && searchResults.length > 0 && (
         <div
-          className={`max-h-[300px] overflow-y-auto rounded-md border border-cyan-400/20 bg-black/90 shadow-[0_0_10px_rgba(0,255,255,0.15)] ${widthClass}`}
+          className={`max-h-[300px] overflow-y-auto ml-5 rounded-md border border-cyan-400/20 bg-black/90 shadow-[0_0_10px_rgba(0,255,255,0.15)] ${widthClass}`}
         >
           {searchResults.map((result, index) => (
             <div
