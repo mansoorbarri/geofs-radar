@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const API_URL = "https://radar.xyzmani.com/api/atc/position";
+  const API_URL = "https://radar-sse-production.up.railway.app/";
   const WS_URL = "wss://geofs-flightradar.duckdns.org/ws";
   const SEND_INTERVAL_MS = 5000;
 
