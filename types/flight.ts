@@ -85,5 +85,5 @@ export function getSizeCategoryFor(type: string): FlightSizeCategory {
 export function airlineCodeFromFlightNo(flightNo?: string): string | undefined {
   if (!flightNo) return undefined;
   const m = flightNo.match(/^([A-Z]{2,3})\d+/i);
-  return m ? m[1].toUpperCase() : undefined;
+  return m?.[1] ? m[1].toUpperCase() : undefined;
 }
