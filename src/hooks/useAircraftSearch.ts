@@ -1,7 +1,7 @@
 // hooks/useAircraftSearch.ts
 import { useState, useEffect, useCallback } from "react";
 import { type PositionUpdate } from "~/lib/aircraft-store";
-import { airlineCodeFromFlightNo, getSizeCategoryFor } from "~/types/flight";
+import { airlineCodeFromFlightNo, getSizeCategoryFor } from "../../types/flight";
 
 interface Airport {
   name: string;

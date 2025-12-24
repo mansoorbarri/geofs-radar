@@ -22,7 +22,7 @@ export interface PositionUpdate {
 
 type Subscriber = (aircraft: Map<string, PositionUpdate>) => void;
 
-import { airlineCodeFromFlightNo, getSizeCategoryFor, type FlightSizeCategory, type Incident } from "~/types/flight";
+import { airlineCodeFromFlightNo, getSizeCategoryFor, type FlightSizeCategory, type Incident } from "../../types/flight";
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
 const EMERGENCY_SQUAWKS = new Set(["7700", "7600", "7500"]);

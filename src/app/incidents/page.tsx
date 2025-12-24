@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { activeAircraft } from "~/lib/aircraft-store";
 import { useAircraftStream } from "~/hooks/useAircraftStream";
-import { type Incident } from "~/types/flight";
+import { type Incident } from "../../../types/flight";
 
 function LiveBadge({ ts }: { ts: number }) {
   const ageSec = Math.floor((Date.now() - ts) / 1000);

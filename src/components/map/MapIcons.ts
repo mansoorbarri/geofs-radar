@@ -1,7 +1,7 @@
 // components/map/MapIcons.ts
 import L from "leaflet";
 import { type PositionUpdate } from "~/lib/aircraft-store";
-import { getSizeCategoryFor, airlineCodeFromFlightNo } from "~/types/flight";
+import { getSizeCategoryFor, airlineCodeFromFlightNo } from "../../../types/flight";
 
 const EMERGENCY_SQUAWKS = new Set(["7700", "7600", "7500"]);
 

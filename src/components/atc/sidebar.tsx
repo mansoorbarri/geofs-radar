@@ -8,7 +8,7 @@ import {
   TbPlaneArrival,
 } from "react-icons/tb";
 import { type PositionUpdate, activeAircraft } from "~/lib/aircraft-store";
-import { airlineCodeFromFlightNo } from "~/types/flight";
+import { airlineCodeFromFlightNo } from "../../../types/flight";
 
 const getFlightPhase = (altAGL: number, vspeed: number, flightPlan?: string) => {
   const isOnGround = altAGL < 100;
