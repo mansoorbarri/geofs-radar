@@ -1,0 +1,2 @@
+Sample default yellow plane image.
+Place a 512x512+ yellow plane icon or SVG here as a fallback for map markers.

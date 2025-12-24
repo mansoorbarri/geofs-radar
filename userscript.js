@@ -31,6 +31,49 @@
 
   window.addEventListener("atc-data-sync", (e) => { info = e.detail; broadcastStatus(); });
 
+  // Simple in-page UI to set flight details and airline code
+  function initOverlay() {
+    const saved = JSON.parse(localStorage.getItem("geofsRadarInfo") || "{}");
+    info = { ...info, ...saved };
+    const container = document.createElement("div");
+    container.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:999999;background:rgba(0,0,0,0.7);border:1px solid #0ff;padding:8px;border-radius:6px;color:#0ff;font:12px monospace";
+    container.innerHTML = `
+      <div style="margin-bottom:6px;font-weight:bold">GeoFS Radar Flight</div>
+      <div style="display:grid;grid-template-columns:60px 140px;gap:6px;align-items:center">
+        <label>Airline</label><input id="gr-airline" placeholder="AA" value="${saved.airline || ""}" />
+        <label>Flight #</label><input id="gr-flight" placeholder="123" value="${saved.flightNum || ""}" />
+        <label>DEP</label><input id="gr-dep" placeholder="KJFK" value="${saved.dep || ""}" />
+        <label>ARR</label><input id="gr-arr" placeholder="KLAX" value="${saved.arr || ""}" />
+        <label>Squawk</label><input id="gr-sqk" placeholder="7000" value="${saved.sqk || ""}" />
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button id="gr-save" style="background:#0ff;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer">Save</button>
+        <button id="gr-toggle" style="background:#0ff;color:#000;border:none;padding:4px 8px;border-radius:4px;cursor:pointer">${saved.active ? "Disable" : "Enable"}</button>
+      </div>
+    `;
+    document.body.appendChild(container);
+    container.querySelector("#gr-save").addEventListener("click", () => {
+      const airline = container.querySelector("#gr-airline").value.toUpperCase().trim();
+      const flightNum = container.querySelector("#gr-flight").value.trim();
+      const dep = container.querySelector("#gr-dep").value.toUpperCase().trim();
+      const arr = container.querySelector("#gr-arr").value.toUpperCase().trim();
+      const sqk = container.querySelector("#gr-sqk").value.trim();
+      info.dep = dep; info.arr = arr; info.sqk = sqk;
+      info.flt = airline && flightNum ? `${airline}${flightNum}` : (airline || flightNum || "");
+      const saveObj = { airline, flightNum, dep, arr, sqk, active: info.active };
+      localStorage.setItem("geofsRadarInfo", JSON.stringify(saveObj));
+      window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: info }));
+    });
+    container.querySelector("#gr-toggle").addEventListener("click", () => {
+      info.active = !info.active;
+      container.querySelector("#gr-toggle").textContent = info.active ? "Disable" : "Enable";
+      const savedObj = JSON.parse(localStorage.getItem("geofsRadarInfo") || "{}");
+      savedObj.active = info.active;
+      localStorage.setItem("geofsRadarInfo", JSON.stringify(savedObj));
+      broadcastStatus();
+    });
+  }
+
   function calculateAGL() {
     try {
       const altitudeMSL = geofs?.animation?.values?.altitude;
@@ -82,4 +125,5 @@
   }, SEND_INTERVAL_MS);
 
   connectWS();
+  try { initOverlay(); } catch (e) {}
 })();

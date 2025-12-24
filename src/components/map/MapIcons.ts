@@ -1,6 +1,7 @@
 // components/map/MapIcons.ts
 import L from "leaflet";
 import { type PositionUpdate } from "~/lib/aircraft-store";
+import { getSizeCategoryFor, airlineCodeFromFlightNo } from "../../../types/flight";
 
 const EMERGENCY_SQUAWKS = new Set(["7700", "7600", "7500"]);
 
@@ -86,8 +87,19 @@ export const getAircraftDivIcon = (
   aircraft: PositionUpdate & { altMSL?: number },
   selectedAircraftId: string | null,
 ) => {
-  const iconUrl = "https://i.ibb.co/6cNhyMMj/1.png";
-  const planeSize = 30;
+  const size = getSizeCategoryFor(aircraft.type || "");
+  const planeSize =
+    size === "ga"
+      ? 16
+      : size === "light"
+      ? 18
+      : size === "regional"
+      ? 20
+      : size === "narrow"
+      ? 24
+      : size === "wide"
+      ? 28
+      : 18; // helicopter
   const tagHeight = 45;
   const tagWidth = 150;
   const tagOffsetFromPlane = 15;
@@ -114,6 +126,20 @@ export const getAircraftDivIcon = (
     (aircraft.id === selectedAircraftId ||
       aircraft.callsign === selectedAircraftId);
 
+  const baseColor = isEmergency
+    ? "#ff0000"
+    : size === "wide"
+    ? "#ffd700"
+    : size === "narrow"
+    ? "#00aaff"
+    : size === "regional"
+    ? "#7dd3fc"
+    : size === "light"
+    ? "#a3e635"
+    : size === "ga"
+    ? "#34d399"
+    : "#f97316"; // helicopter
+
   const planeStyle = `
     position: absolute;
     top: ${(totalHeight - planeSize) / 2}px;
@@ -124,17 +150,6 @@ export const getAircraftDivIcon = (
     transform-origin: 50% 50%;
     display: block;
     z-index: 2;
-    ${
-      isEmergency
-        ? `
-        filter: hue-rotate(200deg) brightness(1.5) saturate(2);
-        animation: emergency-plane-pulse 1s infinite alternate;
-        border: 2px solid #ff0000;
-        box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
-        border-radius: 50%;
-      `
-        : ""
-    }
   `;
 
   const tagStyle = `
@@ -156,6 +171,7 @@ export const getAircraftDivIcon = (
     ${selectedAircraftId && !isCurrentAircraftSelected ? "visibility: hidden;" : ""}
   `;
 
+  const airlineCode = airlineCodeFromFlightNo(aircraft.flightNo);
   const detailContent = `
     <div style="font-size: 12px; font-weight: bold; color: #fff;">
       ${isEmergency ? "&#x26A0; EMERGENCY &#x26A0;<br/>" : ""}
@@ -173,15 +189,24 @@ export const getAircraftDivIcon = (
         aircraft.arrival || "UNK"
       }
     </div>
+    ${
+      airlineCode
+        ? `<div style="margin-top:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+             <img src="/logos/${airlineCode}.png" alt="${airlineCode}"
+                  style="width:16px;height:16px;border-radius:2px;object-fit:contain;"
+                  onerror="this.style.display='none'" />
+             <span style="font-size:10px;opacity:0.8;">${airlineCode}</span>
+           </div>`
+        : ""
+    }
   `;
 
   return L.divIcon({
     html: `
       <div style="position: relative; width: ${totalWidth}px; height: ${totalHeight}px;">
-        <img src="${iconUrl}"
+        <img src="/plane-images/default-yellow.png" alt="plane"
              style="${planeStyle}"
-             alt="${aircraft.callsign}"
-        />
+             onerror="this.style.display='none'" />
         <div class="aircraft-tag" style="${tagStyle}">
           ${detailContent}
         </div>

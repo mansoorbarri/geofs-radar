@@ -207,3 +207,75 @@ export class WeatherOverlayControl extends L.Control {
     if (this._container) setActiveStyle(this._container, enabled);
   }
 }
+
+export class DayNightControl extends L.Control {
+  public options = { position: "topleft" as L.ControlPosition };
+  public _container: HTMLDivElement | null = null;
+  private _toggle: React.Dispatch<React.SetStateAction<boolean>>;
+  private _boundClick: () => void;
+
+  constructor(
+    options: L.ControlOptions,
+    toggle: React.Dispatch<React.SetStateAction<boolean>>,
+  ) {
+    super(options);
+    this._toggle = toggle;
+    this._boundClick = () => this._toggle((prev) => !prev);
+  }
+
+  onAdd(): HTMLDivElement {
+    const container = L.DomUtil.create("div");
+    applyMetarStyleButton(container, "Toggle Day/Night", "\u{1F314}"); // 🌔
+    container.classList.add("mt-1");
+    L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
+    L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
+    L.DomEvent.on(container, "click", this._boundClick);
+    this._container = container;
+    return container;
+  }
+
+  onRemove() {
+    if (this._container)
+      L.DomEvent.off(this._container, "click", this._boundClick);
+  }
+
+  updateState(enabled: boolean) {
+    if (this._container) setActiveStyle(this._container, enabled);
+  }
+}
+
+export class HazardsOverlayControl extends L.Control {
+  public options = { position: "topleft" as L.ControlPosition };
+  public _container: HTMLDivElement | null = null;
+  private _toggle: React.Dispatch<React.SetStateAction<boolean>>;
+  private _boundClick: () => void;
+
+  constructor(
+    options: L.ControlOptions,
+    toggle: React.Dispatch<React.SetStateAction<boolean>>,
+  ) {
+    super(options);
+    this._toggle = toggle;
+    this._boundClick = () => this._toggle((prev) => !prev);
+  }
+
+  onAdd(): HTMLDivElement {
+    const container = L.DomUtil.create("div");
+    applyMetarStyleButton(container, "Toggle Hazards", "\u26A0\uFE0F"); // ⚠️
+    container.classList.add("mt-1");
+    L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
+    L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
+    L.DomEvent.on(container, "click", this._boundClick);
+    this._container = container;
+    return container;
+  }
+
+  onRemove() {
+    if (this._container)
+      L.DomEvent.off(this._container, "click", this._boundClick);
+  }
+
+  updateState(enabled: boolean) {
+    if (this._container) setActiveStyle(this._container, enabled);
+  }
+}

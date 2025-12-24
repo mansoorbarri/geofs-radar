@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { type PositionUpdate } from "~/lib/aircraft-store";
+import { activeAircraft, type PositionUpdate } from "~/lib/aircraft-store";
 
 export const useAircraftStream = () => {
   const [aircrafts, setAircrafts] = useState<PositionUpdate[]>([]);
@@ -39,6 +39,11 @@ export const useAircraftStream = () => {
           data.aircraft?.map((ac: any) => ({ ...ac, ts: ac.ts || Date.now() })) ||
           [];
         setAircrafts(processed);
+        // Update central store for history/incidents/indexing
+        processed.forEach((ac) => {
+          const id = ac.id || ac.callsign;
+          if (id) activeAircraft.set(id, ac);
+        });
         setIsLoading(false);
         setError(null);
       } catch {}

@@ -5,6 +5,8 @@ import {
   RadarModeControl,
   OpenAIPControl,
   WeatherOverlayControl,
+  DayNightControl,
+  HazardsOverlayControl,
   OSMControl,
 } from "~/components/map/MapControls";
 
@@ -15,12 +17,16 @@ interface UseMapInitializationProps {
   setIsOSMMode?: React.Dispatch<React.SetStateAction<boolean>>;
   setIsOpenAIPEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   setIsWeatherOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsDayNightOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsHazardsOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setHeadingControlRef: React.MutableRefObject<HeadingModeControl | null>;
   setRadarControlRef: React.MutableRefObject<RadarModeControl | null>;
   setOSMControlRef?: React.MutableRefObject<OSMControl | null>;
   setOpenAIPControlRef: React.MutableRefObject<OpenAIPControl | null>;
   setWeatherControlRef: React.MutableRefObject<WeatherOverlayControl | null>;
+  setDayNightControlRef?: React.MutableRefObject<DayNightControl | null>;
+  setHazardsControlRef?: React.MutableRefObject<HazardsOverlayControl | null>;
 }
 
 interface MapRefs {
@@ -43,12 +49,16 @@ export const useMapInitialization = ({
   setIsOSMMode,
   setIsOpenAIPEnabled,
   setIsWeatherOverlayEnabled,
+  setIsDayNightOverlayEnabled,
+  setIsHazardsOverlayEnabled,
   onMapClick,
   setHeadingControlRef,
   setRadarControlRef,
   setOSMControlRef,
   setOpenAIPControlRef,
   setWeatherControlRef,
+  setDayNightControlRef,
+  setHazardsControlRef,
 }: UseMapInitializationProps): MapRefs => {
   const mapInstance = useRef<L.Map | null>(null);
   const flightPlanLayerGroup = useRef<L.LayerGroup | null>(null);
@@ -160,6 +170,14 @@ export const useMapInitialization = ({
     );
     map.addControl(weatherControl);
     setWeatherControlRef.current = weatherControl;
+
+    const dayNightControl = new DayNightControl({}, setIsDayNightOverlayEnabled);
+    map.addControl(dayNightControl);
+    if (setDayNightControlRef) setDayNightControlRef.current = dayNightControl;
+
+    const hazardsControl = new HazardsOverlayControl({}, setIsHazardsOverlayEnabled);
+    map.addControl(hazardsControl);
+    if (setHazardsControlRef) setHazardsControlRef.current = hazardsControl;
 
     map.on("click", onMapClick);
 

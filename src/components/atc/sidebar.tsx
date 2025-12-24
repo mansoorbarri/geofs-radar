@@ -7,7 +7,8 @@ import {
   TbPlane,
   TbPlaneArrival,
 } from "react-icons/tb";
-import { type PositionUpdate } from "~/lib/aircraft-store";
+import { type PositionUpdate, activeAircraft } from "~/lib/aircraft-store";
+import { airlineCodeFromFlightNo } from "../../../types/flight";
 
 const getFlightPhase = (altAGL: number, vspeed: number, flightPlan?: string) => {
   const isOnGround = altAGL < 100;
@@ -35,6 +36,7 @@ export const Sidebar = React.memo(
     const [dragStart, setDragStart] = useState<number | null>(null);
     const [dragOffset, setDragOffset] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [recentFlights, setRecentFlights] = useState<PositionUpdate[]>([]);
 
     const altMSL = aircraft.altMSL ?? aircraft.alt;
     const altAGL = aircraft.alt;
@@ -142,6 +144,17 @@ export const Sidebar = React.memo(
     const baseStyle =
       "backdrop-blur-lg text-white flex flex-col z-50 transition-all overflow-hidden";
 
+    React.useEffect(() => {
+      const update = () => setRecentFlights(activeAircraft.getRecentFlights());
+      update();
+      const unsub = activeAircraft.subscribe(update);
+      const t = setInterval(update, 60000);
+      return () => {
+        unsub();
+        clearInterval(t);
+      };
+    }, []);
+
     return (
       <div
         ref={containerRef}
@@ -174,6 +187,16 @@ export const Sidebar = React.memo(
             {aircraft.type || "Unknown Type"}
           </div>
         </div>
+
+        {/* --- Plane Image --- */}
+        {(() => {
+          const code = airlineCodeFromFlightNo(aircraft.flightNo);
+          const typeNorm = (aircraft.type || "").replace(/\s+/g, "").toUpperCase();
+          const src = code ? `/plane-images/${code}-${typeNorm}.png` : `/plane-images/${typeNorm}.png`;
+          return (
+            <PlaneImage src={src} />
+          );
+        })()}
 
         {/* --- Flight Info Section --- */}
         <div
@@ -241,6 +264,29 @@ export const Sidebar = React.memo(
           {(isExpanded || !isMobile) && (
             <div className="flex-1 mt-2">{renderFlightPlan()}</div>
           )}
+
+          {/* --- Recent Flights (<=3h) --- */}
+          {(isExpanded || !isMobile) && (
+            <div className="mt-2 p-2 rounded-lg border border-white/10 bg-white/5">
+              <div className="text-xs font-semibold text-white/80 mb-2">Recent Flights (&lt;=3h)</div>
+              <div className="max-h-[160px] overflow-y-auto space-y-1">
+                {recentFlights.slice(0, 50).map((f, i) => (
+                  <div
+                    key={(f.id || f.callsign) + i}
+                    className="w-full text-left px-2 py-1 rounded-md bg-black/30 hover:bg-black/45 border border-white/10 transition"
+                  >
+                    <div className="flex justify-between text-[12px]">
+                      <span className="font-semibold">{f.callsign || f.flightNo || "N/A"}</span>
+                      <span className="opacity-70">{f.departure || "UNK"} → {f.arrival || "UNK"}</span>
+                    </div>
+                  </div>
+                ))}
+                {recentFlights.length === 0 && (
+                  <div className="text-[12px] opacity-70">No recent flights.</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -248,6 +294,26 @@ export const Sidebar = React.memo(
 );
 
 Sidebar.displayName = "Sidebar";
+
+const PlaneImage = ({ src }: { src: string }) => {
+  const [error, setError] = React.useState(false);
+  return (
+    <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+      {!error ? (
+        <img
+          src={src}
+          alt="aircraft"
+          className="w-full h-[140px] object-cover rounded-md"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <div className="w-full h-[140px] flex items-center justify-center text-white/60 text-sm rounded-md border border-white/10">
+          No picture available
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Helper subcomponent
 const Detail = ({ label, value }: { label: string; value: string }) => (
