@@ -16,7 +16,9 @@
   const UI_CONTAINER_ID = "geofs-atc-radar-flightInfoUI";
   const DEP_INPUT_ID = "atc-depInput";
   const ARR_INPUT_ID = "atc-arrInput";
-  const FLT_INPUT_ID = "atc-fltInput";
+  const AIRLINE_INPUT_ID = "atc-airlineInput";
+  const FLIGHTNUM_INPUT_ID = "atc-flightNumInput";
+  const CALLSIGN_INPUT_ID = "atc-callsignInput";
   const SQK_INPUT_ID = "atc-sqkInput";
   const SAVE_BTN_ID = "atc-saveBtn";
   const CLEAR_BTN_ID = "atc-clearBtn";
@@ -43,6 +45,7 @@
   }
 
   function injectFlightUI() {
+    const saved = JSON.parse(localStorage.getItem("geofsRadarInfo") || "{}");
     flightUI = document.createElement("div");
     flightUI.id = UI_CONTAINER_ID;
     flightUI.style.cssText = `position:fixed; top:60px; right:15px; background:rgba(35, 42, 49, 0.75); backdrop-filter:blur(14px) saturate(180%); border-radius:14px; color:#f1f2f6; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; padding:16px; width:230px; border:1px solid rgba(255,255,255,0.15); box-shadow:0 8px 28px rgba(0,0,0,0.35); transition:transform 0.2s ease; z-index:999999;`;
@@ -52,7 +55,9 @@
       <div style="display: grid; gap: 8px;">
         ${buildInputRow("Departure", DEP_INPUT_ID, "ICAO")}
         ${buildInputRow("Arrival", ARR_INPUT_ID, "ICAO")}
-        ${buildInputRow("Callsign", FLT_INPUT_ID, "ABC123")}
+        ${buildInputRow("Airline", AIRLINE_INPUT_ID, "AA / QTR", (saved.airline||"") )}
+        ${buildInputRow("Flight #", FLIGHTNUM_INPUT_ID, "123", (saved.flightNum||"") )}
+        ${buildInputRow("Callsign", CALLSIGN_INPUT_ID, "ABC123", (saved.callsign||"") )}
         ${buildInputRow("Squawk", SQK_INPUT_ID, "7000")}
       </div>
       <div style="display:flex; gap:8px; margin-top:14px;">
@@ -63,13 +68,13 @@
       <div style="margin-top:6px; text-align:center; font-size:10px; color:#95a5a6;">Press 'W' to hide/show this panel</div>
     `;
 
-    function buildInputRow(labelTxt, id, placeholder) {
-      return `<div style="display:flex; align-items:center; gap:6px;"><label style="width:70px; font-weight:500; color:#dfe6e9;">${labelTxt}:</label><input id="${id}" placeholder="${placeholder}" autocomplete="off" style="flex:1; padding:6px 7px; border:none; border-radius:6px; background:rgba(255,255,255,0.15); color:#fff; font-size:11.5px; outline:none; min-width:0;" maxlength="8"></div>`;
+    function buildInputRow(labelTxt, id, placeholder, value = "") {
+      return `<div style="display:flex; align-items:center; gap:6px;"><label style="width:70px; font-weight:500; color:#dfe6e9;">${labelTxt}:</label><input id="${id}" placeholder="${placeholder}" value="${value}" autocomplete="off" style="flex:1; padding:6px 7px; border:none; border-radius:6px; background:rgba(255,255,255,0.15); color:#fff; font-size:11.5px; outline:none; min-width:0;" maxlength="8"></div>`;
     }
 
     document.body.appendChild(flightUI);
 
-    [DEP_INPUT_ID, ARR_INPUT_ID, FLT_INPUT_ID, SQK_INPUT_ID].forEach((id) => {
+    [DEP_INPUT_ID, ARR_INPUT_ID, AIRLINE_INPUT_ID, FLIGHTNUM_INPUT_ID, CALLSIGN_INPUT_ID, SQK_INPUT_ID].forEach((id) => {
       const el = document.getElementById(id);
       el.addEventListener("input", () => { el.value = el.value.toUpperCase(); });
     });
@@ -77,20 +82,26 @@
     document.getElementById(SAVE_BTN_ID).onclick = () => {
       const dep = document.getElementById(DEP_INPUT_ID).value.trim();
       const arr = document.getElementById(ARR_INPUT_ID).value.trim();
-      const flt = document.getElementById(FLT_INPUT_ID).value.trim();
+      const airline = document.getElementById(AIRLINE_INPUT_ID).value.trim();
+      const flightNum = document.getElementById(FLIGHTNUM_INPUT_ID).value.trim();
+      const callsign = document.getElementById(CALLSIGN_INPUT_ID).value.trim();
       const sqk = document.getElementById(SQK_INPUT_ID).value.trim();
 
-      if (!dep || !arr || !flt) { showToast("Please fill in Departure, Arrival, and Callsign", true); return; }
+      if (!dep || !arr || (!airline && !callsign)) { showToast("Please fill Airline+Flight or Callsign, plus DEP/ARR", true); return; }
       if (sqk && !validateSquawk(sqk)) { showToast("Invalid squawk (digits 0–7 only)", true); return; }
 
       isFlightInfoSaved = true;
-      window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: { dep, arr, flt, sqk, active: true } }));
+      const flt = airline && flightNum ? `${airline}${flightNum}` : (callsign || airline || "");
+      const payload = { dep, arr, flt, sqk, active: true };
+      localStorage.setItem("geofsRadarInfo", JSON.stringify({ airline, flightNum, callsign, dep, arr, sqk, active: true }));
+      window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: payload }));
       showToast("Flight info saved. Data transmission started.");
     };
 
     document.getElementById(CLEAR_BTN_ID).onclick = () => {
       isFlightInfoSaved = false;
-      [DEP_INPUT_ID, ARR_INPUT_ID, FLT_INPUT_ID, SQK_INPUT_ID].forEach(id => document.getElementById(id).value = "");
+      [DEP_INPUT_ID, ARR_INPUT_ID, AIRLINE_INPUT_ID, FLIGHTNUM_INPUT_ID, CALLSIGN_INPUT_ID, SQK_INPUT_ID].forEach(id => document.getElementById(id).value = "");
+      localStorage.removeItem("geofsRadarInfo");
       window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: { active: false } }));
       showToast("Flight info cleared.");
     };
