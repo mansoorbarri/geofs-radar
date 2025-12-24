@@ -1,6 +1,7 @@
 // hooks/useAircraftSearch.ts
 import { useState, useEffect, useCallback } from "react";
 import { type PositionUpdate } from "~/lib/aircraft-store";
+import { airlineCodeFromFlightNo, getSizeCategoryFor } from "~/types/flight";
 
 interface Airport {
   name: string;
@@ -36,6 +37,20 @@ export const useAircraftSearch = (
         ac.squawk?.toLowerCase().includes(lowerCaseSearchTerm)
       ) {
         results.push(ac);
+      }
+      const airline = airlineCodeFromFlightNo(ac.flightNo)?.toLowerCase();
+      if (airline && airline.includes(lowerCaseSearchTerm)) {
+        results.push(ac);
+      }
+      const route = `${(ac.departure || "").toLowerCase()}-${(ac.arrival || "").toLowerCase()}`;
+      if (route.includes(lowerCaseSearchTerm)) {
+        results.push(ac);
+      }
+      if (lowerCaseSearchTerm.startsWith("size:")) {
+        const want = lowerCaseSearchTerm.replace("size:", "");
+        if (getSizeCategoryFor(ac.type || "").includes(want)) {
+          results.push(ac);
+        }
       }
     });
 
