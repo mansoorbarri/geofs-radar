@@ -8,6 +8,7 @@ import {
   TbPlaneArrival,
 } from "react-icons/tb";
 import { type PositionUpdate, activeAircraft } from "~/lib/aircraft-store";
+import { airlineCodeFromFlightNo } from "~/types/flight";
 
 const getFlightPhase = (altAGL: number, vspeed: number, flightPlan?: string) => {
   const isOnGround = altAGL < 100;
@@ -187,6 +188,16 @@ export const Sidebar = React.memo(
           </div>
         </div>
 
+        {/* --- Plane Image --- */}
+        {(() => {
+          const code = airlineCodeFromFlightNo(aircraft.flightNo);
+          const typeNorm = (aircraft.type || "").replace(/\s+/g, "").toUpperCase();
+          const src = code ? `/plane-images/${code}-${typeNorm}.png` : `/plane-images/${typeNorm}.png`;
+          return (
+            <PlaneImage src={src} />
+          );
+        })()}
+
         {/* --- Flight Info Section --- */}
         <div
           className={`flex flex-col gap-2 p-3 ${
@@ -283,6 +294,26 @@ export const Sidebar = React.memo(
 );
 
 Sidebar.displayName = "Sidebar";
+
+const PlaneImage = ({ src }: { src: string }) => {
+  const [error, setError] = React.useState(false);
+  return (
+    <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+      {!error ? (
+        <img
+          src={src}
+          alt="aircraft"
+          className="w-full h-[140px] object-cover rounded-md"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <div className="w-full h-[140px] flex items-center justify-center text-white/60 text-sm rounded-md border border-white/10">
+          No picture available
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Helper subcomponent
 const Detail = ({ label, value }: { label: string; value: string }) => (
