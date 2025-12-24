@@ -51,7 +51,7 @@ export default function IncidentsPage() {
             <div>Time (UTC)</div>
             <div>Status</div>
           </div>
-          {incidents.map((i, idx) => (
+          {incidents.map((i: Incident, idx: number) => (
             <div
               key={`${i.id}-${i.ts}-${idx}`}
               className="grid grid-cols-5 gap-2 px-3 py-2 text-[13px] border-b border-cyan-400/5 last:border-b-0"
