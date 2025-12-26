@@ -8,6 +8,7 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
+    CLERK_SECRET_KEY: z.string(),
   },
 
   /**
@@ -20,6 +21,7 @@ export const env = createEnv({
     NEXT_PUBLIC_OPENAIP_API_KEY: z.string(),
     NEXT_PUBLIC_AVWX_TOKEN: z.string(),
     NEXT_PUBLIC_OPENWEATHERMAP_API_KEY: z.string(),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string()
   },
 
   /**
@@ -31,6 +33,8 @@ export const env = createEnv({
     NEXT_PUBLIC_OPENAIP_API_KEY: process.env.NEXT_PUBLIC_OPENAIP_API_KEY,
     NEXT_PUBLIC_AVWX_TOKEN: process.env.NEXT_PUBLIC_AVWX_TOKEN,
     NEXT_PUBLIC_OPENWEATHERMAP_API_KEY: process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY,
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
