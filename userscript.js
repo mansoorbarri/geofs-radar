@@ -56,6 +56,7 @@
 
     const payload = {
       id: geofs.userRecord.callsign,
+      googleId: geofs.userRecord.googleId || null,
       callsign: geofs.userRecord.callsign,
       type: inst.aircraftRecord.name || "Unknown",
       lat: lla[0],
@@ -72,7 +73,7 @@
       flightPlan: geofs.flightPlan?.export ? geofs.flightPlan.export() : [],
       nextWaypoint: geofs.flightPlan?.trackedWaypoint?.ident || null,
       vspeed: Math.floor(geofs.animation?.values?.verticalSpeed || 0),
-      userId: geofs.userRecord.userId || null,
+      // userId: geofs.userRecord.userId || null,
     };
 
     fetch(API_URL, {
