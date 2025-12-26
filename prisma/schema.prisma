@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum Role {
+  FREE
+  PREMIUM
+  ADMIN
+}
+
+model User {
+  id            String   @id @default(cuid()) // Matches Clerk ID or internal ID
+  clerkId       String   @unique
+  email         String   @unique
+  username      String?
+  role          Role     @default(FREE)
+  
+  // Premium Customization
+  radarKey      String   @unique @default(cuid()) // For the Tampermonkey script
+  airlineLogo   String?  // URL to the hosted image
+  airlineName   String?
+  
+  // Relations
+  flights       Flight[]
+  ownedServer   Server?  @relation("ServerOwner")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Flight {
+  id           String   @id @default(cuid())
+  userId       String
+  callsign     String
+  aircraftType String
+  depICAO      String?
+  arrICAO      String?
+  squawk       String?
+  
+  // Statistics
+  duration     Int?     // in minutes
+  landingRate  Float?   // fpm
+  maxAltitude  Int?
+  maxSpeed     Int?
+  
+  // Path Data
+  // Store as JSON: [{lat: number, lng: number, alt: number, ts: number}]
+  routeData    Json?    
+  
+  startTime    DateTime @default(now())
+  endTime      DateTime?
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Server {
+  id          String   @id @default(cuid())
+  name        String
+  inviteCode  String   @unique @default(nanoid(8))
+  ownerId     String   @unique
+  
+  owner       User     @relation("ServerOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+}

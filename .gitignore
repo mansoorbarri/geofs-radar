@@ -44,3 +44,7 @@ yarn-error.log*
 
 # idea files
 .idea
+
+## INTERNAL
+todo.md
+/generated/prisma
