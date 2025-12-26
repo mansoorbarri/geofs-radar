@@ -2,11 +2,11 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { createClerkClient } from "@clerk/nextjs/server";
 
 const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
-  // 1. Get the headers and body
   const headerList = await headers();
   const payload = await req.text();
 
@@ -14,19 +14,15 @@ export async function POST(req: Request) {
   const svix_timestamp = headerList.get("svix-timestamp");
   const svix_signature = headerList.get("svix-signature");
 
-  // 2. If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
     return new NextResponse("Error occured -- no svix headers", {
       status: 400,
     });
   }
 
-  // 3. Create a new Svix instance with your secret.
   const wh = new Webhook(CLERK_WEBHOOK_SECRET);
-
   let evt: any;
 
-  // 4. Verify the payload with the headers
   try {
     evt = wh.verify(payload, {
       "svix-id": svix_id,
@@ -40,10 +36,8 @@ export async function POST(req: Request) {
     });
   }
 
-  // 5. Handle the webhook events
   const { type, data } = evt;
 
-  // Sync Create or Update
   if (type === "user.created" || type === "user.updated") {
     const email = data.email_addresses?.[0]?.email_address;
 
@@ -51,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "No email found" }, { status: 400 });
     }
 
-    await db.user.upsert({
+    const user = await db.user.upsert({
       where: { clerkId: data.id },
       update: {
         email: email,
@@ -64,19 +58,24 @@ export async function POST(req: Request) {
         username: data.username ?? null,
       },
     });
+
+    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    await clerk.users.updateUserMetadata(data.id, {
+      publicMetadata: {
+        radarKey: user.radarKey,
+      },
+    });
     
-    console.log(`✅ User ${data.id} synced to DB`);
+    console.log(`✅ User ${data.id} synced`);
   }
 
-  // Handle Deletion
   if (type === "user.deleted") {
     try {
       await db.user.delete({
         where: { clerkId: data.id },
       });
-      console.log(`❌ User ${data.id} deleted from DB`);
+      console.log(`❌ User ${data.id} deleted`);
     } catch (error) {
-      // Catch error if user was already deleted from DB
       console.error("Error deleting user:", error);
     }
   }
