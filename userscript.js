@@ -55,7 +55,7 @@
     const altAGL = calculateAGL();
 
     const payload = {
-      id: geofs.userRecord.callsign,
+      id:geofs.userRecord.googleId || geofs.userRecord.callsign,
       googleId: geofs.userRecord.googleId || null,
       callsign: geofs.userRecord.callsign,
       type: inst.aircraftRecord.name || "Unknown",
