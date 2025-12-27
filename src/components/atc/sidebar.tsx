@@ -13,6 +13,7 @@ import {
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { getFlightHistory } from "~/app/actions/get-flight-history";
 import { getUserProfile } from "~/app/actions/get-user-profile";
+import Image from "next/image";
 
 const getFlightPhase = (altAGL: number, vspeed: number, flightPlan?: string) => {
   const isOnGround = altAGL < 100;
@@ -161,10 +162,12 @@ export const Sidebar = React.memo(
         <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-b border-white/10 px-4 py-3 flex items-center gap-3">
           <div className="relative">
             {displayLogo ? (
-              <img 
-                src={displayLogo} 
-                alt="Airline Logo" 
-                className="w-12 h-12 rounded bg-black/40 object-contain border border-white/10"
+              <Image
+                src={displayLogo}
+                alt="Airline Logo"
+                width={12}
+                height={12}
+                className="rounded bg-black/40 object-contain border border-white/10"
               />
             ) : (
               <div className="w-12 h-12 rounded bg-white/5 border border-dashed border-white/20 flex items-center justify-center text-white/20">

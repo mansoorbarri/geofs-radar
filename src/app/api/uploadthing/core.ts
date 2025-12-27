@@ -10,10 +10,16 @@ export const ourFileRouter = {
       const { userId } = await auth();
       if (!userId) throw new Error("Unauthorized");
       
-      const user = await db.user.findUnique({ where: { clerkId: userId } });
+      const user = await db.user.findUnique({ 
+        where: { clerkId: userId },
+        select: { id: true, role: true, googleId: true } 
+      });
+
       if (user?.role !== "PREMIUM") throw new Error("Premium Required");
+      if (!user.googleId) throw new Error("User Google ID not found in database");
       
-      return { userId: user.id };
+      // Pass the googleId to the metadata
+      return { userId: user.id, googleId: user.googleId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       await db.user.update({
