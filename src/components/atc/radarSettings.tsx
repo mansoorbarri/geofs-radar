@@ -23,6 +23,8 @@ export const RadarSettings = () => {
   const isPremium = profile?.role === "PREMIUM";
   const radarKey = profile?.radarKey;
 
+  console.log(isPremium, radarKey);
+
   if (!isLoaded) return null;
 
   return (
