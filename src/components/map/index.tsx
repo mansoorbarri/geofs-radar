@@ -86,7 +86,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsWeatherOverlayEnabled,
     setIsSettingsOpen,
     onMapClick: useCallback(() => {
-      // intentional no-op, handled later with stableOnMapClick
+      // Intentional no-op: Map clicks are handled by stableOnMapClick
     }, []),
     setHeadingControlRef: headingControlRef,
     setRadarControlRef: radarControlRef,
@@ -232,14 +232,39 @@ const MapComponent: React.FC<MapComponentProps> = ({
     icaoInput || selectedAirport?.icao,
   );
 
-  return (
+return (
     <>
       <MapGlobalStyles />
       <div id="map-container" style={{ height: "100%", width: "100%" }} />
 
       {isSettingsOpen && (
-        <div className="absolute top-12 left-12 z-[10001] w-[320px]">
-          <RadarSettings />
+        <div className="absolute top-[86px] left-[70px] z-[10020] w-[320px] animate-in fade-in zoom-in-95 duration-200">
+          {/* Decorative Arrow Pointing to Button */}
+          <div 
+            className="absolute left-[-6px] bottom-[50px] h-3 w-3 rotate-45 border-b border-l border-white/10 bg-[#0a1219]/95 shadow-[-4px_4px_10px_rgba(0,0,0,0.5)]" 
+            style={{ backdropFilter: 'blur(20px)' }}
+          />
+          
+          {/* Main Popup Body */}
+          <div className="rounded-xl border border-white/10 bg-[#0a1219]/95 p-5 shadow-2xl backdrop-blur-xl">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <h3 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+                    Radar Configuration
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="text-white/40 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <RadarSettings />
+            </div>
+          </div>
         </div>
       )}
 

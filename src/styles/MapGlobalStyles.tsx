@@ -2,7 +2,6 @@ import React from "react";
 
 export const MapGlobalStyles = () => (
   <style jsx global>{`
-    /* === Tooltip Styling (HUD Cyan Theme) === */
     .heading-tooltip {
       background: rgba(0, 10, 15, 0.85) !important;
       color: #00ffff !important;
@@ -19,7 +18,6 @@ export const MapGlobalStyles = () => (
       display: none !important;
     }
 
-    /* === Leaflet Popup (Aircraft / Airport info) === */
     .leaflet-popup-content-wrapper {
       background-color: rgba(0, 10, 15, 0.95) !important;
       color: #00ffff !important;
@@ -34,7 +32,6 @@ export const MapGlobalStyles = () => (
       border: 1px solid rgba(0, 255, 255, 0.2) !important;
     }
 
-    /* === Radar Popups (Flight tracks, emergencies) === */
     .radar-popup .leaflet-popup-content-wrapper {
       background-color: rgba(0, 10, 15, 0.9) !important;
       color: #00ffff !important;
@@ -49,7 +46,6 @@ export const MapGlobalStyles = () => (
       border-right: 1px solid transparent !important;
     }
 
-    /* === Keyframes for the cyan glow effect === */
     @keyframes radar-glow-pulse {
       0% {
         box-shadow: 0 0 6px rgba(0, 255, 255, 0.4),
@@ -65,7 +61,6 @@ export const MapGlobalStyles = () => (
       }
     }
 
-    /* === Emergency pulse (for red aircraft highlights) === */
     @keyframes emergency-plane-pulse {
       0% {
         box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
@@ -90,7 +85,6 @@ export const MapGlobalStyles = () => (
       }
     }
 
-    /* === Default Leaflet controls re-theme (Zoom, etc.) === */
     .leaflet-control-zoom a {
       width: 36px !important;
       height: 36px !important;
@@ -115,6 +109,7 @@ export const MapGlobalStyles = () => (
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
+      top: 55px;
     }
   `}</style>
 );

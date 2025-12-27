@@ -9,19 +9,19 @@ export const UserAuth = () => {
   if (!isLoaded) return null;
 
   const baseStyle =
-    "flex items-center rounded-md border font-mono text-[12px] font-semibold px-3 py-1.5 transition-all duration-200 bg-black/70 cursor-pointer";
+    "flex items-center justify-center rounded-md border font-mono text-[12px] font-semibold px-3 py-1.5 transition-all duration-200 bg-black/70 cursor-pointer";
 
-  // Match the "Live" cyan indicator style
   const cyanStyle =
     "border-cyan-400/30 text-cyan-400 shadow-[0_0_8px_rgba(0,255,255,0.4)] hover:border-cyan-400 hover:shadow-[0_0_12px_rgba(0,255,255,0.6)]";
 
   if (isSignedIn) {
     return (
-      <div className="">
+      <div className="flex items-center justify-center h-full leading-none">
         <UserButton 
           appearance={{
             elements: {
-              avatarBox: "border border-cyan-400/50"
+              avatarBox: "border border-cyan-400/50 w-8 h-8",
+              userButtonTrigger: "focus:shadow-none focus:outline-none"
             }
           }}
         />
