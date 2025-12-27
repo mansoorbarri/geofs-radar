@@ -16,13 +16,13 @@ export const UserAuth = () => {
 
   if (isSignedIn) {
     return (
-      <div className="flex items-center justify-center h-full leading-none">
-        <UserButton 
+      <div className="flex h-full items-center justify-center leading-none">
+        <UserButton
           appearance={{
             elements: {
               avatarBox: "border border-cyan-400/50 w-8 h-8",
-              userButtonTrigger: "focus:shadow-none focus:outline-none"
-            }
+              userButtonTrigger: "focus:shadow-none focus:outline-none",
+            },
           }}
         />
       </div>
@@ -31,9 +31,7 @@ export const UserAuth = () => {
 
   return (
     <SignInButton mode="modal">
-      <button className={`${baseStyle} ${cyanStyle}`}>
-        SIGN IN
-      </button>
+      <button className={`${baseStyle} ${cyanStyle}`}>SIGN IN</button>
     </SignInButton>
   );
 };

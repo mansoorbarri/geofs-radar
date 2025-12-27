@@ -232,32 +232,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
     icaoInput || selectedAirport?.icao,
   );
 
-return (
+  return (
     <>
       <MapGlobalStyles />
       <div id="map-container" style={{ height: "100%", width: "100%" }} />
 
       {isSettingsOpen && (
-        <div className="absolute top-[86px] left-[70px] z-[10020] w-[320px] animate-in fade-in zoom-in-95 duration-200">
+        <div className="animate-in fade-in zoom-in-95 absolute top-[86px] left-[70px] z-[10020] w-[320px] duration-200">
           {/* Decorative Arrow Pointing to Button */}
-          <div 
-            className="absolute left-[-6px] bottom-[50px] h-3 w-3 rotate-45 border-b border-l border-white/10 bg-[#0a1219]/95 shadow-[-4px_4px_10px_rgba(0,0,0,0.5)]" 
-            style={{ backdropFilter: 'blur(20px)' }}
+          <div
+            className="absolute bottom-[50px] left-[-6px] h-3 w-3 rotate-45 border-b border-l border-white/10 bg-[#0a1219]/95 shadow-[-4px_4px_10px_rgba(0,0,0,0.5)]"
+            style={{ backdropFilter: "blur(20px)" }}
           />
-          
+
           {/* Main Popup Body */}
           <div className="rounded-xl border border-white/10 bg-[#0a1219]/95 p-5 shadow-2xl backdrop-blur-xl">
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <h3 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                  <h3 className="font-mono text-[10px] font-bold tracking-[0.2em] text-cyan-400 uppercase">
                     Radar Configuration
                   </h3>
                 </div>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="text-white/40 hover:text-white transition-colors"
+                  className="text-white/40 transition-colors hover:text-white"
                 >
                   ✕
                 </button>

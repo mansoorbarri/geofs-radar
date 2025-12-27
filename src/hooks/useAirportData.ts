@@ -19,45 +19,45 @@ export const useAirportData = () => {
   const fetchAirports = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch from OurAirports public dataset (CSV format)
       const response = await fetch(
-        "https://davidmegginson.github.io/ourairports-data/airports.csv"
+        "https://davidmegginson.github.io/ourairports-data/airports.csv",
       );
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const csvText = await response.text();
-      
+
       // Parse CSV manually (simple parser for this specific format)
       const lines = csvText.split("\n");
       const headers = lines[0]?.split(",") || [];
-      
+
       // Find column indices
-      const icaoIdx = headers.findIndex(h => h?.includes("ident"));
-      const nameIdx = headers.findIndex(h => h?.includes("name"));
-      const latIdx = headers.findIndex(h => h?.includes("latitude_deg"));
-      const lonIdx = headers.findIndex(h => h?.includes("longitude_deg"));
-      const typeIdx = headers.findIndex(h => h?.includes("type"));
-      
+      const icaoIdx = headers.findIndex((h) => h?.includes("ident"));
+      const nameIdx = headers.findIndex((h) => h?.includes("name"));
+      const latIdx = headers.findIndex((h) => h?.includes("latitude_deg"));
+      const lonIdx = headers.findIndex((h) => h?.includes("longitude_deg"));
+      const typeIdx = headers.findIndex((h) => h?.includes("type"));
+
       const airportArray: Airport[] = [];
-      
+
       // Parse each line (skip header)
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         if (!line?.trim()) continue;
-        
+
         // Handle quoted fields in CSV
         const fields: string[] = [];
         let currentField = "";
         let inQuotes = false;
-        
+
         for (const char of line) {
           if (char === '"') {
             inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
+          } else if (char === "," && !inQuotes) {
             fields.push(currentField);
             currentField = "";
           } else {
@@ -65,13 +65,13 @@ export const useAirportData = () => {
           }
         }
         fields.push(currentField); // Add last field
-        
+
         const icao = fields[icaoIdx]?.replace(/"/g, "").trim() || "";
         const name = fields[nameIdx]?.replace(/"/g, "").trim() || "";
         const lat = parseFloat(fields[latIdx]?.replace(/"/g, "").trim() || "0");
         const lon = parseFloat(fields[lonIdx]?.replace(/"/g, "").trim() || "0");
         const type = fields[typeIdx]?.replace(/"/g, "").trim() || "";
-        
+
         // Only include medium/large airports with valid ICAO codes
         if (
           icao &&
@@ -88,14 +88,16 @@ export const useAirportData = () => {
           });
         }
       }
-      
-      console.log(`Loaded ${airportArray.length} airports from OurAirports API`);
+
+      console.log(
+        `Loaded ${airportArray.length} airports from OurAirports API`,
+      );
       setAirports(airportArray);
       setAirportFetchError(null);
     } catch (e) {
       console.error("Could not load airport data:", e);
       setAirportFetchError("Failed to load airport data from API.");
-      
+
       // Fallback to empty array
       setAirports([]);
     } finally {

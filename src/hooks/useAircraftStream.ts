@@ -20,7 +20,7 @@ export const useAircraftStream = () => {
 
     setConnectionStatus("connecting");
 
-    const url = "https://radar-sse-production.up.railway.app/api/stream"
+    const url = "https://radar-sse-production.up.railway.app/api/stream";
 
     const es = new EventSource(url);
     eventSourceRef.current = es;
@@ -36,8 +36,10 @@ export const useAircraftStream = () => {
         lastMessageTime.current = Date.now();
         const data = JSON.parse(event.data);
         const processed: PositionUpdate[] =
-          data.aircraft?.map((ac: any) => ({ ...ac, ts: ac.ts || Date.now() })) ||
-          [];
+          data.aircraft?.map((ac: any) => ({
+            ...ac,
+            ts: ac.ts || Date.now(),
+          })) || [];
         setAircrafts(processed);
         setIsLoading(false);
         setError(null);
@@ -55,7 +57,10 @@ export const useAircraftStream = () => {
 
   const scheduleReconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-    const backoff = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+    const backoff = Math.min(
+      1000 * Math.pow(2, reconnectAttempts.current),
+      30000,
+    );
     reconnectAttempts.current++;
     setError(`Connection lost. Reconnecting in ${backoff / 1000}s...`);
     reconnectTimeoutRef.current = setTimeout(() => connectToStream(), backoff);
@@ -76,8 +81,10 @@ export const useAircraftStream = () => {
     connectToStream();
     return () => {
       if (eventSourceRef.current) eventSourceRef.current.close();
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      if (watchdogIntervalRef.current) clearInterval(watchdogIntervalRef.current);
+      if (reconnectTimeoutRef.current)
+        clearTimeout(reconnectTimeoutRef.current);
+      if (watchdogIntervalRef.current)
+        clearInterval(watchdogIntervalRef.current);
     };
   }, [connectToStream]);
 

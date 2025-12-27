@@ -5,7 +5,7 @@ import { db } from "~/server/db";
 
 export async function getUserProfile(googleId?: string) {
   const { userId } = await auth();
-//   console.log("Fetched user profile for userId:", userId);
+  //   console.log("Fetched user profile for userId:", userId);
   if (!userId) return null;
 
   return await db.user.findUnique({

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-
 export function useUtcTime(): string {
   const [time, setTime] = useState<string>("");
 
@@ -13,7 +12,7 @@ export function useUtcTime(): string {
       setTime(utcPart);
     };
 
-    updateClock(); 
+    updateClock();
     const interval = setInterval(updateClock, 1000);
 
     return () => clearInterval(interval);

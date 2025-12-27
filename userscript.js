@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  const API_URL = "https://radar-sse-production.up.railway.app/api/atc/position";
+  const API_URL =
+    "https://radar-sse-production.up.railway.app/api/atc/position";
   const SEND_INTERVAL_MS = 5000;
 
   let info = { active: false, dep: "", arr: "", flt: "", sqk: "" };
@@ -14,7 +15,7 @@
       status = { text: "Transmitting to API", color: "#27ae60" };
     }
     window.dispatchEvent(
-      new CustomEvent("atc-status-update", { detail: status })
+      new CustomEvent("atc-status-update", { detail: status }),
     );
   }
 

@@ -79,7 +79,14 @@ export const useMapLayersAndMarkers = ({
     } else {
       map.addLayer(satelliteHybridLayer.current);
     }
-  }, [mapInstance, isOSMMode, isRadarMode, osmLayer, satelliteHybridLayer, radarBaseLayer]);
+  }, [
+    mapInstance,
+    isOSMMode,
+    isRadarMode,
+    osmLayer,
+    satelliteHybridLayer,
+    radarBaseLayer,
+  ]);
 
   // Effect for managing OpenAIP layer
   useEffect(() => {

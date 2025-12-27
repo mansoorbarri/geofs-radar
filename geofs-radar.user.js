@@ -46,7 +46,7 @@
     flightUI = document.createElement("div");
     flightUI.id = UI_CONTAINER_ID;
     flightUI.style.cssText = `position:fixed; top:60px; right:15px; background:rgba(35, 42, 49, 0.75); backdrop-filter:blur(14px) saturate(180%); border-radius:14px; color:#f1f2f6; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; padding:16px; width:230px; border:1px solid rgba(255,255,255,0.15); box-shadow:0 8px 28px rgba(0,0,0,0.35); transition:transform 0.2s ease; z-index:999999;`;
-    
+
     flightUI.innerHTML = `
       <div style="text-align:center; margin-bottom: 12px; font-weight:600; font-size:14px; letter-spacing:0.5px; color:#74b9ff;">ATC Flight Information</div>
       <div style="display: grid; gap: 8px;">
@@ -71,7 +71,9 @@
 
     [DEP_INPUT_ID, ARR_INPUT_ID, FLT_INPUT_ID, SQK_INPUT_ID].forEach((id) => {
       const el = document.getElementById(id);
-      el.addEventListener("input", () => { el.value = el.value.toUpperCase(); });
+      el.addEventListener("input", () => {
+        el.value = el.value.toUpperCase();
+      });
     });
 
     document.getElementById(SAVE_BTN_ID).onclick = () => {
@@ -80,34 +82,62 @@
       const flt = document.getElementById(FLT_INPUT_ID).value.trim();
       const sqk = document.getElementById(SQK_INPUT_ID).value.trim();
 
-      if (!dep || !arr || !flt) { showToast("Please fill in Departure, Arrival, and Callsign", true); return; }
-      if (sqk && !validateSquawk(sqk)) { showToast("Invalid squawk (digits 0–7 only)", true); return; }
+      if (!dep || !arr || !flt) {
+        showToast("Please fill in Departure, Arrival, and Callsign", true);
+        return;
+      }
+      if (sqk && !validateSquawk(sqk)) {
+        showToast("Invalid squawk (digits 0–7 only)", true);
+        return;
+      }
 
       isFlightInfoSaved = true;
-      window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: { dep, arr, flt, sqk, active: true } }));
+      window.dispatchEvent(
+        new CustomEvent("atc-data-sync", {
+          detail: { dep, arr, flt, sqk, active: true },
+        }),
+      );
       showToast("Flight info saved. Data transmission started.");
     };
 
     document.getElementById(CLEAR_BTN_ID).onclick = () => {
       isFlightInfoSaved = false;
-      [DEP_INPUT_ID, ARR_INPUT_ID, FLT_INPUT_ID, SQK_INPUT_ID].forEach(id => document.getElementById(id).value = "");
-      window.dispatchEvent(new CustomEvent("atc-data-sync", { detail: { active: false } }));
+      [DEP_INPUT_ID, ARR_INPUT_ID, FLT_INPUT_ID, SQK_INPUT_ID].forEach(
+        (id) => (document.getElementById(id).value = ""),
+      );
+      window.dispatchEvent(
+        new CustomEvent("atc-data-sync", { detail: { active: false } }),
+      );
       showToast("Flight info cleared.");
     };
   }
 
   window.addEventListener("atc-status-update", (e) => {
     const statusEl = document.getElementById(STATUS_INDICATOR_ID);
-    if (statusEl) { statusEl.innerHTML = e.detail.text; statusEl.style.color = e.detail.color; }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key.toLowerCase() === "w" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
-      flightUI.style.display = flightUI.style.display === "none" ? "block" : "none";
+    if (statusEl) {
+      statusEl.innerHTML = e.detail.text;
+      statusEl.style.color = e.detail.color;
     }
   });
 
-  document.addEventListener("keydown", (e) => { if (e.target.tagName === "INPUT") e.stopPropagation(); }, true);
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key.toLowerCase() === "w" &&
+      e.target.tagName !== "INPUT" &&
+      e.target.tagName !== "TEXTAREA"
+    ) {
+      flightUI.style.display =
+        flightUI.style.display === "none" ? "block" : "none";
+    }
+  });
+
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.target.tagName === "INPUT") e.stopPropagation();
+    },
+    true,
+  );
 
   injectFlightUI();
 })();

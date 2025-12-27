@@ -48,25 +48,33 @@ export const MapGlobalStyles = () => (
 
     @keyframes radar-glow-pulse {
       0% {
-        box-shadow: 0 0 6px rgba(0, 255, 255, 0.4),
+        box-shadow:
+          0 0 6px rgba(0, 255, 255, 0.4),
           0 0 10px rgba(0, 255, 255, 0.25);
       }
       50% {
-        box-shadow: 0 0 12px rgba(0, 255, 255, 0.7),
+        box-shadow:
+          0 0 12px rgba(0, 255, 255, 0.7),
           0 0 20px rgba(0, 255, 255, 0.5);
       }
       100% {
-        box-shadow: 0 0 6px rgba(0, 255, 255, 0.4),
+        box-shadow:
+          0 0 6px rgba(0, 255, 255, 0.4),
           0 0 10px rgba(0, 255, 255, 0.25);
       }
     }
 
     @keyframes emergency-plane-pulse {
       0% {
-        box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+        box-shadow:
+          0 0 10px #ff0000,
+          0 0 20px #ff0000;
       }
       100% {
-        box-shadow: 0 0 22px #ff0000, 0 0 35px #ff0000, 0 0 45px #ff0000;
+        box-shadow:
+          0 0 22px #ff0000,
+          0 0 35px #ff0000,
+          0 0 45px #ff0000;
       }
     }
 

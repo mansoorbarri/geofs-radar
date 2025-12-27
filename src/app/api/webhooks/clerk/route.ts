@@ -59,13 +59,15 @@ export async function POST(req: Request) {
       },
     });
 
-    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    const clerk = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
     await clerk.users.updateUserMetadata(data.id, {
       publicMetadata: {
         radarKey: user.radarKey,
       },
     });
-    
+
     console.log(`✅ User ${data.id} synced`);
   }
 

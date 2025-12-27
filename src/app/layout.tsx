@@ -27,7 +27,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider
-          appearance={{
+      appearance={{
         baseTheme: dark,
         variables: {
           colorPrimary: "#22d3ee", // text-cyan-400
@@ -42,13 +42,13 @@ export default function RootLayout({
         },
       }}
     >
-    <html lang="en" className={`${geist.variable}`}>
-      <body>
-      <Toaster theme="dark" position="top-center" richColors />
-      <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-        {children}
-      </body>
-    </html>
+      <html lang="en" className={`${geist.variable}`}>
+        <body>
+          <Toaster theme="dark" position="top-center" richColors />
+          <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
+          {children}
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
