@@ -168,6 +168,7 @@ export const Sidebar = React.memo(
                 width={48}
                 height={48}
                 className="rounded bg-black/40 object-contain border border-white/10"
+                unoptimized
               />
             ) : (
               <div className="w-12 h-12 rounded bg-white/5 border border-dashed border-white/20 flex items-center justify-center text-white/20">
