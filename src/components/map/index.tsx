@@ -85,7 +85,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsOpenAIPEnabled,
     setIsWeatherOverlayEnabled,
     setIsSettingsOpen,
-    onMapClick: useCallback(() => { /* noop */ }, []),
+    onMapClick: useCallback(() => {
+      // intentional no-op, handled later with stableOnMapClick
+    }, []),
     setHeadingControlRef: headingControlRef,
     setRadarControlRef: radarControlRef,
     setOSMControlRef: osmControlRef,
@@ -121,7 +123,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
         setIsSettingsOpen(false);
       }
     },
-    [setSelectedAircraftId, currentSelectedAircraftRef, mapRefs.flightPlanLayerGroup, mapRefs.historyLayerGroup],
+    [
+      setSelectedAircraftId,
+      currentSelectedAircraftRef,
+      mapRefs.flightPlanLayerGroup,
+      mapRefs.historyLayerGroup,
+    ],
   );
 
   useEffect(() => {
@@ -137,9 +144,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, [mapRefs.mapInstance, stableOnMapClick]);
 
   useEffect(() => {
-    const map = mapRefs.mapInstance.current;
     const layerGroup = mapRefs.historyLayerGroup.current;
-    if (!map || !layerGroup) return;
+    if (!layerGroup) return;
 
     layerGroup.clearLayers();
 
@@ -152,15 +158,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         lineJoin: "round",
       }).addTo(layerGroup);
     }
-  }, [historyPath, aircrafts, mapRefs.mapInstance, mapRefs.historyLayerGroup]);
-
-  useEffect(() => {
-    const map = mapRefs.mapInstance.current;
-    if (map && historyPath && historyPath.length > 1) {
-        const tempPoly = L.polyline(historyPath);
-        map.fitBounds(tempPoly.getBounds(), { padding: [50, 50] });
-    }
-  }, [historyPath, mapRefs.mapInstance]);
+  }, [historyPath, mapRefs.historyLayerGroup]);
 
   useMapLayersAndMarkers({
     mapInstance: mapRefs.mapInstance,
@@ -203,15 +201,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
       headingControlRef.current.updateState(isHeadingMode);
     if (radarControlRef.current)
       radarControlRef.current.updateState(isRadarMode);
-    if (osmControlRef.current)
-      osmControlRef.current.updateState(isOSMMode);
+    if (osmControlRef.current) osmControlRef.current.updateState(isOSMMode);
     if (openAIPControlRef.current)
       openAIPControlRef.current.updateState(isOpenAIPEnabled);
     if (weatherControlRef.current)
       weatherControlRef.current.updateState(isWeatherOverlayEnabled);
     if (settingsControlRef.current)
       settingsControlRef.current.updateState(isSettingsOpen);
-  }, [isHeadingMode, isRadarMode, isOSMMode, isOpenAIPEnabled, isWeatherOverlayEnabled, isSettingsOpen]);
+  }, [
+    isHeadingMode,
+    isRadarMode,
+    isOSMMode,
+    isOpenAIPEnabled,
+    isWeatherOverlayEnabled,
+    isSettingsOpen,
+  ]);
 
   useEffect(() => {
     setDrawFlightPlanOnMap(drawFlightPlan);

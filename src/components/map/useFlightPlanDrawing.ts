@@ -43,7 +43,7 @@ export const useFlightPlanDrawing = ({
         return;
 
       flightPlanLayerGroup.current.clearLayers();
-      historyLayerGroup.current.clearLayers();
+      // historyLayerGroup.current.clearLayers();
       const newSelectedAircraftId = aircraft.id || aircraft.callsign;
       currentSelectedAircraftRef.current = newSelectedAircraftId;
       setSelectedAircraftId(newSelectedAircraftId);
