@@ -12,8 +12,8 @@ import { ourFileRouter } from "~/app/api/uploadthing/core";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "ATC Radar",
-  description: "ATC Radar for GeoFS",
+  title: "RadarThing",
+  description: "RadarThing for GeoFS",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
