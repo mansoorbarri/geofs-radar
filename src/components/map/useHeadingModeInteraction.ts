@@ -5,12 +5,14 @@ import { calculateDistance, calculateBearing } from "~/lib/map-utils";
 interface UseHeadingModeInteractionProps {
   mapInstance: React.MutableRefObject<L.Map | null>;
   isHeadingMode: boolean;
+  setIsHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
   isRadarMode: boolean;
 }
 
 export const useHeadingModeInteraction = ({
   mapInstance,
   isHeadingMode,
+  setIsHeadingMode,
   isRadarMode,
 }: UseHeadingModeInteractionProps) => {
   const headingStartPointRef = useRef<L.LatLng | null>(null);
@@ -23,7 +25,8 @@ export const useHeadingModeInteraction = ({
   const handleGlobalMouseUp = useCallback(() => {
     if (!mapInstance.current || !isHeadingMode) return;
     cleanupHeadingModeRef.current?.();
-  }, [mapInstance, isHeadingMode]);
+    setIsHeadingMode(false);
+  }, [mapInstance, isHeadingMode, setIsHeadingMode]);
 
   const cleanupHeadingMode = useCallback(() => {
     const map = mapInstance.current;

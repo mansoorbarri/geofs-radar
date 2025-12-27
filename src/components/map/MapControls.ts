@@ -70,21 +70,21 @@ export class RadarSettingsControl extends L.Control {
 export class HeadingModeControl extends L.Control {
   public options = { position: "topleft" as L.ControlPosition };
   public _container: HTMLDivElement | null = null;
-  private _toggleHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
+  private _setHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
 
   constructor(
     options: L.ControlOptions,
-    toggleHeadingMode: React.Dispatch<React.SetStateAction<boolean>>,
+    setHeadingMode: React.Dispatch<React.SetStateAction<boolean>>,
   ) {
     super(options);
-    this._toggleHeadingMode = toggleHeadingMode;
-    this._boundClick = () => this._toggleHeadingMode((prev) => !prev);
+    this._setHeadingMode = setHeadingMode;
+    this._boundClick = () => this._setHeadingMode(true);
   }
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Toggle Heading Mode", "&#8599;");
+    applyMetarStyleButton(container, "Heading Mode", "&#8599;");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -93,8 +93,9 @@ export class HeadingModeControl extends L.Control {
   }
 
   onRemove() {
-    if (this._container)
+    if (this._container) {
       L.DomEvent.off(this._container, "click", this._boundClick);
+    }
   }
 
   updateState(enabled: boolean) {
