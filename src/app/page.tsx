@@ -45,6 +45,18 @@ export default function ATCPage() {
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
   >(null);
 
+  useEffect(() => {
+    if (!selectedAircraft || isViewingHistory) return;
+
+    const updatedAircraft = aircrafts.find(
+      (ac) => (ac.id && ac.id === selectedAircraft.id) || 
+              (ac.callsign && ac.callsign === selectedAircraft.callsign)
+    );
+
+    if (updatedAircraft) {
+      setSelectedAircraft(updatedAircraft);
+    }
+  }, [aircrafts, isViewingHistory, selectedAircraft]);
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
       {/* --- VIGNETTE / OVERLAY GRADIENT (Makes UI readable over map) --- */}
