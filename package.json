@@ -6,6 +6,7 @@
   "scripts": {
     "build": "next build",
     "check": "next lint && tsc --noEmit",
+    "cf": " npx cloudflared tunnel --url http://localhost:3000",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
@@ -31,9 +32,11 @@
     "leaflet-marker-rotation": "^0.4.0",
     "lucide-react": "^0.555.0",
     "next": "^15.5.7",
+    "next-themes": "^0.4.6",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-icons": "^5.5.0",
+    "sonner": "^2.0.7",
     "svix": "^1.82.0",
     "uploadthing": "^7.7.4",
     "zod": "^3.25.76"

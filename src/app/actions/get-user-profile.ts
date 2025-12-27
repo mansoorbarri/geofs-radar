@@ -14,6 +14,7 @@ export async function getUserProfile(googleId?: string) {
       role: true,
       radarKey: true,
       airlineLogo: true,
+      googleId: true,
     },
   });
 }
