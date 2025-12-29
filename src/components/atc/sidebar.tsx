@@ -40,7 +40,7 @@ const getAirlineLogoFromFlightNumber = (
 ): string | null => {
   const code = extractAirlineFromFlightNumber(flightNo);
   if (!code) return null;
-  return `https://content.airhex.com/content/logos/airlines_${code}_200_200_s.png`;
+  return `https://content.airhex.com/content/logos/airlines_${code}_200_200_s.png?theme=dark`;
 };
 
 export const Sidebar = ({
