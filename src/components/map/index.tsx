@@ -184,7 +184,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     selectedAirport,
     isRadarMode,
   });
-  
+
   useHeadingModeInteraction({
     mapInstance: mapRefs.mapInstance,
     isHeadingMode,

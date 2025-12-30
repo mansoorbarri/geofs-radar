@@ -35,9 +35,7 @@ const extractAirlineFromFlightNumber = (flightNo?: string): string | null => {
   return match?.[1]?.toLowerCase() ?? null;
 };
 
-const getAirlineLogoFromFlightNumber = (
-  flightNo?: string,
-): string | null => {
+const getAirlineLogoFromFlightNumber = (flightNo?: string): string | null => {
   const code = extractAirlineFromFlightNumber(flightNo);
   if (!code) return null;
   return `https://content.airhex.com/content/logos/airlines_${code}_200_200_s.png?theme=dark`;
@@ -125,7 +123,7 @@ export const Sidebar = ({
           {waypoints.map((wp: any, i: number) => (
             <div
               key={i}
-              className="group flex items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-3.5 transition hover:bg-black/60 hover:border-cyan-500/40 cursor-pointer"
+              className="group flex cursor-pointer items-center gap-4 rounded-xl border border-white/10 bg-black/40 p-3.5 transition hover:border-cyan-500/40 hover:bg-black/60"
               onClick={() => onWaypointClick?.(wp, i)}
             >
               <div className="font-mono text-xs font-black text-cyan-400">
@@ -133,19 +131,21 @@ export const Sidebar = ({
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm font-black text-white tracking-wider">
+                  <span className="font-mono text-sm font-black tracking-wider text-white">
                     {wp.ident}
                   </span>
-                  <span className="font-mono text-[9px] text-white/40 font-bold uppercase">
+                  <span className="font-mono text-[9px] font-bold text-white/40 uppercase">
                     {wp.type}
                   </span>
                 </div>
-                <div className="flex gap-4 font-mono text-[10px] text-white/60 font-bold">
+                <div className="flex gap-4 font-mono text-[10px] font-bold text-white/60">
                   <span>
-                    ALT: <span className="text-cyan-100/90">{wp.alt ?? "---"}</span>
+                    ALT:{" "}
+                    <span className="text-cyan-100/90">{wp.alt ?? "---"}</span>
                   </span>
                   <span>
-                    SPD: <span className="text-cyan-100/90">{wp.spd ?? "---"}</span>
+                    SPD:{" "}
+                    <span className="text-cyan-100/90">{wp.spd ?? "---"}</span>
                   </span>
                 </div>
               </div>
@@ -166,23 +166,23 @@ export const Sidebar = ({
       className={`flex flex-col overflow-hidden text-white transition-all duration-500 ease-in-out ${
         isMobile
           ? "fixed inset-x-0 bottom-0 rounded-t-[2.5rem] border-t border-white/20 bg-[#050f14]"
-          : "h-full w-full bg-[#050f14]/90 backdrop-blur-3xl border-l border-white/10 shadow-2xl"
+          : "h-full w-full border-l border-white/10 bg-[#050f14]/90 shadow-2xl backdrop-blur-3xl"
       }`}
       style={{ height: isMobile ? (isExpanded ? "88vh" : "240px") : "100%" }}
     >
       <div className="relative p-6 pb-4">
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_8px_#22d3ee]" />
+        <div className="mb-5 flex items-start justify-between">
+          <div className="min-w-0 flex-1 pr-4">
+            <div className="mb-1.5 flex items-center gap-2">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500 shadow-[0_0_8px_#22d3ee]" />
               <span className="font-mono text-[10px] font-black tracking-[0.2em] text-cyan-400 uppercase">
                 Active Radar Lock
               </span>
             </div>
-            <h1 className="truncate font-mono text-4xl font-black tracking-tighter text-white leading-none mb-1 uppercase">
+            <h1 className="mb-1 truncate font-mono text-4xl leading-none font-black tracking-tighter text-white uppercase">
               {aircraft.flightNo || aircraft.callsign || "N/A"}
             </h1>
-            <p className="truncate font-mono text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">
+            <p className="truncate font-mono text-[11px] font-black tracking-[0.15em] text-slate-400 uppercase">
               {aircraft.type || "Unknown Class"}
             </p>
           </div>
@@ -205,39 +205,45 @@ export const Sidebar = ({
         </div>
 
         <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-black/40 p-1.5 shadow-inner">
-          <div className="flex flex-col items-center p-3.5 rounded-xl">
-            <span className="font-mono text-[9px] font-black uppercase text-slate-400 mb-1.5">
+          <div className="flex flex-col items-center rounded-xl p-3.5">
+            <span className="mb-1.5 font-mono text-[9px] font-black text-slate-400 uppercase">
               Altitude
             </span>
-            <span id="side-alt" className="font-mono text-base font-black text-white tracking-tight leading-none">
+            <span
+              id="side-alt"
+              className="font-mono text-base leading-none font-black tracking-tight text-white"
+            >
               ---
             </span>
-            <span className="font-mono text-[8px] font-black text-cyan-400/80 uppercase tracking-widest mt-0.5">
+            <span className="mt-0.5 font-mono text-[8px] font-black tracking-widest text-cyan-400/80 uppercase">
               FT MSL
             </span>
           </div>
-          <div className="flex flex-col items-center p-3.5 rounded-xl bg-white/10 border border-white/10 shadow-lg scale-105 z-10">
+          <div className="z-10 flex scale-105 flex-col items-center rounded-xl border border-white/10 bg-white/10 p-3.5 shadow-lg">
             <TbPlaneInflight size={20} className="text-cyan-400" />
-            <span className="font-mono text-[10px] font-black text-white mt-1.5 uppercase tracking-wide">
+            <span className="mt-1.5 font-mono text-[10px] font-black tracking-wide text-white uppercase">
               {currentFlightPhase}
             </span>
           </div>
-          <div className="flex flex-col items-center p-3.5 rounded-xl">
-            <span className="font-mono text-[9px] font-black uppercase text-slate-400 mb-1.5">
+          <div className="flex flex-col items-center rounded-xl p-3.5">
+            <span className="mb-1.5 font-mono text-[9px] font-black text-slate-400 uppercase">
               Speed
             </span>
-            <span id="side-spd" className="font-mono text-base font-black text-white tracking-tight leading-none">
+            <span
+              id="side-spd"
+              className="font-mono text-base leading-none font-black tracking-tight text-white"
+            >
               ---
             </span>
-            <span className="font-mono text-[8px] font-black text-cyan-400/80 uppercase tracking-widest mt-0.5">
+            <span className="mt-0.5 font-mono text-[8px] font-black tracking-widest text-cyan-400/80 uppercase">
               KNOTS GS
             </span>
           </div>
         </div>
       </div>
 
-      <nav className="flex px-6 mb-5">
-        <div className="flex w-full rounded-2xl bg-black/60 p-1.5 border border-white/10 shadow-xl">
+      <nav className="mb-5 flex px-6">
+        <div className="flex w-full rounded-2xl border border-white/10 bg-black/60 p-1.5 shadow-xl">
           <button
             onClick={() => setTab("info")}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-mono text-[10px] font-black transition-all ${
@@ -265,8 +271,16 @@ export const Sidebar = ({
         {tab === "info" ? (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-3.5">
-              <StatBox label="Departure" value={aircraft.departure || "---"} sub="ORIG" />
-              <StatBox label="Arrival" value={aircraft.arrival || "---"} sub="DEST" />
+              <StatBox
+                label="Departure"
+                value={aircraft.departure || "---"}
+                sub="ORIG"
+              />
+              <StatBox
+                label="Arrival"
+                value={aircraft.arrival || "---"}
+                sub="DEST"
+              />
               <StatBox label="V-Speed" id="side-vs" value="---" sub="FPM" />
               <StatBox label="Heading" id="side-hdg" value="---" sub="MAG" />
               <StatBox label="Squawk" id="side-sqk" value="---" sub="XPDR" />
@@ -278,13 +292,13 @@ export const Sidebar = ({
           <div className="space-y-3">
             {loadingHistory ? (
               <div className="flex flex-col items-center justify-center py-20 opacity-60">
-                <div className="h-6 w-6 rounded-full border-2 border-cyan-400 animate-spin mb-4" />
+                <div className="mb-4 h-6 w-6 animate-spin rounded-full border-2 border-cyan-400" />
                 <span className="font-mono text-[11px] font-black tracking-widest">
                   LOADING
                 </span>
               </div>
             ) : history.length === 0 ? (
-              <div className="py-20 text-center font-mono text-[10px] text-white/40 tracking-widest uppercase">
+              <div className="py-20 text-center font-mono text-[10px] tracking-widest text-white/40 uppercase">
                 No Records
               </div>
             ) : (
@@ -295,9 +309,9 @@ export const Sidebar = ({
                     f.routeData &&
                     onHistoryClick?.(f.routeData as [number, number][])
                   }
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-4 transition-all hover:border-cyan-500/40 cursor-pointer shadow-lg"
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-4 shadow-lg transition-all hover:border-cyan-500/40"
                 >
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="mb-1.5 flex items-center justify-between">
                     <span className="font-mono text-sm font-black text-white group-hover:text-cyan-400">
                       {f.depICAO} → {f.arrICAO}
                     </span>
@@ -326,15 +340,18 @@ const StatBox = ({
   id?: string;
   sub: string;
 }) => (
-  <div className="group rounded-2xl border border-white/10 bg-black/40 p-4 transition-all hover:bg-black/60 shadow-lg">
-    <div className="font-mono text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase mb-2 group-hover:text-cyan-400/80 transition-colors">
+  <div className="group rounded-2xl border border-white/10 bg-black/40 p-4 shadow-lg transition-all hover:bg-black/60">
+    <div className="mb-2 font-mono text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase transition-colors group-hover:text-cyan-400/80">
       {label}
     </div>
     <div className="flex items-baseline gap-1.5">
-      <div id={id} className="truncate font-mono text-lg font-black text-white tracking-tighter">
+      <div
+        id={id}
+        className="truncate font-mono text-lg font-black tracking-tighter text-white"
+      >
         {value}
       </div>
-      <span className="font-mono text-[9px] font-black text-cyan-400 uppercase tracking-tighter opacity-80">
+      <span className="font-mono text-[9px] font-black tracking-tighter text-cyan-400 uppercase opacity-80">
         {sub}
       </span>
     </div>

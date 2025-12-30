@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import dynamic from "next/dynamic";
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
@@ -50,19 +56,19 @@ export default function ATCPage() {
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
   >(null);
 
-const filteredAircrafts = useMemo(() => {
-  if (selectedCallsigns.size === 0) return aircrafts;
+  const filteredAircrafts = useMemo(() => {
+    if (selectedCallsigns.size === 0) return aircrafts;
 
-  const prefixRegex = /^[A-Z]+/;
-  
-  return aircrafts.filter((aircraft) => {
-    if (!aircraft.flightNo) return false;
-    const upperFlightNo = aircraft.flightNo.trim().toUpperCase();
-    const match = prefixRegex.exec(upperFlightNo);
-    const prefix = match?.[0];
-    return prefix && prefix.length >= 2 && selectedCallsigns.has(prefix);
-  });
-}, [aircrafts, selectedCallsigns]);
+    const prefixRegex = /^[A-Z]+/;
+
+    return aircrafts.filter((aircraft) => {
+      if (!aircraft.flightNo) return false;
+      const upperFlightNo = aircraft.flightNo.trim().toUpperCase();
+      const match = prefixRegex.exec(upperFlightNo);
+      const prefix = match?.[0];
+      return prefix && prefix.length >= 2 && selectedCallsigns.has(prefix);
+    });
+  }, [aircrafts, selectedCallsigns]);
 
   const handleToggleCallsign = useCallback((prefix: string) => {
     setSelectedCallsigns((prev) => {
@@ -137,11 +143,11 @@ const filteredAircrafts = useMemo(() => {
             onClick={() => setShowTimerPopup(!showTimerPopup)}
             className="group flex min-h-[44px] flex-col items-center justify-center rounded-full border border-white/10 bg-black/40 px-4 py-1.5 backdrop-blur-md transition-all hover:border-cyan-500/50 hover:bg-black/60"
           >
-            <span className="font-mono text-xl font-medium leading-none tracking-tight text-cyan-400 group-hover:text-cyan-300">
+            <span className="font-mono text-xl leading-none font-medium tracking-tight text-cyan-400 group-hover:text-cyan-300">
               {time} <span className="text-[10px] text-slate-500">UTC</span>
             </span>
             {isRunning && (
-              <span className="mt-1 animate-pulse font-mono text-[9px] leading-none tracking-[0.2em] uppercase text-emerald-400">
+              <span className="mt-1 animate-pulse font-mono text-[9px] leading-none tracking-[0.2em] text-emerald-400 uppercase">
                 Timer Active
               </span>
             )}
@@ -164,8 +170,8 @@ const filteredAircrafts = useMemo(() => {
 
           <button
             onClick={() => {
-              console.log('Filter clicked, current state:', showCallsignFilter);
-              console.log('Aircrafts count:', aircrafts.length);
+              console.log("Filter clicked, current state:", showCallsignFilter);
+              console.log("Aircrafts count:", aircrafts.length);
               setShowCallsignFilter(!showCallsignFilter);
             }}
             className={`flex h-11 items-center gap-2 rounded-xl border px-4 transition-all ${
@@ -197,24 +203,24 @@ const filteredAircrafts = useMemo(() => {
         </div>
       </header>
 
-{showCallsignFilter && (
-  <>
-    <div className="animate-in fade-in zoom-in-95 absolute top-32 right-6 z-[10011] w-96 duration-200">
-      <CallsignFilter
-        aircrafts={aircrafts}
-        selectedCallsigns={selectedCallsigns}
-        onToggleCallsign={handleToggleCallsign}
-        onClearFilters={handleClearFilters}
-      />
-    </div>
-  </>
-)}
+      {showCallsignFilter && (
+        <>
+          <div className="animate-in fade-in zoom-in-95 absolute top-32 right-6 z-[10011] w-96 duration-200">
+            <CallsignFilter
+              aircrafts={aircrafts}
+              selectedCallsigns={selectedCallsigns}
+              onToggleCallsign={handleToggleCallsign}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
+        </>
+      )}
 
       {showTimerPopup && (
         <div className="animate-in fade-in zoom-in-95 absolute top-20 left-1/2 z-[10011] w-64 -translate-x-1/2 duration-200">
           <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-5 shadow-2xl backdrop-blur-2xl">
             <div className="mb-4 text-center">
-              <span className="text-[10px] tracking-widest uppercase text-slate-500">
+              <span className="text-[10px] tracking-widest text-slate-500 uppercase">
                 Chrono
               </span>
               <div className="font-mono text-3xl font-light text-white">
@@ -234,7 +240,7 @@ const filteredAircrafts = useMemo(() => {
               </button>
               <button
                 onClick={reset}
-                className="flex-1 rounded-xl border border-blue-500/20 bg-blue-500/10 py-2.5 text-[10px] font-bold tracking-wider uppercase text-blue-400 transition-all hover:bg-blue-500/20"
+                className="flex-1 rounded-xl border border-blue-500/20 bg-blue-500/10 py-2.5 text-[10px] font-bold tracking-wider text-blue-400 uppercase transition-all hover:bg-blue-500/20"
               >
                 Reset
               </button>
@@ -261,21 +267,21 @@ const filteredAircrafts = useMemo(() => {
         )}
       </main>
 
-{selectedAircraft && (
-  <aside className="fixed inset-y-0 right-0 z-[10012] w-[400px]">
-    <Sidebar
-      aircraft={selectedAircraft}
-      onWaypointClick={() => {
-        return;
-      }}
-      onHistoryClick={(path) => {
-        setHistoryPath(path);
-        setIsViewingHistory(true);
-      }}
-      isMobile={isMobile}
-    />
-  </aside>
-)}
+      {selectedAircraft && (
+        <aside className="fixed inset-y-0 right-0 z-[10012] w-[400px]">
+          <Sidebar
+            aircraft={selectedAircraft}
+            onWaypointClick={() => {
+              return;
+            }}
+            onHistoryClick={(path) => {
+              setHistoryPath(path);
+              setIsViewingHistory(true);
+            }}
+            isMobile={isMobile}
+          />
+        </aside>
+      )}
     </div>
   );
 
