@@ -8,7 +8,6 @@ import React, {
   useMemo,
 } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
 import { useAircraftStream } from "~/hooks/useAircraftStream";
@@ -22,9 +21,6 @@ import Loading from "~/components/loading";
 import { useUtcTime } from "~/hooks/useUtcTime";
 import { useTimer } from "~/hooks/useTimer";
 import { UserAuth } from "~/components/atc/userAuth";
-import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
-import { useAirportChart } from "~/hooks/useAirportCharts";
-import { useUserCapabilities } from "~/hooks/useUserCapabilities";
 import Image from "next/image";
 
 const DynamicMapComponent = dynamic(() => import("~/components/map"), {
@@ -33,12 +29,9 @@ const DynamicMapComponent = dynamic(() => import("~/components/map"), {
 });
 
 export default function ATCPage() {
-  const router = useRouter();
   const isMobile = useMobileDetection();
   const { aircrafts, isLoading, connectionStatus } = useAircraftStream();
   const { airports } = useAirportData();
-  const { canViewTaxiCharts } = useUserCapabilities();
-
   const [selectedAircraft, setSelectedAircraft] =
     useState<PositionUpdate | null>(null);
   const [selectedAirport, setSelectedAirport] = useState<any>(undefined);
@@ -50,19 +43,14 @@ export default function ATCPage() {
     new Set(),
   );
   const [showCallsignFilter, setShowCallsignFilter] = useState(false);
-  const [showTaxiChart, setShowTaxiChart] = useState(false);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-
-  const { chart } = useAirportChart(selectedAirport?.icao);
-
   const { searchTerm, setSearchTerm, searchResults } = useAircraftSearch(
     aircrafts,
     airports,
   );
-
   const time = useUtcTime();
   const { formattedTime, isRunning, start, stop, reset } = useTimer();
   const [showTimerPopup, setShowTimerPopup] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   const drawFlightPlanOnMapRef = useRef<
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
@@ -89,7 +77,8 @@ export default function ATCPage() {
         next.delete(prefix);
       } else {
         next.add(prefix);
-      } return next;
+      }
+      return next;
     });
   }, []);
 
@@ -110,13 +99,6 @@ export default function ATCPage() {
       setSelectedAircraft(updatedAircraft);
     }
   }, [aircrafts, isViewingHistory, selectedAircraft]);
-
-  function handleAircraftSelect(aircraft: PositionUpdate | null) {
-    setIsViewingHistory(false);
-    setHistoryPath(null);
-    setSelectedAircraft(aircraft);
-    setSelectedAirport(undefined);
-  }
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
@@ -165,7 +147,7 @@ export default function ATCPage() {
               {time} <span className="text-[10px] text-slate-500">UTC</span>
             </span>
             {isRunning && (
-              <span className="mt-1 animate-pulse font-mono text-[9px] tracking-[0.2em] text-emerald-400 uppercase">
+              <span className="mt-1 animate-pulse font-mono text-[9px] leading-none tracking-[0.2em] text-emerald-400 uppercase">
                 Timer Active
               </span>
             )}
@@ -174,91 +156,30 @@ export default function ATCPage() {
 
         <div className="pointer-events-auto flex flex-col items-end gap-3">
           <div className="flex min-h-[44px] items-center justify-center gap-4 rounded-full border border-white/5 bg-black/20 px-3 py-1.5 backdrop-blur-sm">
-            <ConnectionStatusIndicator
-              status={connectionStatus}
-              isMobile={isMobile}
-            />
+            <div className="flex items-center">
+              <ConnectionStatusIndicator
+                status={connectionStatus}
+                isMobile={isMobile}
+              />
+            </div>
             <div className="h-4 w-[1px] bg-white/10" />
-            <UserAuth />
+            <div className="flex items-center justify-center">
+              <UserAuth />
+            </div>
           </div>
 
-          <div className="flex gap-2">
-            {selectedAirport && (
-              canViewTaxiCharts && chart ? (
-                <button
-                  onClick={() => setShowTaxiChart(true)}
-                  className="flex h-11 items-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 text-xs text-cyan-400 backdrop-blur-md transition-all hover:bg-cyan-500/20"
-                >
-                  Taxi Chart
-                </button>
-              ) : (
-                <button
-                  onClick={() => router.push("/upgrade")}
-                  className="flex h-11 items-center rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 text-xs text-yellow-400 backdrop-blur-md transition-all hover:bg-yellow-500/20"
-                >
-                  Taxi Charts (Premium)
-                </button>
-              )
-            )}
-
-            <button
-              onClick={() => setShowCallsignFilter(!showCallsignFilter)}
-              className={`flex h-11 items-center gap-2 rounded-xl border px-4 transition-all ${
-                selectedCallsigns.size > 0
-                  ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-300"
-                  : "border-white/10 bg-black/40 text-slate-400 hover:border-white/20 hover:bg-black/60"
-              } backdrop-blur-md`}
-            >
-              <span className="text-xs font-medium">Filter</span>
-              {selectedCallsigns.size > 0 && (
-                <span className="rounded-full bg-cyan-500/30 px-1.5 py-0.5 text-[10px] font-bold">
-                  {selectedCallsigns.size}
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => setShowCallsignFilter(!showCallsignFilter)}
+            className={`flex h-11 items-center gap-2 rounded-xl border px-4 transition-all ${
+              selectedCallsigns.size > 0
+                ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-300"
+                : "border-white/10 bg-black/40 text-slate-400 hover:border-white/20 hover:bg-black/60"
+            } backdrop-blur-md`}
+          >
+            <span className="text-xs font-medium">Filter</span>
+          </button>
         </div>
       </header>
-
-      {showCallsignFilter && (
-        <div className="absolute top-32 right-6 z-[10011] w-96 animate-in fade-in zoom-in-95">
-          <CallsignFilter
-            aircrafts={aircrafts}
-            selectedCallsigns={selectedCallsigns}
-            onToggleCallsign={handleToggleCallsign}
-            onClearFilters={handleClearFilters}
-          />
-        </div>
-      )}
-
-      {showTimerPopup && (
-        <div className="absolute top-20 left-1/2 z-[10011] w-64 -translate-x-1/2 animate-in fade-in zoom-in-95">
-          <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-5 backdrop-blur-2xl">
-            <div className="mb-4 text-center">
-              <span className="text-[10px] tracking-widest text-slate-500 uppercase">
-                Chrono
-              </span>
-              <div className="font-mono text-3xl font-light text-white">
-                {formattedTime}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={isRunning ? stop : start}
-                className="flex-1 rounded-xl border py-2.5 text-[10px] font-bold uppercase transition-all"
-              >
-                {isRunning ? "Stop" : "Start"}
-              </button>
-              <button
-                onClick={reset}
-                className="flex-1 rounded-xl border py-2.5 text-[10px] font-bold uppercase"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <main className="absolute inset-0 z-0">
         {isLoading && aircrafts.length === 0 ? (
@@ -282,7 +203,9 @@ export default function ATCPage() {
         <aside className="fixed inset-y-0 right-0 z-[10012] w-[400px]">
           <Sidebar
             aircraft={selectedAircraft}
-            onWaypointClick={() => null}
+            onWaypointClick={() => {
+              // Intentional no-op
+            }}
             onHistoryClick={(path) => {
               setHistoryPath(path);
               setIsViewingHistory(true);
@@ -292,12 +215,39 @@ export default function ATCPage() {
         </aside>
       )}
 
-      {showTaxiChart && chart && canViewTaxiCharts && (
-        <TaxiChartViewer
-          chart={chart}
-          onClose={() => setShowTaxiChart(false)}
-        />
+      {selectedAirport && (
+        <div className="pointer-events-auto fixed bottom-6 left-1/2 z-[10012] -translate-x-1/2">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/80 px-5 py-3 backdrop-blur-xl shadow-2xl">
+            <div className="flex flex-col">
+              <span className="font-mono text-xs font-semibold text-cyan-300">
+                {selectedAirport.icao}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {selectedAirport.name}
+              </span>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedAirport(undefined)
+              }}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-wide text-white/60 hover:bg-white/10"
+            >
+              Unselect
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
+
+  function handleAircraftSelect(aircraft: PositionUpdate | null) {
+    setIsViewingHistory(false);
+    setHistoryPath(null);
+    setSelectedAircraft(aircraft);
+
+    if (aircraft) {
+      setSelectedAirport(undefined);
+    }
+  }
 }

@@ -1,7 +1,6 @@
-// components/map/useSelectedAirportHandling.ts
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { type Airport } from "~/components/map"; // Adjusted path
+import { type Airport } from "~/components/map";
 
 interface UseSelectedAirportHandlingProps {
   mapInstance: React.MutableRefObject<L.Map | null>;
@@ -14,68 +13,34 @@ export const useSelectedAirportHandling = ({
   selectedAirport,
   isRadarMode,
 }: UseSelectedAirportHandlingProps) => {
-  const selectedAirportMarkerRef = useRef<L.Marker | null>(null);
+  const highlightRef = useRef<L.Circle | null>(null);
 
   useEffect(() => {
     if (!mapInstance.current) return;
 
-    if (selectedAirport) {
-      mapInstance.current.setView(
-        [selectedAirport.lat, selectedAirport.lon],
-        12,
-      );
-
-      if (selectedAirportMarkerRef.current) {
-        mapInstance.current.removeLayer(selectedAirportMarkerRef.current);
-      }
-      selectedAirportMarkerRef.current = L.marker(
-        [selectedAirport.lat, selectedAirport.lon],
-        {
-          icon: L.divIcon({
-            className: "selected-airport-marker",
-            html: `
-              <div style="
-                background-color: ${isRadarMode ? "#00ffff" : "#3b82f6"};
-                color: ${isRadarMode ? "black" : "white"};
-                padding: 5px 10px;
-                border-radius: 5px;
-                font-weight: bold;
-                white-space: nowrap;
-                border: 2px solid ${isRadarMode ? "#00ffff" : "white"};
-                box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-                transform: translate(-50%, -100%);
-              ">
-                ${selectedAirport.icao}
-              </div>
-              <div style="
-                width: 0;
-                height: 0;
-                border-left: 8px solid transparent;
-                border-right: 8px solid transparent;
-                border-top: 8px solid ${isRadarMode ? "#00ffff" : "#3b82f6"};
-                position: absolute;
-                bottom: 0px;
-                left: 50%;
-                transform: translateX(-50%);
-              "></div>
-            `,
-            iconSize: [80, 40],
-            iconAnchor: [40, 40],
-          }),
-          zIndexOffset: 2000,
-        },
-      )
-        .addTo(mapInstance.current)
-        .bindPopup(
-          `<strong>${selectedAirport.name}</strong><br>${selectedAirport.icao}`,
-          { className: isRadarMode ? "radar-popup" : "" },
-        )
-        .openPopup();
-    } else {
-      if (selectedAirportMarkerRef.current) {
-        mapInstance.current.removeLayer(selectedAirportMarkerRef.current);
-        selectedAirportMarkerRef.current = null;
-      }
+    if (highlightRef.current) {
+      mapInstance.current.removeLayer(highlightRef.current);
+      highlightRef.current = null;
     }
+
+    if (!selectedAirport) return;
+
+    mapInstance.current.setView(
+      [selectedAirport.lat, selectedAirport.lon],
+      15,
+      { animate: true },
+    );
+
+    highlightRef.current = L.circle(
+      [selectedAirport.lat, selectedAirport.lon],
+      {
+        radius: 2500,
+        color: isRadarMode ? "#22d3ee" : "#3b82f6",
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.05,
+        interactive: false,
+      },
+    ).addTo(mapInstance.current);
   }, [selectedAirport, isRadarMode, mapInstance]);
 };
