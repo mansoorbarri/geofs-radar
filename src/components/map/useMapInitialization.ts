@@ -72,10 +72,7 @@ export const useMapInitialization = ({
   useEffect(() => {
     if (mapInstance.current) return;
 
-    const worldBounds = L.latLngBounds(
-      L.latLng(-85, -360),
-      L.latLng(85, 360),
-    );
+    const worldBounds = L.latLngBounds(L.latLng(-85, -360), L.latLng(85, 360));
 
     const map = L.map(mapContainerId, {
       zoomAnimation: true,

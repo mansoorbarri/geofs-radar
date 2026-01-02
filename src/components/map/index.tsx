@@ -108,6 +108,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [canUseAdvancedWeather]);
 
+  const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
+    const target = e.originalEvent.target as HTMLElement;
+
+    if (
+      target.closest(".leaflet-marker-icon") ||
+      target.closest(".leaflet-control") ||
+      target.closest(".leaflet-popup-pane")
+    ) {
+      return;
+    }
+
+    mapRefs.flightPlanLayerGroup.current?.clearLayers();
+    mapRefs.historyLayerGroup.current?.clearLayers();
+
+    currentSelectedAircraftRef.current = null;
+    setSelectedAircraftId(null);
+
+    onAircraftSelectRef.current(null);
+    setIsSettingsOpen(false);
+  }, []);
+
   const mapRefs = useMapInitialization({
     mapContainerId: "map-container",
     setIsHeadingMode,
@@ -115,11 +136,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsOSMMode,
     setIsOpenAIPEnabled,
     setIsWeatherOverlayEnabled: setShowPrecipitation,
-    canUseRadarMode,
     setIsSettingsOpen,
-    onMapClick: useCallback(() => {
-      // Intentional no-op: Map clicks are handled by stableOnMapClick
-    }, []),
+    canUseRadarMode,
+    onMapClick: handleMapClick,
     setHeadingControlRef: headingControlRef,
     setRadarControlRef: radarControlRef,
     setOSMControlRef: osmControlRef,
