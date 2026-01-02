@@ -10,6 +10,16 @@ interface CallsignFilterProps {
   onClearFilters: () => void;
 }
 
+const getAirlineLogoFromFlightNumber = (
+  flightNo?: string,
+): string | null => {
+  if (!flightNo) return null;
+  const match = /^[A-Z]{2,3}/.exec(flightNo.trim().toUpperCase());
+  if (!match) return null;
+  const code = match[0];
+  return `https://content.airhex.com/content/logos/airlines_${code}_200_200_s.png?theme=dark`;
+};
+
 export function CallsignFilter({
   aircrafts,
   selectedCallsigns,
@@ -22,12 +32,10 @@ export function CallsignFilter({
 
     aircrafts.forEach((aircraft) => {
       if (!aircraft.flightNo) return;
-
-      const trimmed = aircraft.flightNo.trim();
-      const upperFlightNo = trimmed.toUpperCase();
-      const match = prefixRegex.exec(upperFlightNo);
+      const match = prefixRegex.exec(
+        aircraft.flightNo.trim().toUpperCase(),
+      );
       const prefix = match?.[0];
-
       if (prefix && prefix.length >= 2) {
         prefixMap.set(prefix, (prefixMap.get(prefix) || 0) + 1);
       }
@@ -39,47 +47,85 @@ export function CallsignFilter({
   }, [aircrafts]);
 
   return (
-    <div className="pointer-events-auto rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-        <span className="text-xs font-medium tracking-wider text-slate-400 uppercase">
-          Filter by Airline
+<div className="pointer-events-auto flex h-full flex-col border-l border-white/10 bg-black/85 backdrop-blur-xl
+  animate-in fade-in slide-in-from-right-2 duration-200 ease-out">
+    {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+        <span className="text-sm font-semibold tracking-widest text-cyan-400 uppercase">
+          Airline Filter
         </span>
         {selectedCallsigns.size > 0 && (
           <button
             onClick={onClearFilters}
-            className="text-xs text-cyan-400 transition-colors hover:text-cyan-300"
+            className="text-sm tracking-wide text-cyan-400 hover:text-cyan-300"
           >
             Clear
           </button>
         )}
       </div>
-      <div className="max-h-96 overflow-y-auto p-2">
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto">
         {callsignPrefixes.length === 0 ? (
-          <div className="p-4 text-center text-xs text-slate-500">
-            No aircraft with flight numbers found
+          <div className="p-8 text-center text-sm text-slate-500">
+            No flights with callsigns
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <ul className="divide-y divide-white/5">
             {callsignPrefixes.map(({ prefix, count }) => {
               const isSelected = selectedCallsigns.has(prefix);
+              const logoUrl = getAirlineLogoFromFlightNumber(prefix);
+
               return (
-                <button
-                  key={prefix}
-                  onClick={() => onToggleCallsign(prefix)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-                    isSelected
-                      ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-300"
-                      : "border-white/10 bg-black/20 text-slate-400 hover:border-white/20 hover:bg-black/40"
-                  }`}
-                >
-                  <span className="font-mono">{prefix}</span>
-                  <span className="ml-1.5 text-[10px] opacity-60">
-                    ({count})
-                  </span>
-                </button>
+                <li key={prefix}>
+                  <button
+                    onClick={() => onToggleCallsign(prefix)}
+                    className={`flex w-full items-center gap-5 px-6 py-4 transition-all duration-150 ${
+                      isSelected
+                        ? "bg-cyan-500/15 text-cyan-300"
+                        : "hover:bg-white/5 text-slate-200"
+                    }`}
+                  >
+                    {/* Logo */}
+                    <div className="flex h-10 w-10 items-center justify-center">
+                      {logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt={prefix}
+                          className="h-10 w-10 rounded bg-black/40 object-contain"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display =
+                              "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded bg-white/5 font-mono text-sm text-slate-400">
+                          {prefix}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Airline info */}
+                    <div className="flex flex-col items-start">
+                      <span className="font-mono text-lg leading-tight">
+                        {prefix}
+                      </span>
+                      <span className="text-sm text-slate-500">
+                        {count} flight{count > 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    {/* Selected indicator */}
+                    {isSelected && (
+                      <div className="ml-auto rounded-full bg-cyan-400/20 px-3 py-1 text-xs font-bold uppercase text-cyan-300">
+                        Active
+                      </div>
+                    )}
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </div>
     </div>
