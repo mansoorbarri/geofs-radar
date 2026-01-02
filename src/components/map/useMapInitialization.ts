@@ -12,11 +12,12 @@ import {
 interface UseMapInitializationProps {
   mapContainerId: string;
   setIsHeadingMode: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsRadarMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsRadarMode: () => void;
   setIsOSMMode?: React.Dispatch<React.SetStateAction<boolean>>;
   setIsOpenAIPEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   setIsWeatherOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  canUseRadarMode: boolean;
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setHeadingControlRef: React.MutableRefObject<HeadingModeControl | null>;
   setRadarControlRef: React.MutableRefObject<RadarModeControl | null>;
@@ -47,6 +48,7 @@ export const useMapInitialization = ({
   setIsOpenAIPEnabled,
   setIsWeatherOverlayEnabled,
   setIsSettingsOpen,
+  canUseRadarMode,
   onMapClick,
   setHeadingControlRef,
   setRadarControlRef,
@@ -70,7 +72,10 @@ export const useMapInitialization = ({
   useEffect(() => {
     if (mapInstance.current) return;
 
-    const worldBounds = L.latLngBounds(L.latLng(-85, -360), L.latLng(85, 360));
+    const worldBounds = L.latLngBounds(
+      L.latLng(-85, -360),
+      L.latLng(85, 360),
+    );
 
     const map = L.map(mapContainerId, {
       zoomAnimation: true,
@@ -92,8 +97,6 @@ export const useMapInitialization = ({
     osmLayer.current = L.tileLayer(
       "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         minZoom: 3,
         bounds: worldBounds,
@@ -103,10 +106,8 @@ export const useMapInitialization = ({
     satelliteHybridLayer.current = L.tileLayer(
       "https://mt0.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}",
       {
-        attribution: "Esri, Garmin, FAO, USGS, NPS",
         maxZoom: 18,
         minZoom: 3,
-        transparent: true,
         bounds: worldBounds,
       },
     );
@@ -114,8 +115,6 @@ export const useMapInitialization = ({
     radarBaseLayer.current = L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
       {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: "abcd",
         maxZoom: 18,
         minZoom: 3,
@@ -125,7 +124,6 @@ export const useMapInitialization = ({
 
     const openAIPUrl = `https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=${process.env.NEXT_PUBLIC_OPENAIP_API_KEY}`;
     openAIPLayer.current = L.tileLayer(openAIPUrl, {
-      attribution: '&copy; <a href="https://www.openaip.net/">OpenAIP</a>',
       maxZoom: 19,
       minZoom: 3,
       noWrap: true,
@@ -143,9 +141,13 @@ export const useMapInitialization = ({
     map.addControl(headingControl);
     setHeadingControlRef.current = headingControl;
 
-    const radarControl = new RadarModeControl({}, setIsRadarMode);
-    map.addControl(radarControl);
-    setRadarControlRef.current = radarControl;
+    if (canUseRadarMode) {
+      const radarControl = new RadarModeControl({}, setIsRadarMode);
+      map.addControl(radarControl);
+      setRadarControlRef.current = radarControl;
+    } else {
+      setRadarControlRef.current = null;
+    }
 
     if (setIsOSMMode && setOSMControlRef) {
       const osmControl = new OSMControl({}, setIsOSMMode);
@@ -171,13 +173,11 @@ export const useMapInitialization = ({
     map.on("click", onMapClick);
 
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.off("click", onMapClick);
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
+      map.off("click", onMapClick);
+      map.remove();
+      mapInstance.current = null;
     };
-  }, [mapContainerId, onMapClick]);
+  }, [mapContainerId, onMapClick, canUseRadarMode]);
 
   return {
     mapInstance,

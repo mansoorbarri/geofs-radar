@@ -115,6 +115,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsOSMMode,
     setIsOpenAIPEnabled,
     setIsWeatherOverlayEnabled: setShowPrecipitation,
+    canUseRadarMode,
     setIsSettingsOpen,
     onMapClick: useCallback(() => {
       // Intentional no-op: Map clicks are handled by stableOnMapClick
