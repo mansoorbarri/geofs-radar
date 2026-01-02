@@ -3,12 +3,16 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
 import { type PositionUpdate } from "~/lib/aircraft-store";
+import { useUserCapabilities } from "~/hooks/useUserCapabilities";
+
 import { useMapInitialization } from "./useMapInitialization";
 import { useFlightPlanDrawing } from "./useFlightPlanDrawing";
 import { useMapLayersAndMarkers } from "./useMapLayersAndMarkers";
 import { useSelectedAirportHandling } from "./useSelectedAirportHandling";
 import { useHeadingModeInteraction } from "./useHeadingModeInteraction";
+
 import {
   HeadingModeControl,
   RadarModeControl,
@@ -17,6 +21,7 @@ import {
   WeatherOverlayControl,
   RadarSettingsControl,
 } from "~/components/map/MapControls";
+
 import { MapGlobalStyles } from "~/styles/MapGlobalStyles";
 import { useMetarOverlay } from "~/hooks/useMetarOverlay";
 import { useWeatherOverlayLayer } from "~/hooks/useWeatherOverlayLayer";
@@ -35,8 +40,7 @@ interface MapComponentProps {
   aircrafts: PositionUpdate[];
   airports: Airport[];
   onAircraftSelect: (aircraft: PositionUpdate | null) => void;
-  selectedWaypointIndex?: number | null;
-  selectedAirport?: Airport | undefined;
+  selectedAirport?: Airport;
   setDrawFlightPlanOnMap: (
     func: (aircraft: PositionUpdate, shouldZoom?: boolean) => void,
   ) => void;
@@ -53,15 +57,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
   onMapReady,
   historyPath,
 }) => {
+  const { canViewTaxiCharts } = useUserCapabilities();
+  const canUseRadarMode = canViewTaxiCharts;
+  const canUseAdvancedWeather = canViewTaxiCharts;
+
   const [isHeadingMode, setIsHeadingMode] = useState(false);
   const [isRadarMode, setIsRadarMode] = useState(false);
   const [isOSMMode, setIsOSMMode] = useState(false);
   const [isOpenAIPEnabled, setIsOpenAIPEnabled] = useState(false);
-  const [isWeatherOverlayEnabled, setIsWeatherOverlayEnabled] = useState(false);
+
+  const [showPrecipitation, setShowPrecipitation] = useState(false);
+  const [showAirmets, setShowAirmets] = useState(false);
+  const [showSigmets, setShowSigmets] = useState(false);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(
     null,
   );
+
   const [icaoInput, setIcaoInput] = useState("");
   const [showMetar, setShowMetar] = useState(true);
 
@@ -77,13 +90,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
     onAircraftSelectRef.current = onAircraftSelect;
   }, [onAircraftSelect]);
 
+  const toggleRadarMode = useCallback(() => {
+    if (!canUseRadarMode) return;
+    setIsRadarMode((prev) => !prev);
+  }, [canUseRadarMode]);
+
+  useEffect(() => {
+    if (!canUseRadarMode && isRadarMode) {
+      setIsRadarMode(false);
+    }
+  }, [canUseRadarMode, isRadarMode]);
+
+  useEffect(() => {
+    if (!canUseAdvancedWeather) {
+      setShowAirmets(false);
+      setShowSigmets(false);
+    }
+  }, [canUseAdvancedWeather]);
+
   const mapRefs = useMapInitialization({
     mapContainerId: "map-container",
     setIsHeadingMode,
-    setIsRadarMode,
+    setIsRadarMode: toggleRadarMode,
     setIsOSMMode,
     setIsOpenAIPEnabled,
-    setIsWeatherOverlayEnabled,
+    setIsWeatherOverlayEnabled: setShowPrecipitation,
     setIsSettingsOpen,
     onMapClick: useCallback(() => {
       // Intentional no-op: Map clicks are handled by stableOnMapClick
@@ -104,61 +135,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     onAircraftSelect: onAircraftSelectRef.current,
     setSelectedAircraftId,
   });
-
-  const stableOnMapClick = useCallback(
-    (e: L.LeafletMouseEvent) => {
-      const target = e.originalEvent.target as HTMLElement;
-      if (
-        !target.closest(".leaflet-marker-icon") &&
-        !target.closest(".leaflet-popup-pane") &&
-        !target.closest(".leaflet-control") &&
-        mapRefs.flightPlanLayerGroup.current &&
-        mapRefs.historyLayerGroup.current
-      ) {
-        mapRefs.flightPlanLayerGroup.current.clearLayers();
-        mapRefs.historyLayerGroup.current.clearLayers();
-        currentSelectedAircraftRef.current = null;
-        setSelectedAircraftId(null);
-        onAircraftSelectRef.current(null);
-        setIsSettingsOpen(false);
-      }
-    },
-    [
-      setSelectedAircraftId,
-      currentSelectedAircraftRef,
-      mapRefs.flightPlanLayerGroup,
-      mapRefs.historyLayerGroup,
-    ],
-  );
-
-  useEffect(() => {
-    if (mapRefs.mapInstance.current) {
-      mapRefs.mapInstance.current.off("click");
-      mapRefs.mapInstance.current.on("click", stableOnMapClick);
-    }
-    return () => {
-      if (mapRefs.mapInstance.current) {
-        mapRefs.mapInstance.current.off("click", stableOnMapClick);
-      }
-    };
-  }, [mapRefs.mapInstance, stableOnMapClick]);
-
-  useEffect(() => {
-    const layerGroup = mapRefs.historyLayerGroup.current;
-    if (!layerGroup) return;
-
-    layerGroup.clearLayers();
-
-    if (historyPath && historyPath.length > 1) {
-      L.polyline(historyPath, {
-        color: "#3b82f6",
-        weight: 4,
-        opacity: 0.8,
-        dashArray: "10, 10",
-        lineJoin: "round",
-      }).addTo(layerGroup);
-    }
-  }, [historyPath, mapRefs.historyLayerGroup]);
 
   useMapLayersAndMarkers({
     mapInstance: mapRefs.mapInstance,
@@ -194,19 +170,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   useWeatherOverlayLayer({
     mapInstance: mapRefs.mapInstance,
-    isWeatherOverlayEnabled,
+    showPrecipitation,
+    showAirmets: canUseAdvancedWeather && showAirmets,
+    showSigmets: canUseAdvancedWeather && showSigmets,
   });
 
   useEffect(() => {
     if (headingControlRef.current)
       headingControlRef.current.updateState(isHeadingMode);
     if (radarControlRef.current)
-      radarControlRef.current.updateState(isRadarMode);
+      radarControlRef.current.updateState(canUseRadarMode && isRadarMode);
     if (osmControlRef.current) osmControlRef.current.updateState(isOSMMode);
     if (openAIPControlRef.current)
       openAIPControlRef.current.updateState(isOpenAIPEnabled);
     if (weatherControlRef.current)
-      weatherControlRef.current.updateState(isWeatherOverlayEnabled);
+      weatherControlRef.current.updateState(showPrecipitation);
     if (settingsControlRef.current)
       settingsControlRef.current.updateState(isSettingsOpen);
   }, [
@@ -214,8 +192,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
     isRadarMode,
     isOSMMode,
     isOpenAIPEnabled,
-    isWeatherOverlayEnabled,
+    showPrecipitation,
     isSettingsOpen,
+    canUseRadarMode,
   ]);
 
   useEffect(() => {
@@ -239,32 +218,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
       <div id="map-container" style={{ height: "100%", width: "100%" }} />
 
       {isSettingsOpen && (
-        <div className="animate-in fade-in zoom-in-95 absolute top-[86px] left-[70px] z-[10020] w-[320px] duration-200">
-          {/* Decorative Arrow Pointing to Button */}
-          <div
-            className="absolute bottom-[50px] left-[-6px] h-3 w-3 rotate-45 border-b border-l border-white/10 bg-[#0a1219]/95 shadow-[-4px_4px_10px_rgba(0,0,0,0.5)]"
-            style={{ backdropFilter: "blur(20px)" }}
-          />
-
-          {/* Main Popup Body */}
+        <div className="animate-in fade-in zoom-in-95 absolute top-[180px] left-[70px] z-[10020] w-[320px] duration-200">
           <div className="rounded-xl border border-white/10 bg-[#0a1219]/95 p-5 shadow-2xl backdrop-blur-xl">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-                  <h3 className="font-mono text-[10px] font-bold tracking-[0.2em] text-cyan-400 uppercase">
-                    Radar Configuration
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setIsSettingsOpen(false)}
-                  className="text-white/40 transition-colors hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-              <RadarSettings />
-            </div>
+            <RadarSettings
+              isPremium={canViewTaxiCharts}
+              showPrecipitation={showPrecipitation}
+              setShowPrecipitation={setShowPrecipitation}
+              showAirmets={showAirmets}
+              setShowAirmets={setShowAirmets}
+              showSigmets={showSigmets}
+              setShowSigmets={setShowSigmets}
+            />
           </div>
         </div>
       )}

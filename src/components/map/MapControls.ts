@@ -49,7 +49,7 @@ export class RadarSettingsControl extends L.Control {
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Radar Settings", "&#9881;"); // ⚙️
+    applyMetarStyleButton(container, "Radar Settings", "&#9881;");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -120,7 +120,7 @@ export class RadarModeControl extends L.Control {
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Toggle Radar Mode", "&#128223;"); // 📡
+    applyMetarStyleButton(container, "Radar Mode", "&#128223;");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -155,7 +155,7 @@ export class OSMControl extends L.Control {
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Toggle OpenStreetMap", "&#128506;"); // 🗺️
+    applyMetarStyleButton(container, "OpenStreetMap", "&#128506;");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -190,7 +190,7 @@ export class OpenAIPControl extends L.Control {
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Toggle OpenAIP Layer", "&#127758;"); // 🌍
+    applyMetarStyleButton(container, "OpenAIP Layer", "&#127758;");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -211,21 +211,21 @@ export class OpenAIPControl extends L.Control {
 export class WeatherOverlayControl extends L.Control {
   public options = { position: "topleft" as L.ControlPosition };
   public _container: HTMLDivElement | null = null;
-  private _toggleWX: React.Dispatch<React.SetStateAction<boolean>>;
+  private _togglePrecip: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
 
   constructor(
     options: L.ControlOptions,
-    toggleWX: React.Dispatch<React.SetStateAction<boolean>>,
+    togglePrecip: React.Dispatch<React.SetStateAction<boolean>>,
   ) {
     super(options);
-    this._toggleWX = toggleWX;
-    this._boundClick = () => this._toggleWX((prev) => !prev);
+    this._togglePrecip = togglePrecip;
+    this._boundClick = () => this._togglePrecip((prev) => !prev);
   }
 
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
-    applyMetarStyleButton(container, "Toggle Weather Overlay", "&#9925;"); // ⛅
+    applyMetarStyleButton(container, "Precipitation", "&#9925;");
     container.classList.add("mt-1");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
