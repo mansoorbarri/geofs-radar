@@ -16,7 +16,7 @@ import { useAircraftSearch } from "~/hooks/useAircraftSearch";
 import { ConnectionStatusIndicator } from "~/components/atc/connectionStatusIndicator";
 import { SearchBar } from "~/components/atc/searchbar";
 import { Sidebar } from "~/components/atc/sidebar";
-import { CallsignFilter } from "~/components/atc/callsignFilter";
+import { FIDSPanel } from "~/components/atc/FIDSPanel";
 import Loading from "~/components/loading";
 import { useUtcTime } from "~/hooks/useUtcTime";
 import { useTimer } from "~/hooks/useTimer";
@@ -63,6 +63,7 @@ export default function ATCPage() {
 
   const [showTaxiChart, setShowTaxiChart] = useState(false);
   const { chart } = useAirportChart(selectedAirport?.icao);
+  const [showFids, setShowFids] = useState(false);
 
   const drawFlightPlanOnMapRef = useRef<
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
@@ -186,6 +187,12 @@ export default function ATCPage() {
           >
             <span className="text-xs font-medium">Filter</span>
           </button>
+          <button
+            onClick={() => setShowFids(!showFids)}
+            className="flex h-11 items-center rounded-xl border border-white/10 bg-black/40 px-4 text-xs text-slate-400 hover:bg-black/60"
+          >
+            Flights
+          </button>
         </div>
       </header>
 
@@ -206,6 +213,18 @@ export default function ATCPage() {
           />
         )}
       </main>
+
+      {showFids && (
+  <aside className="fixed inset-y-0 left-0 z-[10012] w-[420px] border-r border-white/10 bg-black/80 backdrop-blur-xl">
+    <FIDSPanel
+      aircrafts={aircrafts}
+      onTrack={(ac) => {
+        setSelectedAircraft(ac);
+        drawFlightPlanOnMapRef.current?.(ac, true);
+      }}
+    />
+  </aside>
+)}
 
       {selectedAircraft && (
         <aside className="fixed inset-y-0 right-0 z-[10012] w-[400px]">
