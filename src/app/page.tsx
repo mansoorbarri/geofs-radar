@@ -21,7 +21,11 @@ import Loading from "~/components/loading";
 import { useUtcTime } from "~/hooks/useUtcTime";
 import { useTimer } from "~/hooks/useTimer";
 import { UserAuth } from "~/components/atc/userAuth";
+import { useAirportChart } from "~/hooks/useAirportCharts";
+import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
+import { useUserCapabilities } from "~/hooks/useUserCapabilities";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const DynamicMapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
@@ -29,9 +33,13 @@ const DynamicMapComponent = dynamic(() => import("~/components/map"), {
 });
 
 export default function ATCPage() {
+  const router = useRouter();
   const isMobile = useMobileDetection();
   const { aircrafts, isLoading, connectionStatus } = useAircraftStream();
   const { airports } = useAirportData();
+
+  const { canViewTaxiCharts } = useUserCapabilities();
+
   const [selectedAircraft, setSelectedAircraft] =
     useState<PositionUpdate | null>(null);
   const [selectedAirport, setSelectedAirport] = useState<any>(undefined);
@@ -47,10 +55,14 @@ export default function ATCPage() {
     aircrafts,
     airports,
   );
+
   const time = useUtcTime();
   const { formattedTime, isRunning, start, stop, reset } = useTimer();
   const [showTimerPopup, setShowTimerPopup] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  const [showTaxiChart, setShowTaxiChart] = useState(false);
+  const { chart } = useAirportChart(selectedAirport?.icao);
 
   const drawFlightPlanOnMapRef = useRef<
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
@@ -156,16 +168,12 @@ export default function ATCPage() {
 
         <div className="pointer-events-auto flex flex-col items-end gap-3">
           <div className="flex min-h-[44px] items-center justify-center gap-4 rounded-full border border-white/5 bg-black/20 px-3 py-1.5 backdrop-blur-sm">
-            <div className="flex items-center">
-              <ConnectionStatusIndicator
-                status={connectionStatus}
-                isMobile={isMobile}
-              />
-            </div>
+            <ConnectionStatusIndicator
+              status={connectionStatus}
+              isMobile={isMobile}
+            />
             <div className="h-4 w-[1px] bg-white/10" />
-            <div className="flex items-center justify-center">
-              <UserAuth />
-            </div>
+            <UserAuth />
           </div>
 
           <button
@@ -203,9 +211,7 @@ export default function ATCPage() {
         <aside className="fixed inset-y-0 right-0 z-[10012] w-[400px]">
           <Sidebar
             aircraft={selectedAircraft}
-            onWaypointClick={() => {
-              // Intentional no-op
-            }}
+            onWaypointClick={undefined}
             onHistoryClick={(path) => {
               setHistoryPath(path);
               setIsViewingHistory(true);
@@ -214,7 +220,7 @@ export default function ATCPage() {
           />
         </aside>
       )}
-
+      
       {selectedAirport && (
         <div className="pointer-events-auto fixed bottom-6 left-1/2 z-[10012] -translate-x-1/2">
           <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/80 px-5 py-3 backdrop-blur-xl shadow-2xl">
@@ -227,16 +233,38 @@ export default function ATCPage() {
               </span>
             </div>
 
+            {canViewTaxiCharts ? (
+              <button
+                onClick={() => setShowTaxiChart(true)}
+                className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[10px] uppercase tracking-wide text-cyan-300 hover:bg-cyan-500/20"
+              >
+                Taxi Chart
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push("/upgrade")}
+                className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-[10px] uppercase tracking-wide text-yellow-400 hover:bg-yellow-500/20"
+              >
+                Taxi Charts (Premium)
+              </button>
+            )}
+
             <button
-              onClick={() => {
-                setSelectedAirport(undefined)
-              }}
+              onClick={() => setSelectedAirport(undefined)}
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-wide text-white/60 hover:bg-white/10"
             >
               Unselect
             </button>
           </div>
+          
         </div>
+      )}
+
+      {showTaxiChart && chart && (
+        <TaxiChartViewer
+          chart={chart}
+          onClose={() => setShowTaxiChart(false)}
+        />
       )}
     </div>
   );
