@@ -259,7 +259,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         <div className="animate-in fade-in zoom-in-95 absolute top-[180px] left-[70px] z-[10020] w-[320px] duration-200">
           <div className="rounded-xl border border-white/10 bg-[#0a1219]/95 p-5 shadow-2xl backdrop-blur-xl">
             <RadarSettings
-              isPremium={canViewTaxiCharts}
+              isPRO={canViewTaxiCharts}
               showPrecipitation={showPrecipitation}
               setShowPrecipitation={setShowPrecipitation}
               showAirmets={showAirmets}

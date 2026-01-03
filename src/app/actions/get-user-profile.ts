@@ -12,8 +12,6 @@ export async function getUserProfile(googleId?: string) {
     where: { clerkId: userId },
     select: {
       role: true,
-      radarKey: true,
-      airlineLogo: true,
       googleId: true,
     },
   });

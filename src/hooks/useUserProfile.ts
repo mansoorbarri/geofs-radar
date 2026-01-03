@@ -6,8 +6,6 @@ import { getUserProfile } from "~/app/actions/get-user-profile";
 
 interface UserProfile {
   role: UserRole;
-  radarKey: string | null;
-  airlineLogo: string | null;
   googleId: string | null;
 }
 

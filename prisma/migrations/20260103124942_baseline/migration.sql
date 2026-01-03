@@ -1,18 +1,18 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('FREE', 'PREMIUM', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('FREE', 'PRO');
 
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "clerkId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "username" TEXT,
     "role" "Role" NOT NULL DEFAULT 'FREE',
     "radarKey" TEXT NOT NULL,
-    "airlineLogo" TEXT,
-    "airlineName" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "deletedAt" TIMESTAMP(3),
+    "googleId" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -58,6 +58,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "User_radarKey_key" ON "User"("radarKey");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_googleId_key" ON "User"("googleId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Server_inviteCode_key" ON "Server"("inviteCode");
 
 -- CreateIndex
@@ -67,4 +70,4 @@ CREATE UNIQUE INDEX "Server_ownerId_key" ON "Server"("ownerId");
 ALTER TABLE "Flight" ADD CONSTRAINT "Flight_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Server" ADD CONSTRAINT "Server_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Server" ADD CONSTRAINT "Server_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

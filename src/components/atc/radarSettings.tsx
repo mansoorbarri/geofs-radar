@@ -3,7 +3,7 @@
 import React from "react";
 
 interface RadarSettingsProps {
-  isPremium: boolean;
+  isPRO: boolean;
 
   showPrecipitation: boolean;
   setShowPrecipitation: (v: boolean) => void;
@@ -16,7 +16,7 @@ interface RadarSettingsProps {
 }
 
 export const RadarSettings = ({
-  isPremium,
+  isPRO,
   showPrecipitation,
   setShowPrecipitation,
   showAirmets,
@@ -45,14 +45,14 @@ export const RadarSettings = ({
           label="AIRMETs"
           checked={showAirmets}
           onChange={setShowAirmets}
-          disabled={!isPremium}
+          disabled={!isPRO}
         />
 
         <Toggle
           label="SIGMETs"
           checked={showSigmets}
           onChange={setShowSigmets}
-          disabled={!isPremium}
+          disabled={!isPRO}
         />
       </div>
     </div>
@@ -80,7 +80,7 @@ function Toggle({
         {label}
         {disabled && (
           <span className="ml-2 text-[10px] text-yellow-500 uppercase">
-            Premium
+            PRO
           </span>
         )}
       </span>

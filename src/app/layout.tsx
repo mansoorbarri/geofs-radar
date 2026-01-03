@@ -6,9 +6,6 @@ import { Geist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 
-import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
-import { extractRouterConfig } from "uploadthing/server";
-import { ourFileRouter } from "~/app/api/uploadthing/core";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -45,7 +42,6 @@ export default function RootLayout({
       <html lang="en" className={`${geist.variable}`}>
         <body>
           <Toaster theme="dark" position="top-center" richColors />
-          <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
           {children}
         </body>
       </html>

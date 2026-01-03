@@ -30,7 +30,7 @@ import { ControlDock } from "~/components/atc/controlDock";
 import { FIDSPanel } from "~/components/atc/FIDSPanel";
 import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
 import Loading from "~/components/loading";
-import { DockIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
+import { UpgradeIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
 
 const DynamicMapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
@@ -223,29 +223,36 @@ export default function ATCPage() {
         </aside>
       )}
 
-      <ControlDock
-        side="right"
-        items={[
-          {
-            id: "fids",
-            label: "Flights",
-            icon: FlightsIcon,
-            active: activeRightPanel === "fids",
-            onClick: () =>
-              setActiveRightPanel(activeRightPanel === "fids" ? null : "fids"),
-          },
-          {
-            id: "filter",
-            label: "Filter",
-            icon: FilterIcon,
-            active: activeRightPanel === "filter",
-            onClick: () =>
-              setActiveRightPanel(
-                activeRightPanel === "filter" ? null : "filter",
-              ),
-          },
-        ]}
-      />
+<ControlDock
+  side="right"
+  items={[
+    {
+      id: "fids",
+      label: "Flights",
+      icon: FlightsIcon,
+      active: activeRightPanel === "fids",
+      onClick: () =>
+        setActiveRightPanel(activeRightPanel === "fids" ? null : "fids"),
+    },
+    {
+      id: "filter",
+      label: "Filter",
+      icon: FilterIcon,
+      active: activeRightPanel === "filter",
+      onClick: () =>
+        setActiveRightPanel(
+          activeRightPanel === "filter" ? null : "filter",
+        ),
+    },
+    {
+      id: "upgrade",
+      label: canViewTaxiCharts ? "PRO" : "Upgrade",
+      icon: UpgradeIcon,
+      active: false,
+      onClick: () => router.push("/pricing"),
+    },
+  ]}
+/>
 
       {selectedAirport && (
         <div className="fixed bottom-6 left-1/2 z-[10012] -translate-x-1/2">

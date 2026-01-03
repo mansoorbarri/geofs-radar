@@ -7,65 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-enum Role {
-  FREE
-  PREMIUM
-  ADMIN
-}
-
 model User {
-  id            String   @id @default(cuid()) // Matches Clerk ID or internal ID
-  clerkId       String   @unique
-  googleId      String?  @unique
-  email         String   @unique
-  username      String?
-  role          Role     @default(PREMIUM)
-  
-  // Premium Customization
-  radarKey      String   @unique @default(cuid()) // For the Tampermonkey script
-  airlineLogo   String?  // URL to the hosted image
-  airlineName   String?
-  
-  // Relations
-  flights       Flight[]
-  ownedServer   Server?  @relation("ServerOwner")
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  clerkId     String   @unique
+  email       String   @unique
+  role        Role     @default(FREE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  googleId    String?  @unique
+  flights     Flight[]
+  ownedServer Server?  @relation("ServerOwner")
 }
 
 model Flight {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
   callsign     String
   aircraftType String
   depICAO      String?
   arrICAO      String?
   squawk       String?
-  
-  // Statistics
-  duration     Int?     // in minutes
-  landingRate  Float?   // fpm
+  duration     Int?
+  landingRate  Float?
   maxAltitude  Int?
   maxSpeed     Int?
-  
-  // Path Data
-  // Store as JSON: [{lat: number, lng: number, alt: number, ts: number}]
-  routeData    Json?    
-  
-  startTime    DateTime @default(now())
+  routeData    Json?
+  startTime    DateTime  @default(now())
   endTime      DateTime?
-  
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Server {
-  id          String   @id @default(cuid())
-  name        String
-  inviteCode  String   @unique @default(nanoid(8))
-  ownerId     String   @unique
-  
-  owner       User     @relation("ServerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique @default(nanoid(8))
+  ownerId    String   @unique
+  createdAt  DateTime @default(now())
+  owner      User     @relation("ServerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  FREE
+  PRO
 }

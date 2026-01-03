@@ -1,5 +1,5 @@
-export type UserRole = "FREE" | "PREMIUM" | "ADMIN";
+export type UserRole = "FREE" | "PRO" | "ADMIN";
 
-export function hasPremium(role?: UserRole | null) {
-  return role === "PREMIUM";
+export function hasPRO(role?: UserRole | null) {
+  return role === "PRO";
 }

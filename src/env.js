@@ -10,8 +10,6 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]),
     CLERK_SECRET_KEY: z.string(),
     DATABASE_URL: z.string().url(),
-    UPLOADTHING_SECRET: z.string(),
-    UPLOADTHING_TOKEN: z.string(),
     CLERK_WEBHOOK_SECRET: z.string(),
   },
 
@@ -42,8 +40,6 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
-    UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
-    UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
