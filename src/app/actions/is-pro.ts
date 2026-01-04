@@ -12,5 +12,7 @@ export async function isPro() {
     select: { role: true },
   });
 
+  console.log("user", user)
+
   return user?.role === "PRO";
 }

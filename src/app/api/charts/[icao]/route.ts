@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest, context: any) {
 
   try {
     const chart = await getAirportChart(icao);
-    console.log(chart);
+    // console.log(chart);
     return NextResponse.json({ chart });
   } catch {
     return NextResponse.json(
