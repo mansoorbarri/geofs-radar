@@ -64,9 +64,7 @@ export default function PricingPage() {
   ];
 
   if (checkingStatus) {
-    return (
-     <Loading />
-    );
+    return <Loading />;
   }
 
   return (
@@ -78,7 +76,12 @@ export default function PricingPage() {
             onClick={() => router.push("/")}
             className="font-mono text-xl text-cyan-400"
           >
-            <Image src="/logo-white.svg" alt="RadarThing" width={100} height={30} />
+            <Image
+              src="/logo-white.svg"
+              alt="RadarThing"
+              width={100}
+              height={30}
+            />
           </button>
           <button
             onClick={() => router.push("/")}

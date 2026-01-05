@@ -57,10 +57,10 @@ export function ControlDock({ items, side = "left" }: ControlDockProps) {
         {/* Dock toggle (anchored, never moves) */}
         <button
           onClick={() => setOpen(!open)}
-          className={`flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/80 backdrop-blur-md transition-all duration-150 ${
+          className={`flex h-13 w-13 items-center justify-center rounded-md border font-mono font-bold transition-all duration-200 ${
             open
-              ? "bg-black/90 text-cyan-300"
-              : "text-slate-400 hover:bg-black/90 hover:text-cyan-300"
+              ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.5)]"
+              : "border-cyan-400/30 bg-black/80 text-cyan-400 shadow-[0_0_6px_rgba(0,255,255,0.25)] hover:border-cyan-400/50 hover:bg-cyan-400/15 hover:shadow-[0_0_10px_rgba(0,255,255,0.5)]"
           }`}
         >
           {DockIcon}
