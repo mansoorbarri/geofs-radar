@@ -6,6 +6,7 @@ import { createPortalSession } from "~/app/actions/create-portal";
 import { useState, useEffect } from "react";
 import { isPro } from "~/app/actions/is-pro";
 import { Check, Zap } from "lucide-react";
+import Loading from "~/components/loading";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -63,9 +64,7 @@ export default function PricingPage() {
 
   if (checkingStatus) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="font-mono text-cyan-400">Loading...</div>
-      </div>
+     <Loading />
     );
   }
 
@@ -161,7 +160,7 @@ export default function PricingPage() {
               <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-cyan-500/10 to-transparent p-8 backdrop-blur-xl">
                 <div className="mb-6">
                   <div className="mb-2 text-5xl font-bold text-white">
-                    $9.99
+                    $3
                     <span className="text-xl text-slate-400">/month</span>
                   </div>
                   <div className="font-mono text-sm text-cyan-400">
