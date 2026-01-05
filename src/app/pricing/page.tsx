@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { isPro } from "~/app/actions/is-pro";
 import { Check, Zap } from "lucide-react";
 import Loading from "~/components/loading";
+import Image from "next/image";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -77,7 +78,7 @@ export default function PricingPage() {
             onClick={() => router.push("/")}
             className="font-mono text-xl text-cyan-400"
           >
-            RadarThing
+            <Image src="/logo-white.svg" alt="RadarThing" width={100} height={30} />
           </button>
           <button
             onClick={() => router.push("/")}

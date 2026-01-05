@@ -31,6 +31,7 @@ import { FIDSPanel } from "~/components/atc/FIDSPanel";
 import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
 import Loading from "~/components/loading";
 import { UpgradeIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
+import { Router } from "next/router";
 
 const DynamicMapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
@@ -141,8 +142,8 @@ export default function ATCPage() {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
       <header className="absolute top-0 right-0 left-0 z-[10010] flex h-20 items-start justify-between px-6 pt-5">
-        <div className="flex items-center gap-6">
-          {/* <Image src="/favicon.ico" alt="RadarThing" width={32} height={32} /> */}
+        <div className="flex items-center">
+          <Image src="/logo-black.svg" alt="RadarThing" width={100} height={30} />
 
           {isMapLoaded && (
             <div className="pointer-events-auto h-11 w-80 lg:w-96">
