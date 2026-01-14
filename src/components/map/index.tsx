@@ -71,6 +71,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [showPrecipitation, setShowPrecipitation] = useState(false);
   const [showAirmets, setShowAirmets] = useState(false);
   const [showSigmets, setShowSigmets] = useState(false);
+  const [showTags, setShowTags] = useState(true);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(
@@ -146,6 +147,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
           },
         } as unknown as L.LeafletMouseEvent);
       }
+      if (e.key === "u" || e.key === "U") {
+        setShowTags((prev) => !prev);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -199,6 +203,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     currentSelectedAircraftRef,
     drawFlightPlan,
     onAircraftSelect: onAircraftSelectRef.current,
+    showTags,
   });
 
   useSelectedAirportHandling({

@@ -63,6 +63,7 @@ export const RadarActiveWaypointIcon = L.divIcon({
 export const getAircraftDivIcon = (
   aircraft: PositionUpdate & { altMSL?: number },
   selectedAircraftId: string | null,
+  showTags = true,
 ) => {
   const iconUrl = "https://i.ibb.co/6cNhyMMj/1.png";
   const planeSize = 30;
@@ -118,7 +119,7 @@ export const getAircraftDivIcon = (
     width: ${tagWidth}px;
     pointer-events: none;
     z-index: 1000;
-    ${selectedAircraftId && !isCurrentAircraftSelected ? "visibility: hidden;" : ""}
+    ${!showTags || (selectedAircraftId && !isCurrentAircraftSelected) ? "display: none;" : ""}
   `;
 
   const detailContent = `
@@ -171,6 +172,7 @@ export const getAircraftDivIcon = (
 export const getRadarAircraftDivIcon = (
   aircraft: PositionUpdate & { altMSL?: number },
   selectedAircraftId: string | null,
+  showTags = true,
 ) => {
   const dotSize = 8;
   const headingLineLength = 14;
@@ -230,7 +232,7 @@ export const getRadarAircraftDivIcon = (
     width: ${labelWidth}px;
     pointer-events: none;
     z-index: 1000;
-    ${selectedAircraftId && !isCurrentAircraftSelected ? "visibility: hidden;" : ""}
+    ${!showTags || (selectedAircraftId && !isCurrentAircraftSelected) ? "display: none;" : ""}
   `;
 
   const detailContent = `

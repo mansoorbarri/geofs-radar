@@ -27,6 +27,7 @@ interface UseMapLayersAndMarkersProps {
   currentSelectedAircraftRef: React.MutableRefObject<string | null>;
   drawFlightPlan: (aircraft: PositionUpdate, shouldZoom?: boolean) => void;
   onAircraftSelect: (aircraft: PositionUpdate | null) => void;
+  showTags: boolean;
 }
 
 export const useMapLayersAndMarkers = ({
@@ -46,6 +47,7 @@ export const useMapLayersAndMarkers = ({
   currentSelectedAircraftRef,
   drawFlightPlan,
   onAircraftSelect,
+  showTags,
 }: UseMapLayersAndMarkersProps) => {
   // Effect for managing base layers (OSM/Satellite/Radar)
   useEffect(() => {
@@ -110,8 +112,8 @@ export const useMapLayersAndMarkers = ({
     aircraftMarkersLayer.current.clearLayers();
     aircrafts.forEach((aircraft) => {
       const icon = isRadarMode
-        ? getRadarAircraftDivIcon(aircraft, selectedAircraftId)
-        : getAircraftDivIcon(aircraft, selectedAircraftId);
+        ? getRadarAircraftDivIcon(aircraft, selectedAircraftId, showTags)
+        : getAircraftDivIcon(aircraft, selectedAircraftId, showTags);
 
       const marker = L.marker([aircraft.lat, aircraft.lon], {
         title: aircraft.callsign,
@@ -142,6 +144,7 @@ export const useMapLayersAndMarkers = ({
     currentSelectedAircraftRef,
     drawFlightPlan,
     onAircraftSelect,
+    showTags,
   ]);
 
   // Effect for managing airport markers
