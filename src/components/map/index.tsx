@@ -258,6 +258,37 @@ const MapComponent: React.FC<MapComponentProps> = ({
     icaoInput || selectedAirport?.icao,
   );
 
+  // Render historic flight path from Flight Log
+  useEffect(() => {
+    if (!mapRefs.mapInstance.current || !mapRefs.historyLayerGroup.current) {
+      return;
+    }
+
+    // Clear existing history layers
+    mapRefs.historyLayerGroup.current.clearLayers();
+
+    if (!historyPath || historyPath.length < 2) {
+      return;
+    }
+
+    // Draw the historic path
+    const historyPolyline = L.polyline(historyPath, {
+      color: isRadarMode ? "#00ff00" : "#00ff00",
+      weight: isRadarMode ? 2 : 4,
+      opacity: isRadarMode ? 0.7 : 0.8,
+      smoothFactor: 1,
+      dashArray: isRadarMode ? "5, 5" : "",
+    });
+    mapRefs.historyLayerGroup.current.addLayer(historyPolyline);
+
+    // Fit map bounds to show the entire path
+    const bounds = L.latLngBounds(historyPath);
+    mapRefs.mapInstance.current.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 10,
+    });
+  }, [historyPath, isRadarMode, mapRefs.mapInstance, mapRefs.historyLayerGroup]);
+
   return (
     <>
       <MapGlobalStyles />
