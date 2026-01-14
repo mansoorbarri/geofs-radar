@@ -28,6 +28,7 @@ export const useFlightPlanDrawing = ({
   setSelectedAircraftId,
 }: UseFlightPlanDrawingProps) => {
   const currentSelectedAircraftRef = useRef<string | null>(null);
+  const historyPolylineRef = useRef<L.Polyline | null>(null);
 
   const drawFlightPlan = useCallback(
     (aircraft: PositionUpdate, shouldZoom = false) => {
@@ -39,8 +40,14 @@ export const useFlightPlanDrawing = ({
         return;
 
       flightPlanLayerGroup.current.clearLayers();
-      // historyLayerGroup.current.clearLayers();
-      const newSelectedAircraftId = aircraft.id || aircraft.callsign;
+      const newSelectedAircraftId = aircraft.callsign || aircraft.id;
+
+      // If selecting a different aircraft, clear the history polyline ref
+      if (currentSelectedAircraftRef.current !== newSelectedAircraftId) {
+        historyLayerGroup.current.clearLayers();
+        historyPolylineRef.current = null;
+      }
+
       currentSelectedAircraftRef.current = newSelectedAircraftId;
       setSelectedAircraftId(newSelectedAircraftId);
 
@@ -48,15 +55,27 @@ export const useFlightPlanDrawing = ({
       const history = aircraft.flightPath || [];
 
       if (history.length >= 2) {
-        historyLayerGroup.current.clearLayers();
-        const historyPolyline = L.polyline(history, {
-          color: isRadarMode ? "#00ff00" : "#00ff00",
-          weight: isRadarMode ? 2 : 4,
-          opacity: isRadarMode ? 0.7 : 0.8,
-          smoothFactor: 1,
-          dashArray: isRadarMode ? "5, 5" : "",
-        });
-        historyLayerGroup.current.addLayer(historyPolyline);
+        // Update existing polyline instead of clearing and recreating
+        if (historyPolylineRef.current) {
+          historyPolylineRef.current.setLatLngs(history);
+          historyPolylineRef.current.setStyle({
+            color: "#00ff00",
+            weight: isRadarMode ? 2 : 4,
+            opacity: isRadarMode ? 0.7 : 0.8,
+            dashArray: isRadarMode ? "5, 5" : "",
+          });
+        } else {
+          historyLayerGroup.current.clearLayers();
+          const historyPolyline = L.polyline(history, {
+            color: "#00ff00",
+            weight: isRadarMode ? 2 : 4,
+            opacity: isRadarMode ? 0.7 : 0.8,
+            smoothFactor: 1,
+            dashArray: isRadarMode ? "5, 5" : "",
+          });
+          historyPolylineRef.current = historyPolyline;
+          historyLayerGroup.current.addLayer(historyPolyline);
+        }
       }
 
       if (aircraft.flightPlan) {
@@ -145,5 +164,9 @@ export const useFlightPlanDrawing = ({
     ],
   );
 
-  return { drawFlightPlan, currentSelectedAircraftRef };
+  const clearHistoryPolyline = useCallback(() => {
+    historyPolylineRef.current = null;
+  }, []);
+
+  return { drawFlightPlan, currentSelectedAircraftRef, clearHistoryPolyline };
 };

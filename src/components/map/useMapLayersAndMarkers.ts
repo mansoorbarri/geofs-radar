@@ -130,7 +130,7 @@ export const useMapLayersAndMarkers = ({
 
     if (currentSelectedAircraftRef.current) {
       const selectedAircraft = aircrafts.find(
-        (ac) => (ac.id || ac.callsign) === currentSelectedAircraftRef.current,
+        (ac) => (ac.callsign || ac.id) === currentSelectedAircraftRef.current,
       );
       if (selectedAircraft) {
         drawFlightPlan(selectedAircraft, false);

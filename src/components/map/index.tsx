@@ -93,6 +93,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
     onAircraftSelectRef.current = onAircraftSelect;
   }, [onAircraftSelect]);
 
+  const clearHistoryPolylineRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     isPro()
       .then(setIsProUser)
@@ -130,6 +132,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     mapRefs.flightPlanLayerGroup.current?.clearLayers();
     mapRefs.historyLayerGroup.current?.clearLayers();
+    clearHistoryPolylineRef.current?.();
 
     currentSelectedAircraftRef.current = null;
     setSelectedAircraftId(null);
@@ -177,7 +180,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setSettingsControlRef: settingsControlRef,
   });
 
-  const { drawFlightPlan, currentSelectedAircraftRef } = useFlightPlanDrawing({
+  const { drawFlightPlan, currentSelectedAircraftRef, clearHistoryPolyline } = useFlightPlanDrawing({
     mapInstance: mapRefs.mapInstance,
     flightPlanLayerGroup: mapRefs.flightPlanLayerGroup,
     historyLayerGroup: mapRefs.historyLayerGroup,
@@ -185,6 +188,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
     onAircraftSelect: onAircraftSelectRef.current,
     setSelectedAircraftId,
   });
+
+  // Update the ref so handleMapClick can clear the polyline
+  clearHistoryPolylineRef.current = clearHistoryPolyline;
 
   useMapLayersAndMarkers({
     mapInstance: mapRefs.mapInstance,

@@ -41,8 +41,10 @@ export const useAircraftStream = () => {
             ts: ac.ts || Date.now(),
           })) || [];
         // Update the store with each aircraft (this tracks flight paths)
+        // Use callsign as primary key for consistency (id can be inconsistent)
         processed.forEach((ac) => {
-          activeAircraft.set(ac.id || ac.callsign, ac);
+          const key = ac.callsign || ac.id;
+          activeAircraft.set(key, ac);
         });
         // Get all aircraft with their accumulated flight paths
         setAircrafts(activeAircraft.getAll());
