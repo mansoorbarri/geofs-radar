@@ -9,7 +9,6 @@ import {
   AirportIcon,
   RadarAirportIcon,
 } from "./MapIcons";
-import { aircraftHistoryRef } from "./useFlightPlanDrawing";
 
 interface UseMapLayersAndMarkersProps {
   mapInstance: React.MutableRefObject<L.Map | null>;
@@ -104,41 +103,9 @@ export const useMapLayersAndMarkers = ({
     }
   }, [mapInstance, isOpenAIPEnabled, openAIPLayer]);
 
-  // Effect for managing aircraft history and markers
+  // Effect for managing aircraft markers
   useEffect(() => {
     if (!aircraftMarkersLayer.current) return;
-
-    aircrafts.forEach((aircraft) => {
-      const aircraftId = aircraft.id || aircraft.callsign;
-      const currentPosition: L.LatLngTuple = [aircraft.lat, aircraft.lon];
-
-      if (!aircraftHistoryRef.current.has(aircraftId)) {
-        aircraftHistoryRef.current.set(aircraftId, [currentPosition]);
-      } else {
-        const history = aircraftHistoryRef.current.get(aircraftId)!;
-        const lastPosition = history[history.length - 1];
-
-        if (
-          lastPosition &&
-          (lastPosition[0] !== currentPosition[0] ||
-            lastPosition[1] !== currentPosition[1])
-        ) {
-          history.push(currentPosition);
-          if (history.length > 500) {
-            history.shift();
-          }
-        }
-      }
-    });
-
-    const currentAircraftIds = new Set(
-      aircrafts.map((ac) => ac.id || ac.callsign),
-    );
-    for (const [id] of aircraftHistoryRef.current) {
-      if (!currentAircraftIds.has(id)) {
-        aircraftHistoryRef.current.delete(id);
-      }
-    }
 
     aircraftMarkersLayer.current.clearLayers();
     aircrafts.forEach((aircraft) => {

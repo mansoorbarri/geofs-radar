@@ -19,10 +19,6 @@ interface UseFlightPlanDrawingProps {
   setSelectedAircraftId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-export const aircraftHistoryRef = {
-  current: new Map<string, L.LatLngTuple[]>(),
-};
-
 export const useFlightPlanDrawing = ({
   mapInstance,
   flightPlanLayerGroup,
@@ -48,10 +44,11 @@ export const useFlightPlanDrawing = ({
       currentSelectedAircraftRef.current = newSelectedAircraftId;
       setSelectedAircraftId(newSelectedAircraftId);
 
-      const aircraftId = aircraft.id || aircraft.callsign;
-      const history = aircraftHistoryRef.current.get(aircraftId) || [];
+      // Use server-provided flight path
+      const history = aircraft.flightPath || [];
 
       if (history.length >= 2) {
+        historyLayerGroup.current.clearLayers();
         const historyPolyline = L.polyline(history, {
           color: isRadarMode ? "#00ff00" : "#00ff00",
           weight: isRadarMode ? 2 : 4,

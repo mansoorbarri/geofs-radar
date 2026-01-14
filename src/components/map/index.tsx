@@ -264,12 +264,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
       return;
     }
 
-    // Clear existing history layers
-    mapRefs.historyLayerGroup.current.clearLayers();
-
+    // Only render when we have a valid historic path to show
     if (!historyPath || historyPath.length < 2) {
       return;
     }
+
+    // Clear existing layers before drawing the historic path
+    mapRefs.historyLayerGroup.current.clearLayers();
 
     // Draw the historic path
     const historyPolyline = L.polyline(historyPath, {

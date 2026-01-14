@@ -19,16 +19,45 @@ export interface PositionUpdate {
   nextWaypoint: string;
   ts: number;
   lastSeen: number;
+  flightPath?: [number, number][];
 }
 
 type Subscriber = (aircraft: Map<string, PositionUpdate>) => void;
 
+const MAX_FLIGHT_PATH_POINTS = 500;
+
 class AircraftStore {
   private store = new Map<string, PositionUpdate>();
+  private flightPaths = new Map<string, [number, number][]>();
   private subscribers = new Set<Subscriber>();
 
   set(id: string, data: PositionUpdate) {
-    this.store.set(id, data);
+    // Track flight path history
+    const currentPosition: [number, number] = [data.lat, data.lon];
+    const existingPath = this.flightPaths.get(id) || [];
+    const lastPosition = existingPath[existingPath.length - 1];
+
+    // Only add if position has changed
+    if (
+      !lastPosition ||
+      lastPosition[0] !== currentPosition[0] ||
+      lastPosition[1] !== currentPosition[1]
+    ) {
+      existingPath.push(currentPosition);
+      // Limit to max points
+      if (existingPath.length > MAX_FLIGHT_PATH_POINTS) {
+        existingPath.shift();
+      }
+      this.flightPaths.set(id, existingPath);
+    }
+
+    // Include flight path in the data
+    const dataWithPath = {
+      ...data,
+      flightPath: this.flightPaths.get(id) || [],
+    };
+
+    this.store.set(id, dataWithPath);
     this.notifySubscribers();
   }
 
@@ -42,6 +71,7 @@ class AircraftStore {
 
   delete(id: string) {
     const existed = this.store.delete(id);
+    this.flightPaths.delete(id);
     if (existed) {
       this.notifySubscribers();
     }
