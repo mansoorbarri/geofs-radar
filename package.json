@@ -25,6 +25,7 @@
     "@clerk/nextjs": "^6.36.5",
     "@clerk/themes": "^2.4.46",
     "@prisma/client": "^6.5.0",
+    "@radix-ui/react-switch": "^1.2.6",
     "@stripe/stripe-js": "^8.6.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@types/leaflet": "^1.9.21",

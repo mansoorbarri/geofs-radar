@@ -4,7 +4,6 @@ import {
   HeadingModeControl,
   RadarModeControl,
   OpenAIPControl,
-  WeatherOverlayControl,
   OSMControl,
   RadarSettingsControl,
 } from "~/components/map/MapControls";
@@ -15,7 +14,6 @@ interface UseMapInitializationProps {
   setIsRadarMode: () => void;
   setIsOSMMode?: React.Dispatch<React.SetStateAction<boolean>>;
   setIsOpenAIPEnabled: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsWeatherOverlayEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   canUseRadarMode: boolean;
   onMapClick: (e: L.LeafletMouseEvent) => void;
@@ -23,7 +21,6 @@ interface UseMapInitializationProps {
   setRadarControlRef: React.MutableRefObject<RadarModeControl | null>;
   setOSMControlRef?: React.MutableRefObject<OSMControl | null>;
   setOpenAIPControlRef: React.MutableRefObject<OpenAIPControl | null>;
-  setWeatherControlRef: React.MutableRefObject<WeatherOverlayControl | null>;
   setSettingsControlRef: React.MutableRefObject<RadarSettingsControl | null>;
   isMobile?: boolean;
 }
@@ -47,7 +44,6 @@ export const useMapInitialization = ({
   setIsRadarMode,
   setIsOSMMode,
   setIsOpenAIPEnabled,
-  setIsWeatherOverlayEnabled,
   setIsSettingsOpen,
   canUseRadarMode,
   onMapClick,
@@ -55,7 +51,6 @@ export const useMapInitialization = ({
   setRadarControlRef,
   setOSMControlRef,
   setOpenAIPControlRef,
-  setWeatherControlRef,
   setSettingsControlRef,
   isMobile = false,
 }: UseMapInitializationProps): MapRefs => {
@@ -137,38 +132,34 @@ export const useMapInitialization = ({
     airportMarkersLayer.current = L.layerGroup().addTo(map);
     historyLayerGroup.current = L.layerGroup().addTo(map);
 
-    const headingControl = new HeadingModeControl({}, setIsHeadingMode);
-    map.addControl(headingControl);
-    setHeadingControlRef.current = headingControl;
+    // Only add Leaflet controls on desktop
+    if (!isMobile) {
+      const headingControl = new HeadingModeControl({}, setIsHeadingMode);
+      map.addControl(headingControl);
+      setHeadingControlRef.current = headingControl;
 
-    if (canUseRadarMode) {
-      const radarControl = new RadarModeControl({}, setIsRadarMode);
-      map.addControl(radarControl);
-      setRadarControlRef.current = radarControl;
-    } else {
-      setRadarControlRef.current = null;
+      if (canUseRadarMode) {
+        const radarControl = new RadarModeControl({}, setIsRadarMode);
+        map.addControl(radarControl);
+        setRadarControlRef.current = radarControl;
+      } else {
+        setRadarControlRef.current = null;
+      }
+
+      if (setIsOSMMode && setOSMControlRef) {
+        const osmControl = new OSMControl({}, setIsOSMMode);
+        map.addControl(osmControl);
+        setOSMControlRef.current = osmControl;
+      }
+
+      const openAIPControl = new OpenAIPControl({}, setIsOpenAIPEnabled);
+      map.addControl(openAIPControl);
+      setOpenAIPControlRef.current = openAIPControl;
+
+      const settingsControl = new RadarSettingsControl({}, setIsSettingsOpen);
+      map.addControl(settingsControl);
+      setSettingsControlRef.current = settingsControl;
     }
-
-    if (setIsOSMMode && setOSMControlRef) {
-      const osmControl = new OSMControl({}, setIsOSMMode);
-      map.addControl(osmControl);
-      setOSMControlRef.current = osmControl;
-    }
-
-    const openAIPControl = new OpenAIPControl({}, setIsOpenAIPEnabled);
-    map.addControl(openAIPControl);
-    setOpenAIPControlRef.current = openAIPControl;
-
-    const weatherControl = new WeatherOverlayControl(
-      {},
-      setIsWeatherOverlayEnabled,
-    );
-    map.addControl(weatherControl);
-    setWeatherControlRef.current = weatherControl;
-
-    const settingsControl = new RadarSettingsControl({}, setIsSettingsOpen);
-    map.addControl(settingsControl);
-    setSettingsControlRef.current = settingsControl;
 
     map.on("click", onMapClick);
 

@@ -19,7 +19,6 @@ import {
   RadarModeControl,
   OSMControl,
   OpenAIPControl,
-  WeatherOverlayControl,
   RadarSettingsControl,
 } from "~/components/map/MapControls";
 
@@ -87,7 +86,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const radarControlRef = useRef<RadarModeControl | null>(null);
   const osmControlRef = useRef<OSMControl | null>(null);
   const openAIPControlRef = useRef<OpenAIPControl | null>(null);
-  const weatherControlRef = useRef<WeatherOverlayControl | null>(null);
   const settingsControlRef = useRef<RadarSettingsControl | null>(null);
 
   const onAircraftSelectRef = useRef(onAircraftSelect);
@@ -170,7 +168,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsRadarMode: toggleRadarMode,
     setIsOSMMode,
     setIsOpenAIPEnabled,
-    setIsWeatherOverlayEnabled: setShowPrecipitation,
     setIsSettingsOpen,
     canUseRadarMode,
     onMapClick: handleMapClick,
@@ -178,7 +175,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setRadarControlRef: radarControlRef,
     setOSMControlRef: osmControlRef,
     setOpenAIPControlRef: openAIPControlRef,
-    setWeatherControlRef: weatherControlRef,
     setSettingsControlRef: settingsControlRef,
     isMobile,
   });
@@ -243,8 +239,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (osmControlRef.current) osmControlRef.current.updateState(isOSMMode);
     if (openAIPControlRef.current)
       openAIPControlRef.current.updateState(isOpenAIPEnabled);
-    if (weatherControlRef.current)
-      weatherControlRef.current.updateState(showPrecipitation);
     if (settingsControlRef.current)
       settingsControlRef.current.updateState(isSettingsOpen);
   }, [
@@ -252,7 +246,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     isRadarMode,
     isOSMMode,
     isOpenAIPEnabled,
-    showPrecipitation,
     isSettingsOpen,
     canUseRadarMode,
   ]);

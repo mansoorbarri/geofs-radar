@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Switch } from "~/components/ui/switch";
 
 interface RadarSettingsProps {
   isPRO: boolean;
@@ -35,20 +36,20 @@ export const RadarSettings = ({
           WEATHER LAYERS
         </span>
 
-        <Toggle
+        <SettingsToggle
           label="Precipitation"
           checked={showPrecipitation}
           onChange={setShowPrecipitation}
         />
 
-        <Toggle
+        <SettingsToggle
           label="AIRMETs"
           checked={showAirmets}
           onChange={setShowAirmets}
           disabled={!isPRO}
         />
 
-        <Toggle
+        <SettingsToggle
           label="SIGMETs"
           checked={showSigmets}
           onChange={setShowSigmets}
@@ -59,7 +60,7 @@ export const RadarSettings = ({
   );
 };
 
-function Toggle({
+function SettingsToggle({
   label,
   checked,
   onChange,
@@ -85,12 +86,11 @@ function Toggle({
         )}
       </span>
 
-      <input
-        type="checkbox"
+      <Switch
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 accent-cyan-400"
+        onCheckedChange={onChange}
+        className="data-[state=checked]:bg-cyan-500 data-[state=unchecked]:bg-gray-600"
       />
     </label>
   );

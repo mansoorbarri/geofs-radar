@@ -39,9 +39,8 @@ class AircraftStore {
 
     // Only add if position has changed
     if (
-      !lastPosition ||
-      lastPosition[0] !== currentPosition[0] ||
-      lastPosition[1] !== currentPosition[1]
+      lastPosition?.[0] !== currentPosition[0] ||
+      lastPosition?.[1] !== currentPosition[1]
     ) {
       existingPath.push(currentPosition);
       // Limit to max points
