@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { type PositionUpdate } from "~/lib/aircraft-store";
+import { type PositionUpdate, activeAircraft } from "~/lib/aircraft-store";
 
 export const useAircraftStream = () => {
-  const [aircrafts, setAircrafts] = useState<PositionUpdate[]>([]);
+  const [aircrafts, setAircrafts] = useState<PositionUpdate[]>(activeAircraft.getAll());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
@@ -40,7 +40,12 @@ export const useAircraftStream = () => {
             ...ac,
             ts: ac.ts || Date.now(),
           })) || [];
-        setAircrafts(processed);
+        // Update the store with each aircraft (this tracks flight paths)
+        processed.forEach((ac) => {
+          activeAircraft.set(ac.id || ac.callsign, ac);
+        });
+        // Get all aircraft with their accumulated flight paths
+        setAircrafts(activeAircraft.getAll());
         setIsLoading(false);
         setError(null);
       } catch {}
