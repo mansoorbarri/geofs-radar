@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { isPro } from "~/app/actions/is-pro";
+import { useMobileDetection } from "~/hooks/useMobileDetection";
 
 import { useMapInitialization } from "./useMapInitialization";
 import { useFlightPlanDrawing } from "./useFlightPlanDrawing";
@@ -57,6 +58,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   onMapReady,
   historyPath,
 }) => {
+  const isMobile = useMobileDetection();
   const [isProUser, setIsProUser] = useState(false);
   const [proLoading, setProLoading] = useState(true);
 
@@ -178,6 +180,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setOpenAIPControlRef: openAIPControlRef,
     setWeatherControlRef: weatherControlRef,
     setSettingsControlRef: settingsControlRef,
+    isMobile,
   });
 
   const { drawFlightPlan, currentSelectedAircraftRef, clearHistoryPolyline } = useFlightPlanDrawing({
@@ -322,12 +325,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
         </div>
       )}
 
-      <MetarPanel
-        icaoInput={icaoInput}
-        onChange={setIcaoInput}
-        metarText={showMetar && metar?.raw ? metar.raw : null}
-        onCloseMetar={() => setShowMetar(false)}
-      />
+      {/* Hide METAR panel on mobile */}
+      {!isMobile && (
+        <MetarPanel
+          icaoInput={icaoInput}
+          onChange={setIcaoInput}
+          metarText={showMetar && metar?.raw ? metar.raw : null}
+          onCloseMetar={() => setShowMetar(false)}
+        />
+      )}
     </>
   );
 };

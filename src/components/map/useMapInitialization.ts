@@ -25,6 +25,7 @@ interface UseMapInitializationProps {
   setOpenAIPControlRef: React.MutableRefObject<OpenAIPControl | null>;
   setWeatherControlRef: React.MutableRefObject<WeatherOverlayControl | null>;
   setSettingsControlRef: React.MutableRefObject<RadarSettingsControl | null>;
+  isMobile?: boolean;
 }
 
 interface MapRefs {
@@ -56,6 +57,7 @@ export const useMapInitialization = ({
   setOpenAIPControlRef,
   setWeatherControlRef,
   setSettingsControlRef,
+  isMobile = false,
 }: UseMapInitializationProps): MapRefs => {
   const mapInstance = useRef<L.Map | null>(null);
   const flightPlanLayerGroup = useRef<L.LayerGroup | null>(null);
@@ -80,6 +82,7 @@ export const useMapInitialization = ({
       maxZoom: 18,
       maxBounds: worldBounds,
       attributionControl: false,
+      zoomControl: !isMobile,
     }).setView([20, 0], 3);
 
     mapInstance.current = map;

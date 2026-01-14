@@ -25,25 +25,26 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onSelectAircraft,
   onSelectAirport,
 }) => {
-  const widthClass = isMobile ? "w-[90vw] max-w-[320px]" : "w-[280px]";
-
   return (
-    <div
-      className={`flex flex-col ${isMobile ? "items-center" : "items-start"} `}
-    >
+    <div className={`flex flex-col ${isMobile ? "w-full" : "items-start"}`}>
       <input
         type="text"
-        placeholder="Search a flight or airport"
+        placeholder="Search flight or airport..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className={`mt-1 ml-5 rounded-md border border-cyan-400/30 bg-black/95 px-4 py-2 text-[14px] text-cyan-400 placeholder-cyan-500/50 transition-all duration-200 outline-none ${widthClass} ${
-          searchTerm && searchResults.length > 0 ? "mb-2.5" : ""
-        } hover:border-cyan-400/60 hover:shadow-[0_0_10px_rgba(0,255,255,0.3)] focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,255,255,0.5)]`}
+        autoFocus={isMobile}
+        className={`rounded-lg border border-cyan-400/30 bg-black/80 px-4 py-2.5 text-[14px] text-cyan-400 placeholder-cyan-500/50 transition-all duration-200 outline-none ${
+          isMobile ? "w-full" : "ml-5 mt-1 w-[280px]"
+        } ${
+          searchTerm && searchResults.length > 0 ? "mb-2" : ""
+        } hover:border-cyan-400/60 focus:border-cyan-400 focus:shadow-[0_0_12px_rgba(0,255,255,0.3)]`}
       />
 
       {searchTerm && searchResults.length > 0 && (
         <div
-          className={`ml-5 max-h-[300px] overflow-y-auto rounded-md border border-cyan-400/20 bg-black/90 shadow-[0_0_10px_rgba(0,255,255,0.15)] ${widthClass}`}
+          className={`overflow-y-auto rounded-lg border border-cyan-400/20 bg-black/90 ${
+            isMobile ? "max-h-[70vh] w-full" : "ml-5 max-h-[300px] w-[280px]"
+          }`}
         >
           {searchResults.map((result, index) => (
             <div
@@ -60,21 +61,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 }
                 setSearchTerm("");
               }}
-              className={`cursor-pointer border-b border-cyan-400/10 px-4 py-2 text-[14px] text-cyan-100 transition-colors duration-150 last:border-b-0 hover:bg-cyan-400/10`}
+              className={`cursor-pointer border-b border-cyan-400/10 px-4 py-3 text-[14px] text-cyan-100 transition-colors duration-150 last:border-b-0 active:bg-cyan-400/20 ${
+                isMobile ? "" : "hover:bg-cyan-400/10"
+              }`}
             >
               {"callsign" in result ? (
                 <>
                   <div className="font-semibold text-cyan-300">
                     {result.callsign || result.flightNo || "N/A"}
                   </div>
-                  <div className="mt-[2px] text-[11px] text-cyan-200/60">
-                    {result.type} ({result.departure} →{" "}
-                    {result.arrival || "UNK"})
-                    {result.squawk && (
-                      <span className="ml-2 opacity-80">
-                        SQK: {result.squawk}
-                      </span>
-                    )}
+                  <div className="mt-1 text-[12px] text-cyan-200/60">
+                    {result.type} • {result.departure} → {result.arrival || "UNK"}
                   </div>
                 </>
               ) : (
@@ -82,8 +79,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                   <div className="font-semibold text-cyan-300">
                     {result.icao}
                   </div>
-                  <div className="mt-[2px] text-[11px] text-cyan-200/60">
-                    {result.name} (Airport)
+                  <div className="mt-1 text-[12px] text-cyan-200/60">
+                    {result.name}
                   </div>
                 </>
               )}

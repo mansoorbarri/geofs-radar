@@ -70,6 +70,7 @@ export default function ATCPage() {
 
   const [showTimerPopup, setShowTimerPopup] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   const { searchTerm, setSearchTerm, searchResults } = useAircraftSearch(
     aircrafts,
@@ -141,16 +142,18 @@ export default function ATCPage() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
-      <header className="absolute top-0 right-0 left-0 z-[10010] flex h-20 items-start justify-between px-6 pt-5">
-        <div className="flex items-center">
-          <Image
-            src="/logo-black.svg"
-            alt="RadarThing"
-            width={100}
-            height={30}
-          />
+      <header className={`absolute top-0 right-0 left-0 z-[10010] flex items-center justify-between ${isMobile ? 'h-12 px-3 pt-2' : 'h-20 px-6 pt-5'}`}>
+        <div className="flex items-center gap-2">
+          {!isMobile && (
+            <Image
+              src="/logo-black.svg"
+              alt="RadarThing"
+              width={100}
+              height={30}
+            />
+          )}
 
-          {isMapLoaded && (
+          {isMapLoaded && !isMobile && (
             <div className="pointer-events-auto h-11 w-80 lg:w-96">
               <SearchBar
                 searchTerm={searchTerm}
@@ -169,66 +172,159 @@ export default function ATCPage() {
               />
             </div>
           )}
-        </div>
 
-        <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2">
-          <button
-            onClick={() => setShowTimerPopup(!showTimerPopup)}
-            className="rounded-full border border-white/10 bg-black/40 px-4 py-1.5 backdrop-blur-md"
-          >
-            <span className="font-mono text-xl text-cyan-400">
-              {time} <span className="text-[10px] text-slate-500">UTC</span>
-            </span>
-            {showTimerPopup && (
-              <span className="block font-mono text-sm text-emerald-400">
-                {formattedTime}
-              </span>
-            )}
-            {isRunning && (
-              <span className="block animate-pulse text-[9px] tracking-widest text-emerald-400 uppercase">
-                Timer Active
-              </span>
-            )}
-          </button>
-
-          {showTimerPopup && (
-            <div className="absolute top-full left-1/2 mt-2 -translate-x-1/2">
-              <div className="rounded-xl border border-white/10 bg-black/90 p-3 backdrop-blur-xl">
-                <div className="flex gap-2">
-                  <button
-                    onClick={start}
-                    disabled={isRunning}
-                    className="rounded-lg bg-emerald-500/20 px-3 py-1 text-xs text-emerald-400 disabled:opacity-50"
-                  >
-                    Start
-                  </button>
-                  <button
-                    onClick={stop}
-                    disabled={!isRunning}
-                    className="rounded-lg bg-red-500/20 px-3 py-1 text-xs text-red-400 disabled:opacity-50"
-                  >
-                    Stop
-                  </button>
-                  <button
-                    onClick={reset}
-                    className="rounded-lg bg-slate-500/20 px-3 py-1 text-xs text-slate-400"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Mobile search button */}
+          {isMapLoaded && isMobile && !showMobileSearch && (
+            <button
+              onClick={() => setShowMobileSearch(true)}
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/60 backdrop-blur-md"
+            >
+              <svg className="h-4 w-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
           )}
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-4">
+        {/* UTC Time - simplified on mobile */}
+        {!isMobile && (
+          <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2">
+            <button
+              onClick={() => setShowTimerPopup(!showTimerPopup)}
+              className="rounded-full border border-white/10 bg-black/40 px-4 py-1.5 backdrop-blur-md"
+            >
+              <span className="font-mono text-xl text-cyan-400">
+                {time} <span className="text-[10px] text-slate-500">UTC</span>
+              </span>
+              {showTimerPopup && (
+                <span className="block font-mono text-sm text-emerald-400">
+                  {formattedTime}
+                </span>
+              )}
+              {isRunning && (
+                <span className="block animate-pulse text-[9px] tracking-widest text-emerald-400 uppercase">
+                  Timer Active
+                </span>
+              )}
+            </button>
+
+            {showTimerPopup && (
+              <div className="absolute top-full left-1/2 mt-2 -translate-x-1/2">
+                <div className="rounded-xl border border-white/10 bg-black/90 p-3 backdrop-blur-xl">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={start}
+                      disabled={isRunning}
+                      className="rounded-lg bg-emerald-500/20 px-3 py-1 text-xs text-emerald-400 disabled:opacity-50"
+                    >
+                      Start
+                    </button>
+                    <button
+                      onClick={stop}
+                      disabled={!isRunning}
+                      className="rounded-lg bg-red-500/20 px-3 py-1 text-xs text-red-400 disabled:opacity-50"
+                    >
+                      Stop
+                    </button>
+                    <button
+                      onClick={reset}
+                      className="rounded-lg bg-slate-500/20 px-3 py-1 text-xs text-slate-400"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={`pointer-events-auto flex items-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
           <ConnectionStatusIndicator
             status={connectionStatus}
             isMobile={isMobile}
           />
-          <UserAuth />
+          {!isMobile && <UserAuth />}
         </div>
       </header>
+
+      {/* Mobile search - bottom sheet */}
+      {isMobile && showMobileSearch && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[10019] bg-black/50"
+            onClick={() => {
+              setShowMobileSearch(false);
+              setSearchTerm("");
+            }}
+          />
+          {/* Bottom sheet */}
+          <div className="fixed inset-x-0 bottom-0 z-[10020] rounded-t-2xl border-t border-white/10 bg-[#0a1219] px-4 pb-8 pt-3 animate-in slide-in-from-bottom duration-200">
+            {/* Drag handle */}
+            <div className="mb-4 flex justify-center">
+              <div className="h-1 w-10 rounded-full bg-white/20" />
+            </div>
+
+            {/* Search input */}
+            <input
+              type="text"
+              placeholder="Search flight or airport..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+              className="w-full rounded-xl border border-cyan-400/30 bg-black/60 px-4 py-3 text-[15px] text-cyan-400 placeholder-cyan-500/40 outline-none focus:border-cyan-400"
+            />
+
+            {/* Results */}
+            {searchTerm && searchResults.length > 0 && (
+              <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-xl border border-white/10 bg-black/40">
+                {searchResults.map((result, index) => (
+                  <div
+                    key={
+                      "callsign" in result
+                        ? result.callsign || result.flightNo || `ac-${index}`
+                        : `ap-${result.icao}`
+                    }
+                    onClick={() => {
+                      if ("callsign" in result) {
+                        setSelectedAircraft(result);
+                        drawFlightPlanOnMapRef.current?.(result, true);
+                      } else {
+                        setSelectedAirport(result);
+                      }
+                      setSearchTerm("");
+                      setShowMobileSearch(false);
+                    }}
+                    className="border-b border-white/5 px-4 py-3 active:bg-white/10 last:border-b-0"
+                  >
+                    {"callsign" in result ? (
+                      <>
+                        <div className="font-medium text-white">
+                          {result.callsign || result.flightNo || "N/A"}
+                        </div>
+                        <div className="mt-0.5 text-[12px] text-white/50">
+                          {result.type} • {result.departure} → {result.arrival || "UNK"}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-medium text-white">{result.icao}</div>
+                        <div className="mt-0.5 text-[12px] text-white/50">{result.name}</div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {searchTerm && searchResults.length === 0 && (
+              <div className="mt-6 text-center text-sm text-white/30">No results found</div>
+            )}
+          </div>
+        </>
+      )}
 
       <main className="absolute inset-0">
         {isLoading ? (
@@ -248,7 +344,8 @@ export default function ATCPage() {
         )}
       </main>
 
-      {activeRightPanel === "fids" && (
+      {/* Right panels - hidden on mobile */}
+      {!isMobile && activeRightPanel === "fids" && (
         <aside className="fixed inset-y-0 right-0 z-[10012] w-[420px] border-l border-white/10 bg-black/80 backdrop-blur-xl">
           <FIDSPanel
             aircrafts={aircrafts}
@@ -260,7 +357,7 @@ export default function ATCPage() {
         </aside>
       )}
 
-      {activeRightPanel === "filter" && (
+      {!isMobile && activeRightPanel === "filter" && (
         <aside className="fixed inset-y-0 right-0 z-[10013] w-[360px] border-l border-white/10 bg-black/80 backdrop-blur-xl">
           <CallsignFilter
             aircrafts={aircrafts}
@@ -271,50 +368,55 @@ export default function ATCPage() {
         </aside>
       )}
 
-      <ControlDock
-        side="right"
-        items={[
-          {
-            id: "fids",
-            label: "Flights",
-            icon: FlightsIcon,
-            active: activeRightPanel === "fids",
-            onClick: () =>
-              setActiveRightPanel(activeRightPanel === "fids" ? null : "fids"),
-          },
-          {
-            id: "filter",
-            label: "Filter",
-            icon: FilterIcon,
-            active: activeRightPanel === "filter",
-            onClick: () =>
-              setActiveRightPanel(
-                activeRightPanel === "filter" ? null : "filter",
-              ),
-          },
-          {
-            id: "upgrade",
-            label: isProUser ? "PRO" : "Upgrade",
-            icon: UpgradeIcon,
-            active: false,
-            onClick: () => router.push("/pricing"),
-          },
-        ]}
-      />
+      {/* Control dock - hidden on mobile */}
+      {!isMobile && (
+        <ControlDock
+          side="right"
+          items={[
+            {
+              id: "fids",
+              label: "Flights",
+              icon: FlightsIcon,
+              active: activeRightPanel === "fids",
+              onClick: () =>
+                setActiveRightPanel(activeRightPanel === "fids" ? null : "fids"),
+            },
+            {
+              id: "filter",
+              label: "Filter",
+              icon: FilterIcon,
+              active: activeRightPanel === "filter",
+              onClick: () =>
+                setActiveRightPanel(
+                  activeRightPanel === "filter" ? null : "filter",
+                ),
+            },
+            {
+              id: "upgrade",
+              label: isProUser ? "PRO" : "Upgrade",
+              icon: UpgradeIcon,
+              active: false,
+              onClick: () => router.push("/pricing"),
+            },
+          ]}
+        />
+      )}
 
       {selectedAirport && (
-        <div className="fixed bottom-6 left-1/2 z-[10012] -translate-x-1/2">
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/80 px-5 py-3 backdrop-blur-xl">
+        <div className={`fixed left-1/2 z-[10012] -translate-x-1/2 ${isMobile ? 'bottom-3' : 'bottom-6'}`}>
+          <div className={`flex items-center rounded-2xl border border-white/10 bg-black/80 backdrop-blur-xl ${isMobile ? 'gap-2 px-3 py-2' : 'gap-4 px-5 py-3'}`}>
             <div>
-              <div className="font-mono text-xs text-cyan-300">
+              <div className={`font-mono text-cyan-300 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
                 {selectedAirport.icao}
               </div>
-              <div className="text-[10px] text-slate-400">
-                {selectedAirport.name}
-              </div>
+              {!isMobile && (
+                <div className="text-[10px] text-slate-400">
+                  {selectedAirport.name}
+                </div>
+              )}
             </div>
 
-            {isProUser ? (
+            {!isMobile && (isProUser ? (
               <button
                 onClick={() => setShowTaxiChart(true)}
                 className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[10px] text-cyan-300"
@@ -328,20 +430,24 @@ export default function ATCPage() {
               >
                 Taxi Charts (Premium)
               </button>
-            )}
+            ))}
 
             <button
               onClick={() => setSelectedAirport(undefined)}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] text-white/60"
+              className={`rounded-lg border border-white/10 bg-white/5 text-white/60 ${isMobile ? 'px-2 py-1 text-[9px]' : 'px-3 py-1.5 text-[10px]'}`}
             >
-              Unselect
+              {isMobile ? '×' : 'Unselect'}
             </button>
           </div>
         </div>
       )}
 
       {selectedAircraft && (
-        <aside className="fixed inset-y-0 right-0 z-[10014] w-[400px] border-l border-white/10 bg-black/90 backdrop-blur-xl">
+        <aside className={`fixed z-[10014] border-white/10 bg-black/90 backdrop-blur-xl ${
+          isMobile
+            ? 'inset-x-0 bottom-0 h-[50vh] rounded-t-3xl border-t'
+            : 'inset-y-0 right-0 w-[400px] border-l'
+        }`}>
           <Sidebar
             aircraft={selectedAircraft}
             onWaypointClick={undefined}
@@ -350,6 +456,7 @@ export default function ATCPage() {
               setIsViewingHistory(true);
             }}
             isMobile={isMobile}
+            onClose={() => setSelectedAircraft(null)}
           />
         </aside>
       )}

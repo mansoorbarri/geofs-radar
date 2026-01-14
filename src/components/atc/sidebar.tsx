@@ -46,11 +46,13 @@ export const Sidebar = ({
   onWaypointClick,
   onHistoryClick,
   isMobile,
+  onClose,
 }: {
   aircraft: PositionUpdate & { altMSL?: number };
   onWaypointClick?: (waypoint: any, index: number) => void;
   onHistoryClick?: (path: [number, number][]) => void;
   isMobile: boolean;
+  onClose?: () => void;
 }) => {
   const [tab, setTab] = useState<"info" | "history">("info");
   const [history, setHistory] = useState<any[]>([]);
@@ -163,15 +165,17 @@ export const Sidebar = ({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col overflow-hidden text-white transition-all duration-500 ease-in-out ${
-        isMobile
-          ? "fixed inset-x-0 bottom-0 rounded-t-[2.5rem] border-t border-white/20 bg-[#050f14]"
-          : "h-full w-full border-l border-white/10 bg-[#050f14]/90 shadow-2xl backdrop-blur-3xl"
-      }`}
-      style={{ height: isMobile ? (isExpanded ? "88vh" : "240px") : "100%" }}
+      className="flex h-full flex-col overflow-hidden text-white bg-[#050f14]/90"
     >
-      <div className="relative p-6 pb-4">
-        <div className="mb-5 flex items-start justify-between">
+      {/* Mobile drag handle */}
+      {isMobile && (
+        <div className="flex items-center justify-center px-4 pt-3 pb-1">
+          <div className="h-1 w-12 rounded-full bg-white/30" />
+        </div>
+      )}
+
+      <div className={`relative ${isMobile ? 'p-4 pb-2' : 'p-6 pb-4'}`}>
+        <div className={`${isMobile ? 'mb-3' : 'mb-5'} flex items-start justify-between`}>
           <div className="min-w-0 flex-1 pr-4">
             <div className="mb-1.5 flex items-center gap-2">
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500 shadow-[0_0_8px_#22d3ee]" />
