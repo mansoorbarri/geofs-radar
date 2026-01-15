@@ -1,6 +1,7 @@
 "use client";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
+import { analytics } from "~/lib/posthog";
 
 interface Props {
   aircrafts: PositionUpdate[];
@@ -45,7 +46,10 @@ function FIDSRow({
       <div className="text-slate-500">{aircraft.callsign || "—"}</div>
 
       <button
-        onClick={() => onTrack(aircraft)}
+        onClick={() => {
+          analytics.aircraftTracked(aircraft.callsign || aircraft.flightNo || "unknown");
+          onTrack(aircraft);
+        }}
         className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[10px] tracking-wide text-cyan-300 uppercase hover:bg-cyan-500/20"
       >
         Track
