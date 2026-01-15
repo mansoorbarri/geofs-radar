@@ -5,8 +5,10 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { Suspense } from "react";
 
 import { Toaster } from "sonner";
+import { PostHogProvider } from "~/components/providers/PostHogProvider";
 
 export const metadata: Metadata = {
   title: "RadarThing",
@@ -42,8 +44,12 @@ export default function RootLayout({
     >
       <html lang="en" className={`${geist.variable}`}>
         <body>
-          <Toaster theme="dark" position="top-center" richColors />
-          {children}
+          <Suspense fallback={null}>
+            <PostHogProvider>
+              <Toaster theme="dark" position="top-center" richColors />
+              {children}
+            </PostHogProvider>
+          </Suspense>
         </body>
       </html>
     </ClerkProvider>

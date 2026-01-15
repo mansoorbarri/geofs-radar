@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DockIcon } from "~/utils/dockIcons";
+import { analytics } from "~/lib/posthog";
 
 interface DockItem {
   id: string;
@@ -56,7 +57,11 @@ export function ControlDock({ items, side = "left" }: ControlDockProps) {
 
         {/* Dock toggle (anchored, never moves) */}
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => {
+            const newState = !open;
+            setOpen(newState);
+            analytics.controlDockToggled(newState);
+          }}
           className={`flex h-13 w-13 items-center justify-center rounded-md border font-mono font-bold transition-all duration-200 ${
             open
               ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.5)]"

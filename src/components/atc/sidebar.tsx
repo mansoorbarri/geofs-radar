@@ -16,6 +16,7 @@ import {
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { getFlightHistory } from "~/app/actions/get-flight-history";
 import Image from "next/image";
+import { analytics } from "~/lib/posthog";
 
 const getFlightPhase = (
   altAGL: number,
@@ -249,7 +250,10 @@ export const Sidebar = ({
       <nav className="mb-5 flex px-6">
         <div className="flex w-full rounded-2xl border border-white/10 bg-black/60 p-1.5 shadow-xl">
           <button
-            onClick={() => setTab("info")}
+            onClick={() => {
+              setTab("info");
+              analytics.sidebarTabChanged("info");
+            }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-mono text-[10px] font-black transition-all ${
               tab === "info"
                 ? "bg-white text-black shadow-lg"
@@ -259,7 +263,10 @@ export const Sidebar = ({
             <TbInfoCircle size={14} /> LIVE DATA
           </button>
           <button
-            onClick={() => setTab("history")}
+            onClick={() => {
+              setTab("history");
+              analytics.sidebarTabChanged("history");
+            }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-mono text-[10px] font-black transition-all ${
               tab === "history"
                 ? "bg-white text-black shadow-lg"
@@ -309,10 +316,12 @@ export const Sidebar = ({
               history.map((f) => (
                 <div
                   key={f.id}
-                  onClick={() =>
-                    f.routeData &&
-                    onHistoryClick?.(f.routeData as [number, number][])
-                  }
+                  onClick={() => {
+                    if (f.routeData) {
+                      analytics.historyFlightClicked();
+                      onHistoryClick?.(f.routeData as [number, number][]);
+                    }
+                  }}
                   className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-4 shadow-lg transition-all hover:border-cyan-500/40"
                 >
                   <div className="mb-1.5 flex items-center justify-between">

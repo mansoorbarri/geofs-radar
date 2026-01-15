@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Switch } from "~/components/ui/switch";
+import { analytics } from "~/lib/posthog";
 
 interface RadarSettingsProps {
   isPRO: boolean;
@@ -39,20 +40,29 @@ export const RadarSettings = ({
         <SettingsToggle
           label="Precipitation"
           checked={showPrecipitation}
-          onChange={setShowPrecipitation}
+          onChange={(v) => {
+            setShowPrecipitation(v);
+            analytics.weatherPrecipitationToggled(v);
+          }}
         />
 
         <SettingsToggle
           label="AIRMETs"
           checked={showAirmets}
-          onChange={setShowAirmets}
+          onChange={(v) => {
+            setShowAirmets(v);
+            analytics.weatherAirmetsToggled(v);
+          }}
           disabled={!isPRO}
         />
 
         <SettingsToggle
           label="SIGMETs"
           checked={showSigmets}
-          onChange={setShowSigmets}
+          onChange={(v) => {
+            setShowSigmets(v);
+            analytics.weatherSigmetsToggled(v);
+          }}
           disabled={!isPRO}
         />
       </div>

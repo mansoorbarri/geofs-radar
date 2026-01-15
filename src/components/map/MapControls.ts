@@ -1,5 +1,6 @@
 import L from "leaflet";
 import React from "react";
+import { analytics } from "~/lib/posthog";
 
 function applyMetarStyleButton(
   container: HTMLDivElement,
@@ -37,6 +38,7 @@ export class RadarSettingsControl extends L.Control {
   public _container: HTMLDivElement | null = null;
   private _toggleSettings: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
+  private _currentState = false;
 
   constructor(
     options: L.ControlOptions,
@@ -44,7 +46,10 @@ export class RadarSettingsControl extends L.Control {
   ) {
     super(options);
     this._toggleSettings = toggleSettings;
-    this._boundClick = () => this._toggleSettings((prev) => !prev);
+    this._boundClick = () => {
+      this._toggleSettings((prev) => !prev);
+      analytics.mapSettingsToggled(!this._currentState);
+    };
   }
 
   onAdd(): HTMLDivElement {
@@ -63,6 +68,7 @@ export class RadarSettingsControl extends L.Control {
   }
 
   updateState(enabled: boolean) {
+    this._currentState = enabled;
     if (this._container) setActiveStyle(this._container, enabled);
   }
 }
@@ -79,7 +85,10 @@ export class HeadingModeControl extends L.Control {
   ) {
     super(options);
     this._setHeadingMode = setHeadingMode;
-    this._boundClick = () => this._setHeadingMode(true);
+    this._boundClick = () => {
+      this._setHeadingMode(true);
+      analytics.mapHeadingModeToggled(true);
+    };
   }
 
   onAdd(): HTMLDivElement {
@@ -108,6 +117,7 @@ export class RadarModeControl extends L.Control {
   public _container: HTMLDivElement | null = null;
   private _toggleRadarMode: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
+  private _currentState = false;
 
   constructor(
     options: L.ControlOptions,
@@ -115,7 +125,10 @@ export class RadarModeControl extends L.Control {
   ) {
     super(options);
     this._toggleRadarMode = toggleRadarMode;
-    this._boundClick = () => this._toggleRadarMode((prev) => !prev);
+    this._boundClick = () => {
+      this._toggleRadarMode((prev) => !prev);
+      analytics.mapRadarModeToggled(!this._currentState);
+    };
   }
 
   onAdd(): HTMLDivElement {
@@ -134,6 +147,7 @@ export class RadarModeControl extends L.Control {
   }
 
   updateState(enabled: boolean) {
+    this._currentState = enabled;
     if (this._container) setActiveStyle(this._container, enabled);
   }
 }
@@ -143,6 +157,7 @@ export class OSMControl extends L.Control {
   public _container: HTMLDivElement | null = null;
   private _toggleOSM: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
+  private _currentState = false;
 
   constructor(
     options: L.ControlOptions,
@@ -150,7 +165,10 @@ export class OSMControl extends L.Control {
   ) {
     super(options);
     this._toggleOSM = toggleOSM;
-    this._boundClick = () => this._toggleOSM((prev) => !prev);
+    this._boundClick = () => {
+      this._toggleOSM((prev) => !prev);
+      analytics.mapOsmToggled(!this._currentState);
+    };
   }
 
   onAdd(): HTMLDivElement {
@@ -169,6 +187,7 @@ export class OSMControl extends L.Control {
   }
 
   updateState(enabled: boolean) {
+    this._currentState = enabled;
     if (this._container) setActiveStyle(this._container, enabled);
   }
 }
@@ -178,6 +197,7 @@ export class OpenAIPControl extends L.Control {
   public _container: HTMLDivElement | null = null;
   private _toggleAIP: React.Dispatch<React.SetStateAction<boolean>>;
   private _boundClick: () => void;
+  private _currentState = false;
 
   constructor(
     options: L.ControlOptions,
@@ -185,7 +205,10 @@ export class OpenAIPControl extends L.Control {
   ) {
     super(options);
     this._toggleAIP = toggleAIP;
-    this._boundClick = () => this._toggleAIP((prev) => !prev);
+    this._boundClick = () => {
+      this._toggleAIP((prev) => !prev);
+      analytics.mapOpenAipToggled(!this._currentState);
+    };
   }
 
   onAdd(): HTMLDivElement {
@@ -204,7 +227,7 @@ export class OpenAIPControl extends L.Control {
   }
 
   updateState(enabled: boolean) {
+    this._currentState = enabled;
     if (this._container) setActiveStyle(this._container, enabled);
   }
 }
-

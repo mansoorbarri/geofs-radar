@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
+import { analytics } from "~/lib/posthog";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
 import { useAircraftStream } from "~/hooks/useAircraftStream";
 import { useAirportData } from "~/hooks/useAirportData";
@@ -176,7 +177,10 @@ export default function ATCPage() {
           {/* Mobile search button */}
           {isMapLoaded && isMobile && !showMobileSearch && (
             <button
-              onClick={() => setShowMobileSearch(true)}
+              onClick={() => {
+                setShowMobileSearch(true);
+                analytics.mobileSearchOpened();
+              }}
               className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/60 backdrop-blur-md"
             >
               <svg className="h-4 w-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,21 +217,30 @@ export default function ATCPage() {
                 <div className="rounded-xl border border-white/10 bg-black/90 p-3 backdrop-blur-xl">
                   <div className="flex gap-2">
                     <button
-                      onClick={start}
+                      onClick={() => {
+                        start();
+                        analytics.timerStarted();
+                      }}
                       disabled={isRunning}
                       className="rounded-lg bg-emerald-500/20 px-3 py-1 text-xs text-emerald-400 disabled:opacity-50"
                     >
                       Start
                     </button>
                     <button
-                      onClick={stop}
+                      onClick={() => {
+                        stop();
+                        analytics.timerStopped();
+                      }}
                       disabled={!isRunning}
                       className="rounded-lg bg-red-500/20 px-3 py-1 text-xs text-red-400 disabled:opacity-50"
                     >
                       Stop
                     </button>
                     <button
-                      onClick={reset}
+                      onClick={() => {
+                        reset();
+                        analytics.timerReset();
+                      }}
                       className="rounded-lg bg-slate-500/20 px-3 py-1 text-xs text-slate-400"
                     >
                       Reset
@@ -378,25 +391,32 @@ export default function ATCPage() {
               label: "Flights",
               icon: FlightsIcon,
               active: activeRightPanel === "fids",
-              onClick: () =>
-                setActiveRightPanel(activeRightPanel === "fids" ? null : "fids"),
+              onClick: () => {
+                const newState = activeRightPanel !== "fids";
+                setActiveRightPanel(newState ? "fids" : null);
+                analytics.panelFlightsToggled(newState);
+              },
             },
             {
               id: "filter",
               label: "Filter",
               icon: FilterIcon,
               active: activeRightPanel === "filter",
-              onClick: () =>
-                setActiveRightPanel(
-                  activeRightPanel === "filter" ? null : "filter",
-                ),
+              onClick: () => {
+                const newState = activeRightPanel !== "filter";
+                setActiveRightPanel(newState ? "filter" : null);
+                analytics.panelFilterToggled(newState);
+              },
             },
             {
               id: "upgrade",
               label: isProUser ? "PRO" : "Upgrade",
               icon: UpgradeIcon,
               active: false,
-              onClick: () => router.push("/pricing"),
+              onClick: () => {
+                analytics.upgradeButtonClicked("control_dock");
+                router.push("/pricing");
+              },
             },
           ]}
         />
@@ -418,14 +438,20 @@ export default function ATCPage() {
 
             {!isMobile && (isProUser ? (
               <button
-                onClick={() => setShowTaxiChart(true)}
+                onClick={() => {
+                  setShowTaxiChart(true);
+                  analytics.taxiChartOpened(selectedAirport?.icao || "unknown");
+                }}
                 className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[10px] text-cyan-300"
               >
                 Taxi Chart
               </button>
             ) : (
               <button
-                onClick={() => router.push("/upgrade")}
+                onClick={() => {
+                  analytics.taxiChartPremiumClicked();
+                  router.push("/pricing");
+                }}
                 className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-[10px] text-yellow-400"
               >
                 Taxi Charts (Premium)

@@ -10,6 +10,7 @@ import { Check, Zap } from "lucide-react";
 import Loading from "~/components/loading";
 import Image from "next/image";
 import { UserAuth } from "~/components/atc/userAuth";
+import { analytics } from "~/lib/posthog";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -17,6 +18,10 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [isProUser, setIsProUser] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    analytics.pricingPageViewed();
+  }, []);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -29,6 +34,7 @@ export default function PricingPage() {
   }, [isLoaded, isSignedIn]);
 
   async function handleUpgrade() {
+    analytics.upgradeButtonClicked("pricing_page");
     try {
       setLoading(true);
       const url = await createCheckoutSession();
@@ -42,6 +48,7 @@ export default function PricingPage() {
   }
 
   async function handleManageSubscription() {
+    analytics.manageSubscriptionClicked();
     try {
       setLoading(true);
       const url = await createPortalSession();
