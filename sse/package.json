@@ -1,0 +1,15 @@
+{
+  "name": "geofs-radar-sse",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "prisma": "^6.5.0"
+  }
+}
