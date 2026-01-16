@@ -24,6 +24,7 @@ import {
 
 import { MapGlobalStyles } from "~/styles/MapGlobalStyles";
 import { useMetarOverlay } from "~/hooks/useMetarOverlay";
+import { useAtisOverlay } from "~/hooks/useAtisOverlay";
 import { useWeatherOverlayLayer } from "~/hooks/useWeatherOverlayLayer";
 import { MetarPanel } from "./MetarPanel";
 import { RadarSettings } from "~/components/atc/radarSettings";
@@ -81,6 +82,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const [icaoInput, setIcaoInput] = useState("");
   const [showMetar, setShowMetar] = useState(true);
+  const [showAtis, setShowAtis] = useState(true);
 
   const headingControlRef = useRef<HeadingModeControl | null>(null);
   const radarControlRef = useRef<RadarModeControl | null>(null);
@@ -265,6 +267,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
     icaoInput || selectedAirport?.icao,
   );
 
+  const { atis } = useAtisOverlay(icaoInput || selectedAirport?.icao);
+
   // Render historic flight path from Flight Log
   useEffect(() => {
     if (!mapRefs.mapInstance.current || !mapRefs.historyLayerGroup.current) {
@@ -325,6 +329,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
           onChange={setIcaoInput}
           metarText={showMetar && metar?.raw ? metar.raw : null}
           onCloseMetar={() => setShowMetar(false)}
+          atisText={showAtis && atis?.datis ? atis.datis : null}
+          atisCode={showAtis && atis?.code ? atis.code : null}
+          onCloseAtis={() => setShowAtis(false)}
         />
       )}
     </>

@@ -5,6 +5,9 @@ interface MetarPanelProps {
   onChange: (value: string) => void;
   metarText?: string | null;
   onCloseMetar: () => void;
+  atisText?: string | null;
+  atisCode?: string | null;
+  onCloseAtis: () => void;
 }
 
 export const MetarPanel: React.FC<MetarPanelProps> = ({
@@ -12,9 +15,30 @@ export const MetarPanel: React.FC<MetarPanelProps> = ({
   onChange,
   metarText,
   onCloseMetar,
+  atisText,
+  atisCode,
+  onCloseAtis,
 }) => {
   return (
     <div className="absolute bottom-5 left-5 z-[1000] flex flex-col items-start gap-2.5 font-mono">
+      {atisText && (
+        <div className="relative max-w-[300px] rounded-lg border border-cyan-300/30 bg-gradient-to-br from-black/85 to-cyan-950/90 p-3 break-words text-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.2)]">
+          <button
+            onClick={onCloseAtis}
+            title="Close ATIS"
+            className="absolute top-1 right-1.5 text-lg text-cyan-400 transition-colors hover:text-red-400"
+          >
+            ×
+          </button>
+          <strong className="text-cyan-300">
+            ATIS{atisCode ? ` ${atisCode}` : ""}:
+          </strong>
+          <div className="mt-1.5 max-h-[200px] overflow-y-auto text-[13px] leading-[1.4]">
+            {atisText}
+          </div>
+        </div>
+      )}
+
       {metarText && (
         <div className="relative max-w-[300px] rounded-lg border border-cyan-300/30 bg-gradient-to-br from-black/85 to-cyan-950/90 p-3 break-words text-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.2)]">
           <button
