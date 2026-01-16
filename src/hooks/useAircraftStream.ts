@@ -20,7 +20,7 @@ export const useAircraftStream = () => {
 
     setConnectionStatus("connecting");
 
-    const url = "https://radar-sse-production.up.railway.app/api/stream";
+    const url = "https://sse.radarthing.com/api/stream";
 
     const es = new EventSource(url);
     eventSourceRef.current = es;
