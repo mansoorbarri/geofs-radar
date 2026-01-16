@@ -2,7 +2,7 @@
   "use strict";
 
   const API_URL =
-    "https://radar-sse-production.up.railway.app/api/atc/position";
+    "https://sse.radarthing.com/api/atc/position";
   const SEND_INTERVAL_MS = 5000;
 
   let info = { active: false, dep: "", arr: "", flt: "", sqk: "" };
