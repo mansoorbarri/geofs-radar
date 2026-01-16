@@ -3,6 +3,8 @@
 import React from "react";
 import { Switch } from "~/components/ui/switch";
 import { analytics } from "~/lib/posthog";
+import { useRouter } from "next/navigation";
+import { Plane, Shield } from "lucide-react";
 
 interface RadarSettingsProps {
   isPRO: boolean;
@@ -26,6 +28,8 @@ export const RadarSettings = ({
   showSigmets,
   setShowSigmets,
 }: RadarSettingsProps) => {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-4 rounded-md border border-cyan-400/30 bg-black/90 p-4 font-mono text-cyan-400 shadow-xl backdrop-blur-md">
       <h3 className="text-[14px] font-bold tracking-widest text-white uppercase">
@@ -65,6 +69,31 @@ export const RadarSettings = ({
           }}
           disabled={!isPRO}
         />
+      </div>
+
+      <div className="space-y-3 border-t border-white/10 pt-4">
+        <span className="text-[11px] tracking-widest text-cyan-300 uppercase">
+          AIRCRAFT IMAGES
+        </span>
+
+        <button
+          onClick={() => router.push("/aircraft-images")}
+          className="flex w-full items-center gap-2 rounded-md bg-white/5 px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/10"
+        >
+          <Plane className="h-4 w-4 text-cyan-400" />
+          <span>Upload Images</span>
+        </button>
+
+        {isPRO && (
+          <button
+            onClick={() => router.push("/admin/aircraft-images")}
+            className="flex w-full items-center gap-2 rounded-md bg-cyan-500/10 px-3 py-2 text-left text-sm text-cyan-400 transition-colors hover:bg-cyan-500/20"
+          >
+            <Shield className="h-4 w-4" />
+            <span>Approve Images</span>
+            <span className="ml-auto text-[10px] text-cyan-500 uppercase">PRO</span>
+          </button>
+        )}
       </div>
     </div>
   );

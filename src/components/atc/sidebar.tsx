@@ -17,6 +17,7 @@ import { type PositionUpdate } from "~/lib/aircraft-store";
 import { getFlightHistory } from "~/app/actions/get-flight-history";
 import Image from "next/image";
 import { analytics } from "~/lib/posthog";
+import { useAircraftPhoto } from "~/hooks/useAircraftPhoto";
 
 const getFlightPhase = (
   altAGL: number,
@@ -162,6 +163,10 @@ export const Sidebar = ({
   }, [aircraft.flightPlan, onWaypointClick]);
 
   const airlineLogo = getAirlineLogoFromFlightNumber(aircraft.flightNo);
+  const { photo: aircraftPhoto } = useAircraftPhoto(
+    aircraft.flightNo || aircraft.callsign,
+    aircraft.type
+  );
 
   return (
     <div
@@ -172,6 +177,24 @@ export const Sidebar = ({
       {isMobile && (
         <div className="flex items-center justify-center px-4 pt-3 pb-1">
           <div className="h-1 w-12 rounded-full bg-white/30" />
+        </div>
+      )}
+
+      {/* Aircraft Photo */}
+      {aircraftPhoto && (
+        <div className="relative mx-4 mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+          <img
+            src={aircraftPhoto.imageUrl}
+            alt="Aircraft"
+            className="w-full h-auto object-cover"
+          />
+          {aircraftPhoto.photographer && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2">
+              <span className="font-mono text-[9px] text-white/60">
+                Photo: {aircraftPhoto.photographer}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

@@ -54,3 +54,27 @@ enum Role {
   FREE
   PRO
 }
+
+model AircraftImage {
+  id           String    @id @default(cuid())
+  airlineIata  String    // e.g., "EK", "BA", "AA"
+  aircraftType String    // e.g., "A350", "B777", "A320"
+  imageUrl     String
+  imageKey     String?   // UploadThing file key for deletion
+  photographer String?
+
+  // Approval workflow
+  isApproved   Boolean   @default(false)
+  uploadedBy   String    // Clerk user ID of uploader
+  approvedBy   String?   // Clerk user ID of approver (PRO user)
+  approvedAt   DateTime?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([airlineIata, aircraftType, isApproved])
+  @@index([airlineIata])
+  @@index([aircraftType])
+  @@index([isApproved])
+  @@index([uploadedBy])
+}
