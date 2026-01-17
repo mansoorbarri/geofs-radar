@@ -288,6 +288,8 @@ export default function AircraftImagesPage() {
                     </div>
                   ) : (
                     <ImageUploader
+                      airlineIata={formData.airlineIata}
+                      aircraftType={formData.aircraftType}
                       onUploadComplete={(url, key) => {
                         setFormData({
                           ...formData,

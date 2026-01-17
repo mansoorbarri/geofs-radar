@@ -9,6 +9,8 @@ import { Upload, X, Loader2, ImageIcon, AlertCircle } from "lucide-react";
 interface ImageUploaderProps {
   onUploadComplete: (url: string, key: string) => void;
   onError: (error: string) => void;
+  airlineIata?: string;
+  aircraftType?: string;
 }
 
 // Convert technical error messages to human-readable ones
@@ -40,7 +42,7 @@ function getHumanReadableError(error: Error | string): string {
   return message.replace(/([A-Z])/g, " $1").trim() || "Upload failed. Please try again.";
 }
 
-export function ImageUploader({ onUploadComplete, onError }: ImageUploaderProps) {
+export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraftType }: ImageUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -107,12 +109,25 @@ export function ImageUploader({ onUploadComplete, onError }: ImageUploaderProps)
   const handleUpload = async () => {
     if (!file) return;
 
+    // Require airline and aircraft type before upload
+    if (!airlineIata || !aircraftType) {
+      const errorMsg = "Please fill in the Airline IATA and Aircraft Type before uploading.";
+      setLocalError(errorMsg);
+      onError(errorMsg);
+      return;
+    }
+
     setIsUploading(true);
     setLocalError(null);
     setUploadProgress(0);
 
     try {
-      await startUpload([file]);
+      // Rename file to airline-aircraftType format (e.g., EK-A380.png)
+      const extension = file.name.split('.').pop() || 'png';
+      const newFileName = `${airlineIata}-${aircraftType}.${extension}`;
+      const renamedFile = new File([file], newFileName, { type: file.type });
+
+      await startUpload([renamedFile]);
     } catch (error) {
       const humanError = getHumanReadableError(error as Error);
       setLocalError(humanError);
