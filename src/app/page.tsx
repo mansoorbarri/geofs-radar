@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { analytics } from "~/lib/posthog";
@@ -44,6 +44,7 @@ type RightPanel = "fids" | "filter" | null;
 
 export default function ATCPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useMobileDetection();
 
   const { aircrafts, isLoading, connectionStatus } = useAircraftStream();
@@ -61,9 +62,14 @@ export default function ATCPage() {
   );
   const [isViewingHistory, setIsViewingHistory] = useState(false);
 
-  const [selectedCallsigns, setSelectedCallsigns] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedCallsigns, setSelectedCallsigns] = useState<Set<string>>(() => {
+    const callsignParam = searchParams.get("callsign");
+    if (callsignParam) {
+      const prefixes = callsignParam.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+      return new Set(prefixes);
+    }
+    return new Set();
+  });
 
   const [activeRightPanel, setActiveRightPanel] = useState<RightPanel>(null);
 
@@ -91,6 +97,17 @@ export default function ATCPage() {
       .then(setIsProUser)
       .finally(() => setProLoading(false));
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (selectedCallsigns.size > 0) {
+      params.set("callsign", Array.from(selectedCallsigns).join(","));
+    } else {
+      params.delete("callsign");
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    window.history.replaceState(null, "", newUrl);
+  }, [selectedCallsigns]);
 
   const filteredAircrafts = useMemo(() => {
     if (selectedCallsigns.size === 0) return aircrafts;
