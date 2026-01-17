@@ -61,6 +61,13 @@ async function isProUser(): Promise<boolean> {
   return await convex.query(api.users.isPro, { clerkId: userId });
 }
 
+async function isAdminUser(): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) return false;
+
+  return await convex.query(api.users.isAdmin, { clerkId: userId });
+}
+
 async function getCurrentUserId(): Promise<string | null> {
   const { userId } = await auth();
   return userId;
@@ -95,10 +102,10 @@ export async function getApprovedAircraftImages(): Promise<AircraftImage[]> {
   }
 }
 
-// Get pending images for approval (PRO only)
+// Get pending images for approval (ADMIN only)
 export async function getPendingAircraftImages(): Promise<AircraftImage[]> {
-  const pro = await isProUser();
-  if (!pro) return [];
+  const admin = await isAdminUser();
+  if (!admin) return [];
 
   try {
     const images = await convex.query(api.aircraftImages.getPending, {});
@@ -109,10 +116,10 @@ export async function getPendingAircraftImages(): Promise<AircraftImage[]> {
   }
 }
 
-// Get all images (PRO only - for admin view)
+// Get all images (ADMIN only - for admin view)
 export async function getAllAircraftImages(): Promise<AircraftImage[]> {
-  const pro = await isProUser();
-  if (!pro) return [];
+  const admin = await isAdminUser();
+  if (!admin) return [];
 
   try {
     const images = await convex.query(api.aircraftImages.getAll, {});
@@ -192,13 +199,13 @@ export async function createAircraftImage(data: {
   }
 }
 
-// Approve image (PRO only)
+// Approve image (ADMIN only)
 export async function approveAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isProUser();
-  if (!pro) {
-    return { success: false, error: "Only PRO users can approve images" };
+  const admin = await isAdminUser();
+  if (!admin) {
+    return { success: false, error: "Only ADMIN users can approve images" };
   }
 
   const userId = await getCurrentUserId();
@@ -255,13 +262,13 @@ export async function approveAircraftImage(
   }
 }
 
-// Reject/delete pending image (PRO only)
+// Reject/delete pending image (ADMIN only)
 export async function rejectAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isProUser();
-  if (!pro) {
-    return { success: false, error: "Only PRO users can reject images" };
+  const admin = await isAdminUser();
+  if (!admin) {
+    return { success: false, error: "Only ADMIN users can reject images" };
   }
 
   try {
@@ -295,13 +302,13 @@ export async function rejectAircraftImage(
   }
 }
 
-// Delete approved image (PRO only)
+// Delete approved image (ADMIN only)
 export async function deleteAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isProUser();
-  if (!pro) {
-    return { success: false, error: "Only PRO users can delete images" };
+  const admin = await isAdminUser();
+  if (!admin) {
+    return { success: false, error: "Only ADMIN users can delete images" };
   }
 
   try {

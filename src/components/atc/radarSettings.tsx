@@ -9,6 +9,7 @@ import { Plane, Shield } from "lucide-react";
 
 interface RadarSettingsProps {
   isPRO: boolean;
+  isADMIN: boolean;
 
   showPrecipitation: boolean;
   setShowPrecipitation: (v: boolean) => void;
@@ -22,6 +23,7 @@ interface RadarSettingsProps {
 
 export const RadarSettings = ({
   isPRO,
+  isADMIN,
   showPrecipitation,
   setShowPrecipitation,
   showAirmets,
@@ -85,14 +87,14 @@ export const RadarSettings = ({
           <span>Upload Images</span>
         </button>
 
-        {isPRO && (
+        {isADMIN && (
           <button
             onClick={() => router.push("/admin/aircraft-images")}
             className="flex w-full items-center gap-2 rounded-md bg-cyan-500/10 px-3 py-2 text-left text-sm text-cyan-400 transition-colors hover:bg-cyan-500/20"
           >
             <Shield className="h-4 w-4" />
             <span>Approve Images</span>
-            <span className="ml-auto text-[10px] text-cyan-500 uppercase">PRO</span>
+            <span className="ml-auto text-[10px] text-cyan-500 uppercase">ADMIN</span>
           </button>
         )}
       </div>

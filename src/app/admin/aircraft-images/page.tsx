@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
-import { isPro } from "~/app/actions/is-pro";
+import { isAdmin } from "~/app/actions/is-pro";
 import {
   getPendingAircraftImages,
   getApprovedAircraftImages,
@@ -21,7 +21,7 @@ export default function AdminAircraftImagesPage() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
   const [loading, setLoading] = useState(true);
-  const [isProUser, setIsProUser] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [pendingImages, setPendingImages] = useState<AircraftImage[]>([]);
   const [approvedImages, setApprovedImages] = useState<AircraftImage[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
@@ -29,10 +29,10 @@ export default function AdminAircraftImagesPage() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      isPro()
-        .then((pro) => {
-          setIsProUser(pro);
-          if (pro) {
+      isAdmin()
+        .then((admin) => {
+          setIsAdminUser(admin);
+          if (admin) {
             loadImages();
           } else {
             setLoading(false);
@@ -93,7 +93,7 @@ export default function AdminAircraftImagesPage() {
     return <Loading />;
   }
 
-  if (!isSignedIn || !isProUser) {
+  if (!isSignedIn || !isAdminUser) {
     return (
       <div className="min-h-screen bg-black text-white">
         <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
@@ -119,16 +119,16 @@ export default function AdminAircraftImagesPage() {
             <span className="font-mono text-sm text-red-400">ACCESS DENIED</span>
           </div>
 
-          <h1 className="mb-4 text-4xl font-bold text-white">Pro Access Required</h1>
+          <h1 className="mb-4 text-4xl font-bold text-white">Admin Access Required</h1>
           <p className="mb-8 text-xl text-slate-400">
-            Only Pro users can approve aircraft images
+            Only Admin users can approve aircraft images
           </p>
 
           <button
-            onClick={() => router.push("/pricing")}
+            onClick={() => router.push("/")}
             className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-8 py-4 font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-cyan-500/40"
           >
-            Upgrade to Pro
+            Back to Map
           </button>
         </main>
       </div>

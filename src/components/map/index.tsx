@@ -5,7 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
-import { isPro } from "~/app/actions/is-pro";
+import { isPro, isAdmin } from "~/app/actions/is-pro";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
 
 import { useMapInitialization } from "./useMapInitialization";
@@ -60,6 +60,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
   const isMobile = useMobileDetection();
   const [isProUser, setIsProUser] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [proLoading, setProLoading] = useState(true);
 
   const canUseRadarMode = isProUser;
@@ -98,8 +99,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const clearHistoryPolylineRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    isPro()
-      .then(setIsProUser)
+    Promise.all([isPro(), isAdmin()])
+      .then(([pro, admin]) => {
+        setIsProUser(pro);
+        setIsAdminUser(admin);
+      })
       .finally(() => setProLoading(false));
   }, []);
 
@@ -316,6 +320,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           <div className="rounded-xl border border-white/10 bg-[#0a1219]/95 p-5 shadow-2xl backdrop-blur-xl">
             <RadarSettings
               isPRO={isProUser}
+              isADMIN={isAdminUser}
               showPrecipitation={showPrecipitation}
               setShowPrecipitation={setShowPrecipitation}
               showAirmets={showAirmets}
