@@ -86,7 +86,7 @@ app.post("/api/atc/position", async (req, res) => {
       }
     }
 
-    if (role === "PRO" && convexUserId) {
+    if ((role === "PRO" || role === "ADMIN") && convexUserId) {
       if (!flightSessions.has(data.id)) {
         flightSessions.set(data.id, {
           convexUserId: convexUserId,
