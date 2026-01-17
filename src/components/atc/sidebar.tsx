@@ -60,6 +60,7 @@ export const Sidebar = ({
   const [history, setHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -168,6 +169,11 @@ export const Sidebar = ({
     aircraft.type
   );
 
+  // Reset image loaded state when photo changes
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [aircraftPhoto?.imageUrl]);
+
   return (
     <div
       ref={containerRef}
@@ -180,16 +186,21 @@ export const Sidebar = ({
         </div>
       )}
 
-      {/* Aircraft Photo */}
+      {/* Aircraft Photo - only show when we have a photo */}
       {aircraftPhoto && (
-        <div className="relative mx-4 mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+        <div className="relative mx-4 mt-4 mb-2 aspect-video overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-xl">
+          {/* Loading skeleton while image loads */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={aircraftPhoto.imageUrl}
             alt="Aircraft"
-            className="w-full h-auto object-cover"
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
           />
-          {aircraftPhoto.photographer && (
+          {aircraftPhoto.photographer && imageLoaded && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2">
               <span className="font-mono text-[9px] text-white/60">
                 Photo: {aircraftPhoto.photographer}

@@ -147,11 +147,11 @@ export default function AircraftImagesPage() {
                 className="group overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition-all hover:border-cyan-500/30"
               >
                 <div className="relative aspect-video">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={image.imageUrl}
                     alt={`${image.airlineIata} ${image.aircraftType}`}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
                 <div className="p-4">
@@ -271,12 +271,12 @@ export default function AircraftImagesPage() {
                     UPLOAD IMAGE
                   </label>
                   {formData.imageUrl ? (
-                    <div className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                    <div className="relative aspect-video">
+                      <Image
                         src={formData.imageUrl}
                         alt="Preview"
-                        className="w-full rounded-lg border border-white/10 object-cover"
+                        fill
+                        className="rounded-lg border border-white/10 object-cover"
                       />
                       <button
                         type="button"

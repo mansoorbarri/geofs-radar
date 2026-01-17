@@ -6,6 +6,59 @@ import { generateClientDropzoneAccept } from "uploadthing/client";
 import { useUploadThing } from "~/lib/uploadthing";
 import { Upload, X, Loader2, ImageIcon, AlertCircle } from "lucide-react";
 
+const MAX_WIDTH = 800;
+const MAX_HEIGHT = 600;
+const JPEG_QUALITY = 0.8;
+const MAX_FILE_SIZE = 512 * 1024; // 512KB
+
+// Compress image using canvas
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Calculate new dimensions maintaining aspect ratio
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+        const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      // Create canvas and draw resized image
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Failed to get canvas context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to blob
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Failed to compress image"));
+            return;
+          }
+          // Create new file with same name but .jpg extension
+          const baseName = file.name.replace(/\.[^.]+$/, "");
+          const compressedFile = new File([blob], `${baseName}.jpg`, {
+            type: "image/jpeg",
+          });
+          resolve(compressedFile);
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 interface ImageUploaderProps {
   onUploadComplete: (url: string, key: string) => void;
   onError: (error: string) => void;
@@ -19,7 +72,7 @@ function getHumanReadableError(error: Error | string): string {
   const lowerMessage = message.toLowerCase();
 
   if (lowerMessage.includes("filesize") || lowerMessage.includes("file size") || lowerMessage.includes("too large") || lowerMessage.includes("size limit")) {
-    return "File is too large. Maximum size is 1MB. Please compress your image or choose a smaller one.";
+    return "File is too large. Maximum size is 512KB. Please choose a smaller image.";
   }
 
   if (lowerMessage.includes("file type") || lowerMessage.includes("filetype") || lowerMessage.includes("invalid type")) {
@@ -46,6 +99,7 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -75,28 +129,42 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
     setLocalError(null);
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setLocalError(null);
     const selectedFile = acceptedFiles[0];
 
     if (!selectedFile) return;
 
-    // Client-side validation
-    if (selectedFile.size > 1024 * 1024) {
-      const errorMsg = "File is too large. Maximum size is 1MB. Please compress your image or choose a smaller one.";
+    setIsCompressing(true);
+
+    try {
+      // Compress the image
+      const compressedFile = await compressImage(selectedFile);
+
+      // Check if compressed file is still too large
+      if (compressedFile.size > MAX_FILE_SIZE) {
+        const errorMsg = "Image is still too large after compression. Please choose a smaller image.";
+        setLocalError(errorMsg);
+        onError(errorMsg);
+        setIsCompressing(false);
+        return;
+      }
+
+      setFile(compressedFile);
+
+      // Create preview from compressed file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (err) {
+      const errorMsg = "Failed to process image. Please try another file.";
       setLocalError(errorMsg);
       onError(errorMsg);
-      return;
+    } finally {
+      setIsCompressing(false);
     }
-
-    setFile(selectedFile);
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
   }, [onError]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -192,6 +260,17 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
     );
   }
 
+  // Show compressing state
+  if (isCompressing) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-cyan-500/50 bg-cyan-500/10 p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        <span className="mt-3 font-medium text-white">Compressing image...</span>
+        <span className="mt-1 text-sm text-slate-400">This will only take a moment</span>
+      </div>
+    );
+  }
+
   // Show dropzone
   return (
     <div className="space-y-3">
@@ -227,7 +306,7 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
           </div>
 
           <p className="text-xs text-slate-500">
-            JPG, PNG, GIF or WebP • Max 1MB
+            JPG, PNG, GIF or WebP • Auto-compressed
           </p>
         </div>
       </div>
