@@ -296,8 +296,8 @@ export default function AircraftImagesPage() {
                         });
                         setError(null);
                       }}
-                      onError={(errorMsg) => {
-                        setError(errorMsg);
+                      onError={() => {
+                        // Error is handled internally by ImageUploader
                       }}
                     />
                   )}
