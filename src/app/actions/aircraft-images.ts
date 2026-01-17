@@ -39,7 +39,7 @@ function toAircraftImage(img: {
   updatedAt: number;
 }): AircraftImage {
   return {
-    id: img.id as string,
+    id: img.id,
     airlineIata: img.airlineIata,
     aircraftType: img.aircraftType,
     imageUrl: img.imageUrl,
