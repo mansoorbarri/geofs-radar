@@ -47,7 +47,7 @@ export const getByEmail = query({
   },
 });
 
-// Check if user is PRO
+// Check if user is PRO (or ADMIN, since ADMIN has all PRO features)
 export const isPro = query({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
@@ -55,7 +55,31 @@ export const isPro = query({
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
       .first();
-    return user?.role === "PRO";
+    return user?.role === "PRO" || user?.role === "ADMIN";
+  },
+});
+
+// Check if user is ADMIN
+export const isAdmin = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+    return user?.role === "ADMIN";
+  },
+});
+
+// Get user role
+export const getRole = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+    return user?.role ?? null;
   },
 });
 
@@ -82,7 +106,7 @@ export const update = mutation({
   args: {
     id: v.id("users"),
     email: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"), v.literal("ADMIN"))),
     googleId: v.optional(v.string()),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
@@ -104,7 +128,7 @@ export const updateByClerkId = mutation({
   args: {
     clerkId: v.string(),
     email: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"), v.literal("ADMIN"))),
     googleId: v.optional(v.string()),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
@@ -132,7 +156,7 @@ export const updateByClerkId = mutation({
 export const updateByStripeCustomerId = mutation({
   args: {
     stripeCustomerId: v.string(),
-    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"), v.literal("ADMIN"))),
   },
   handler: async (ctx, args) => {
     const { stripeCustomerId, ...updates } = args;
