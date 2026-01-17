@@ -25,10 +25,11 @@ function normalizeAircraftType(type: string | undefined): string | null {
   const boeingMatch = boeingRegex.exec(cleaned);
   if (boeingMatch) return boeingMatch[0];
 
-  // 737, 777, 787 -> B737, B777, B787
-  const boeingNumRegex = /^(\d{3})/;
-  const boeingNumMatch = boeingNumRegex.exec(cleaned);
-  if (boeingNumMatch) return `B${boeingNumMatch[1]}`;
+  // "Boeing 777", "Boeing 737-800", "777", "787-9" -> B777, B737, B787
+  // Matches 7x7 pattern (Boeing commercial jets) anywhere in string
+  const boeingNameRegex = /\b(7[0-9]7)\b/;
+  const boeingNameMatch = boeingNameRegex.exec(cleaned);
+  if (boeingNameMatch) return `B${boeingNameMatch[1]}`;
 
   // CRJ, ERJ, E175, E190, etc.
   const embraerRegex = /E\d{3}|ERJ\d{3}|CRJ\d{3}/;
