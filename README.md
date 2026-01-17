@@ -1,39 +1,80 @@
-## GeoFS Radar 
-A Flightradar24-type radar display for the GeoFS. This is a fork of the original [GeoFS Radar](https://github.com/seabus0316/GeoFS-flightradar/) project. These are the things I have changed from the original project: 
+<p align="center">
+  <img src="public/logo-white.svg" alt="GeoFS Radar" width="200">
+</p>
 
-- Originally, there were too many options to render the map which was, A, confusing and B, unnecessary.
-- the original project made it a bit difficult to see flight's heading, its fixed on this project.
-- There was no way to just pick a plane, you had to zoom in to see and choose a flight to track, this project makes it easy to just click on a flight and see every detail of it. 
-- The original project uses MSL rather than AGL altitude, this project uses AGL. AGL is more accurate especially when ATCing. 
-- Original did not have detailed Flight plan, this project does. By "detail" I mean, this project shows the speed and altitude at every waypoint. 
+# GeoFS Radar
 
-**Other Additions:**
-- I added a "Heading Mode" that allows users to calculate heading from point A to point B. Making it easy for controllers to calculate headings. 
-- Airports ~~are~~ can be highlighted with a marker.
-- added search so you can directly search with the flights' or geofs' callsign
-- Radar Mode - which has combined look and feel of VATSIM radar and actual radar screens.
-- [GeoFS-Chart](https://github.com/mansoorbarri/geofs-charts) works on the radar screen 
+A modern, feature-rich flight radar for the [GeoFS](https://www.geo-fs.com/) flight simulator. Track flights in real-time, view detailed flight information, and manage air traffic with professional-grade tools.
 
-## Installation 
-- Install the mod: https://xyzmani.com/radar
-- View the radar: https://radar.xyzmani.com/
+This project is a complete reimagining of the original [GeoFS Radar](https://github.com/seabus0316/GeoFS-flightradar/) — rebuilt from the ground up with a focus on usability, accuracy, and a clean interface.
 
-## Usage
-- Once you install the mod, you will see a popup on the right side of your screen 
-- Enter the ICAO of departure/arrival aiports, Callsign and Squawk, and click "Save".
-- You can close the popup by pressing "W" on your keyboard. 
+## Quick Start
 
-**Note:** you will not be on the radar page until you save the settings. and vise-versa, if you don't want to be on the radar page, just clear the fields and click "Save". 
+1. **Install the mod:** [xyzmani.com/radar](https://xyzmani.com/radar)
+2. **Open the radar:** [radar.xyzmani.com](https://radar.xyzmani.com/)
+3. Enter your departure/arrival airports (ICAO codes), callsign, and squawk code
+4. Click **Save** — you're now visible on the radar
 
-## Technicals 
-This project uses [Leaflet](https://leafletjs.com/) and [OpenLayers](https://openlayers.org/) to render the map.
+> Press **W** to toggle the settings popup. Clear the fields and save to go invisible.
 
-The original project uses the same technology but was written in Javascript and Express and was not very modular. This project is written in TypeScript, using the T3 stack. 
+---
 
-## Issues
-If you find any issues, please report them on the [Issues](https://github.com/anar-anar/geofs-radar/issues) page.
+## Features
 
-### ToDo
-- [x] setup auth 
-- [ ] setup db 
-- [ ] setup auth roles 
+### Flight Tracking
+- **Click-to-track** — Select any aircraft directly on the map to view full details
+- **Search** — Find flights instantly by callsign or GeoFS username
+- **Detailed flight plans** — View speed and altitude at every waypoint
+
+### Controller Tools
+- **Heading Mode** — Calculate headings between any two points on the map
+- **Airport markers** — Highlight airports for quick reference
+- **AGL altitude** — Accurate ground-relative altitude, essential for ATC operations
+- **Radar Mode** — Clean, professional display inspired by real-world radar screens and VATSIM
+
+### Weather & Charts
+- **METAR overlays** — Live weather data displayed on the map
+- **Airport charts** — Access approach plates and taxi diagrams via [GeoFS-Charts](https://github.com/mansoorbarri/geofs-charts) integration
+
+---
+
+## What's Different From the Original
+
+| Original | This Version |
+|----------|--------------|
+| Multiple confusing map options | Single, streamlined interface |
+| Hard to see aircraft headings | Clear heading indicators |
+| Required zooming to select flights | Click any aircraft, anywhere |
+| MSL altitude (less useful for ATC) | AGL altitude (ground-relative) |
+| Basic flight plan display | Detailed waypoints with speed/altitude |
+
+---
+
+## Issues & Feedback
+
+Found a bug or have a suggestion? Open an issue on [GitHub](https://github.com/mansoorbarri/RadarThing/issues).
+
+---
+
+## Technical Details
+
+**Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS, Convex (real-time database)
+
+**Mapping:** [Leaflet](https://leafletjs.com/) for interactive maps
+
+**Authentication:** Clerk
+
+**Architecture:** Built on the T3 stack with a modular, type-safe codebase. The original project was written in JavaScript with Express — this version is a complete TypeScript rewrite with modern tooling and better separation of concerns.
+
+### Development
+
+```bash
+# Install dependencies
+bun install
+
+# Run development server
+bun dev
+
+# Build for production
+bun run build
+```
