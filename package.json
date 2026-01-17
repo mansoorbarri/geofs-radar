@@ -8,7 +8,7 @@
     "check": "next lint && tsc --noEmit",
     "cf": " npx cloudflared tunnel --url http://localhost:3000",
     "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
-    "dev": "concurrently -n convex,next -c blue,green \"convex dev\" \"next dev --turbo\"",
+    "dev": "next dev --turbo",
     "dev:next": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
