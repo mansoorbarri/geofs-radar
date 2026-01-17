@@ -35,14 +35,6 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_startTime", ["startTime"]),
 
-  servers: defineTable({
-    name: v.string(),
-    inviteCode: v.string(),
-    ownerId: v.id("users"),
-  })
-    .index("by_inviteCode", ["inviteCode"])
-    .index("by_ownerId", ["ownerId"]),
-
   aircraftImages: defineTable({
     airlineIata: v.string(),
     aircraftType: v.string(),
