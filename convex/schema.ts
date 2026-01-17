@@ -1,0 +1,66 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  users: defineTable({
+    clerkId: v.string(),
+    email: v.string(),
+    role: v.union(v.literal("FREE"), v.literal("PRO")),
+    isDeleted: v.boolean(),
+    deletedAt: v.optional(v.number()), // timestamp
+    googleId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_email", ["email"])
+    .index("by_googleId", ["googleId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+
+  flights: defineTable({
+    userId: v.id("users"),
+    callsign: v.string(),
+    aircraftType: v.string(),
+    depICAO: v.optional(v.string()),
+    arrICAO: v.optional(v.string()),
+    squawk: v.optional(v.string()),
+    duration: v.optional(v.number()),
+    landingRate: v.optional(v.float64()),
+    maxAltitude: v.optional(v.number()),
+    maxSpeed: v.optional(v.number()),
+    routeData: v.optional(v.any()), // JSON data - array of coordinates
+    startTime: v.number(), // timestamp
+    endTime: v.optional(v.number()), // timestamp
+  })
+    .index("by_userId", ["userId"])
+    .index("by_startTime", ["startTime"]),
+
+  servers: defineTable({
+    name: v.string(),
+    inviteCode: v.string(),
+    ownerId: v.id("users"),
+  })
+    .index("by_inviteCode", ["inviteCode"])
+    .index("by_ownerId", ["ownerId"]),
+
+  aircraftImages: defineTable({
+    airlineIata: v.string(),
+    aircraftType: v.string(),
+    imageUrl: v.string(),
+    imageKey: v.optional(v.string()), // UploadThing file key for deletion
+    photographer: v.optional(v.string()),
+    isApproved: v.boolean(),
+    uploadedBy: v.string(), // Clerk user ID
+    approvedBy: v.optional(v.string()), // Clerk user ID
+    approvedAt: v.optional(v.number()), // timestamp
+  })
+    .index("by_airlineIata", ["airlineIata"])
+    .index("by_aircraftType", ["aircraftType"])
+    .index("by_isApproved", ["isApproved"])
+    .index("by_uploadedBy", ["uploadedBy"])
+    .index("by_airline_aircraft_approved", [
+      "airlineIata",
+      "aircraftType",
+      "isApproved",
+    ]),
+});

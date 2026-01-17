@@ -1,8 +1,7 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { db } from "~/server/db";
-import { Role } from "@prisma/client";
+import { convex, api } from "~/server/convex";
 
 const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET!;
 
@@ -36,7 +35,7 @@ export async function POST(req: Request) {
   if (type === "user.created") {
     const email =
       data.email_addresses?.find(
-        (e: any) => e.id === data.primary_email_address_id,
+        (e: any) => e.id === data.primary_email_address_id
       )?.email_address ?? null;
 
     if (!email) {
@@ -45,67 +44,54 @@ export async function POST(req: Request) {
 
     const googleId =
       data.external_accounts?.find(
-        (acc: any) => acc.provider === "oauth_google",
+        (acc: any) => acc.provider === "oauth_google"
       )?.provider_user_id ?? null;
 
-    const existing = await db.user.findFirst({
-      where: {
-        OR: [{ clerkId: data.id }, { email }],
-      },
+    // Check if user exists by clerkId or email
+    const existing = await convex.query(api.users.findByClerkIdOrEmail, {
+      clerkId: data.id,
+      email,
     });
 
     if (existing) {
-      await db.user.update({
-        where: { id: existing.id },
-        data: {
-          clerkId: data.id,
-          email,
-          googleId,
-          isDeleted: false,
-          deletedAt: null,
-          role: Role.FREE,
-        },
+      // Update existing user (undelete if needed)
+      await convex.mutation(api.users.undeleteAndUpdate, {
+        id: existing._id,
+        clerkId: data.id,
+        email,
+        googleId: googleId ?? undefined,
       });
     } else {
-      await db.user.create({
-        data: {
-          clerkId: data.id,
-          email,
-          googleId,
-          role: Role.FREE,
-        },
+      // Create new user
+      await convex.mutation(api.users.create, {
+        clerkId: data.id,
+        email,
+        googleId: googleId ?? undefined,
       });
     }
   }
 
   if (type === "user.updated") {
-    const existing = await db.user.findUnique({
-      where: { clerkId: data.id },
+    const existing = await convex.query(api.users.getByClerkId, {
+      clerkId: data.id,
     });
 
     if (existing && !existing.isDeleted) {
       const email =
         data.email_addresses?.find(
-          (e: any) => e.id === data.primary_email_address_id,
+          (e: any) => e.id === data.primary_email_address_id
         )?.email_address ?? existing.email;
 
-      await db.user.update({
-        where: { id: existing.id },
-        data: {
-          email,
-        },
+      await convex.mutation(api.users.updateByClerkId, {
+        clerkId: data.id,
+        email,
       });
     }
   }
 
   if (type === "user.deleted") {
-    await db.user.updateMany({
-      where: { clerkId: data.id },
-      data: {
-        isDeleted: true,
-        deletedAt: new Date(),
-        role: Role.FREE,
-      },
+    await convex.mutation(api.users.softDelete, {
+      clerkId: data.id,
     });
   }
 
@@ -116,27 +102,42 @@ export async function POST(req: Request) {
     const hasActiveItem =
       Array.isArray(data.items) &&
       data.items.some(
-        (item: any) => item.status === "active" && item.plan?.slug === "pro",
+        (item: any) => item.status === "active" && item.plan?.slug === "pro"
       );
 
     if (!userId && !email) {
       return NextResponse.json({ ok: true });
     }
 
-    const result = await db.user.updateMany({
-      where: {
-        isDeleted: false,
-        OR: [
-          ...(userId ? [{ clerkId: userId }] : []),
-          ...(email ? [{ email }] : []),
-        ],
-      },
-      data: {
-        role: hasActiveItem ? Role.PRO : Role.FREE,
-      },
-    });
+    const role = hasActiveItem ? "PRO" : "FREE";
 
-    console.log("ROLE UPDATE COUNT:", result.count);
+    // Try to find and update user by clerkId first
+    if (userId) {
+      const userByClerk = await convex.query(api.users.getByClerkId, {
+        clerkId: userId,
+      });
+      if (userByClerk && !userByClerk.isDeleted) {
+        await convex.mutation(api.users.updateByClerkId, {
+          clerkId: userId,
+          role,
+        });
+        console.log("ROLE UPDATE by clerkId:", userId, role);
+        return NextResponse.json({ ok: true });
+      }
+    }
+
+    // Try by email
+    if (email) {
+      const userByEmail = await convex.query(api.users.getByEmail, { email });
+      if (userByEmail && !userByEmail.isDeleted) {
+        await convex.mutation(api.users.update, {
+          id: userByEmail._id,
+          role,
+        });
+        console.log("ROLE UPDATE by email:", email, role);
+      }
+    }
   }
+
   return NextResponse.json({ ok: true });
 }
