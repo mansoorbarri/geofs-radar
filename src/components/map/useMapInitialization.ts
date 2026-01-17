@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import {
   HeadingModeControl,
@@ -37,6 +37,7 @@ interface MapRefs {
   radarBaseLayer: React.MutableRefObject<L.TileLayer | null>;
   openAIPLayer: React.MutableRefObject<L.TileLayer | null>;
   weatherOverlayLayer: React.MutableRefObject<L.TileLayer | null>;
+  mapReady: boolean;
 }
 
 export const useMapInitialization = ({
@@ -66,6 +67,9 @@ export const useMapInitialization = ({
   const radarBaseLayer = useRef<L.TileLayer | null>(null);
   const openAIPLayer = useRef<L.TileLayer | null>(null);
   const weatherOverlayLayer = useRef<L.TileLayer | null>(null);
+
+  // State to signal when map and layers are ready
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     if (mapInstance.current) return;
@@ -133,21 +137,16 @@ export const useMapInitialization = ({
     airportMarkersLayer.current = L.layerGroup().addTo(map);
     historyLayerGroup.current = L.layerGroup().addTo(map);
 
-    // Only add Leaflet controls on desktop
+    // Signal that map and layers are ready
+    setMapReady(true);
+
+    // Only add Leaflet controls on desktop (radar control handled in separate effect)
     if (!isMobile) {
       const headingControl = new HeadingModeControl({}, setIsHeadingMode);
       map.addControl(headingControl);
       setHeadingControlRef.current = headingControl;
 
-      if (canUseRadarMode) {
-        const radarControl = new RadarModeControl({}, setIsRadarMode);
-        map.addControl(radarControl);
-        setRadarControlRef.current = radarControl;
-      } else {
-        const lockedRadarControl = new LockedRadarModeControl({});
-        map.addControl(lockedRadarControl);
-        setRadarControlRef.current = null;
-      }
+      // Radar control is added in a separate effect that watches canUseRadarMode
 
       if (setIsOSMMode && setOSMControlRef) {
         const osmControl = new OSMControl({}, setIsOSMMode);
@@ -171,9 +170,38 @@ export const useMapInitialization = ({
       map.remove();
       mapInstance.current = null;
     };
-    // Intentionally excluding setState functions as they are stable
+    // Intentionally excluding setState functions and canUseRadarMode
+    // canUseRadarMode changes should NOT recreate the map - handle controls separately
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapContainerId, onMapClick, canUseRadarMode]);
+  }, [mapContainerId, onMapClick]);
+
+  // Separate effect to handle radar control updates when Pro status changes
+  const radarControlInstanceRef = useRef<L.Control | null>(null);
+
+  useEffect(() => {
+    if (!mapInstance.current || isMobile) return;
+
+    const map = mapInstance.current;
+
+    // Remove existing radar control if any
+    if (radarControlInstanceRef.current) {
+      map.removeControl(radarControlInstanceRef.current);
+      radarControlInstanceRef.current = null;
+    }
+
+    // Add the appropriate radar control
+    if (canUseRadarMode) {
+      const radarControl = new RadarModeControl({}, setIsRadarMode);
+      map.addControl(radarControl);
+      radarControlInstanceRef.current = radarControl;
+      setRadarControlRef.current = radarControl;
+    } else {
+      const lockedRadarControl = new LockedRadarModeControl({});
+      map.addControl(lockedRadarControl);
+      radarControlInstanceRef.current = lockedRadarControl;
+      setRadarControlRef.current = null;
+    }
+  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef]);
 
   return {
     mapInstance,
@@ -186,5 +214,6 @@ export const useMapInitialization = ({
     radarBaseLayer,
     openAIPLayer,
     weatherOverlayLayer,
+    mapReady,
   };
 };

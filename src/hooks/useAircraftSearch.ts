@@ -12,11 +12,19 @@ interface Airport {
 export const useAircraftSearch = (
   aircrafts: PositionUpdate[],
   airports: Airport[],
+  onSearchStart?: () => void,
 ) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<
     (PositionUpdate | Airport)[]
   >([]);
+
+  // Trigger airport fetch when user starts searching
+  useEffect(() => {
+    if (searchTerm && onSearchStart) {
+      onSearchStart();
+    }
+  }, [searchTerm, onSearchStart]);
 
   const performSearch = useCallback(() => {
     if (!searchTerm) {

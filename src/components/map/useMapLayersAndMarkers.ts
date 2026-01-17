@@ -28,6 +28,7 @@ interface UseMapLayersAndMarkersProps {
   drawFlightPlan: (aircraft: PositionUpdate, shouldZoom?: boolean) => void;
   onAircraftSelect: (aircraft: PositionUpdate | null) => void;
   showTags: boolean;
+  mapReady: boolean;
 }
 
 export const useMapLayersAndMarkers = ({
@@ -48,7 +49,9 @@ export const useMapLayersAndMarkers = ({
   drawFlightPlan,
   onAircraftSelect,
   showTags,
+  mapReady,
 }: UseMapLayersAndMarkersProps) => {
+
   // Effect for managing base layers (OSM/Satellite/Radar)
   useEffect(() => {
     if (
@@ -145,6 +148,7 @@ export const useMapLayersAndMarkers = ({
     drawFlightPlan,
     onAircraftSelect,
     showTags,
+    mapReady,
   ]);
 
   // Effect for managing airport markers

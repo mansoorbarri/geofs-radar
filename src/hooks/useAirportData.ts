@@ -1,5 +1,5 @@
 // hooks/useAirportData.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface Airport {
   name: string;
@@ -9,17 +9,70 @@ interface Airport {
   frequencies?: { type: string; frequency: string }[];
 }
 
+// Cache key for localStorage
+const AIRPORT_CACHE_KEY = "radarthing_airports_cache";
+const AIRPORT_CACHE_VERSION = "v1";
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CachedAirportData {
+  version: string;
+  timestamp: number;
+  airports: Airport[];
+}
+
+// Try to get cached data from localStorage
+function getCachedAirports(): Airport[] | null {
+  try {
+    const cached = localStorage.getItem(AIRPORT_CACHE_KEY);
+    if (!cached) return null;
+
+    const data: CachedAirportData = JSON.parse(cached);
+    if (data.version !== AIRPORT_CACHE_VERSION) return null;
+    if (Date.now() - data.timestamp > CACHE_EXPIRY_MS) return null;
+
+    return data.airports;
+  } catch {
+    return null;
+  }
+}
+
+// Save airports to localStorage
+function setCachedAirports(airports: Airport[]) {
+  try {
+    const data: CachedAirportData = {
+      version: AIRPORT_CACHE_VERSION,
+      timestamp: Date.now(),
+      airports,
+    };
+    localStorage.setItem(AIRPORT_CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+}
+
 export const useAirportData = () => {
   const [airports, setAirports] = useState<Airport[]>([]);
-  const [airportFetchError, setAirportFetchError] = useState<string | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
+  const [airportFetchError, setAirportFetchError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const hasFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
   const fetchAirports = useCallback(async () => {
-    try {
-      setIsLoading(true);
+    // Prevent duplicate fetches
+    if (hasFetchedRef.current || isFetchingRef.current) return;
 
+    // Check cache first
+    const cached = getCachedAirports();
+    if (cached && cached.length > 0) {
+      setAirports(cached);
+      hasFetchedRef.current = true;
+      return;
+    }
+
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
       // Fetch from OurAirports public dataset (CSV format)
       const response = await fetch(
         "https://davidmegginson.github.io/ourairports-data/airports.csv",
@@ -89,25 +142,20 @@ export const useAirportData = () => {
         }
       }
 
-      console.log(
-        `Loaded ${airportArray.length} airports from OurAirports API`,
-      );
+      console.log(`Loaded ${airportArray.length} airports from OurAirports API`);
       setAirports(airportArray);
+      setCachedAirports(airportArray);
       setAirportFetchError(null);
+      hasFetchedRef.current = true;
     } catch (e) {
       console.error("Could not load airport data:", e);
       setAirportFetchError("Failed to load airport data from API.");
-
-      // Fallback to empty array
       setAirports([]);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
-  useEffect(() => {
-    fetchAirports();
-  }, [fetchAirports]);
-
-  return { airports, airportFetchError, isLoading };
+  return { airports, airportFetchError, isLoading, fetchAirports };
 };

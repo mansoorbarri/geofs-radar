@@ -7,12 +7,34 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import {
-  TbPlaneInflight,
-  TbPlane,
-  TbHistory,
-  TbInfoCircle,
-} from "react-icons/tb";
+// Inline SVG icons to avoid bundling entire react-icons library (~7.8MB)
+const PlaneInflightIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M15 12h5a2 2 0 0 1 0 4h-15l-3 -6h3l2 2h3l-2 -7h3l4 7z" />
+    <path d="M3 16h18" />
+  </svg>
+);
+
+const PlaneIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z" />
+  </svg>
+);
+
+const HistoryIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 8l0 4l2 2" />
+    <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />
+  </svg>
+);
+
+const InfoCircleIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+    <path d="M12 9h.01" />
+    <path d="M11 12h1v4h1" />
+  </svg>
+);
 import { type PositionUpdate } from "~/lib/aircraft-store";
 import { getFlightHistory } from "~/app/actions/get-flight-history";
 import Image from "next/image";
@@ -59,30 +81,25 @@ export const Sidebar = ({
   const [tab, setTab] = useState<"info" | "history">("info");
   const [history, setHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Calculate display values using useMemo instead of DOM manipulation
+  const displayValues = useMemo(() => {
     const altMSL = Number(aircraft.altMSL ?? aircraft.alt ?? 0);
     const mslVal =
       altMSL >= 18000
         ? `FL${Math.round(altMSL / 100)}`
         : `${Math.round(altMSL).toLocaleString()}`;
 
-    const targets: Record<string, string> = {
-      "side-alt": mslVal,
-      "side-spd": String(Math.round(Number(aircraft.speed ?? 0))),
-      "side-vs": String(Math.round(Number(aircraft.vspeed ?? 0))),
-      "side-hdg": `${Math.round(Number(aircraft.heading ?? 0))}°`,
-      "side-agl": String(Math.round(Number(aircraft.alt ?? 0))),
-      "side-sqk": aircraft.squawk ?? "---",
+    return {
+      altitude: mslVal,
+      speed: String(Math.round(Number(aircraft.speed ?? 0))),
+      vspeed: String(Math.round(Number(aircraft.vspeed ?? 0))),
+      heading: `${Math.round(Number(aircraft.heading ?? 0))}°`,
+      altAGL: String(Math.round(Number(aircraft.alt ?? 0))),
+      squawk: aircraft.squawk ?? "---",
     };
-
-    for (const [id, val] of Object.entries(targets)) {
-      const el = document.getElementById(id);
-      if (el) el.innerText = val;
-    }
   }, [
     aircraft.alt,
     aircraft.altMSL,
@@ -238,7 +255,7 @@ export const Sidebar = ({
               />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/20">
-                <TbPlane size={32} />
+                <PlaneIcon size={32} />
               </div>
             )}
           </div>
@@ -249,18 +266,15 @@ export const Sidebar = ({
             <span className="mb-1.5 font-mono text-[9px] font-black text-slate-400 uppercase">
               Altitude
             </span>
-            <span
-              id="side-alt"
-              className="font-mono text-base leading-none font-black tracking-tight text-white"
-            >
-              ---
+            <span className="font-mono text-base leading-none font-black tracking-tight text-white">
+              {displayValues.altitude}
             </span>
             <span className="mt-0.5 font-mono text-[8px] font-black tracking-widest text-cyan-400/80 uppercase">
               FT MSL
             </span>
           </div>
           <div className="z-10 flex scale-105 flex-col items-center rounded-xl border border-white/10 bg-white/10 p-3.5 shadow-lg">
-            <TbPlaneInflight size={20} className="text-cyan-400" />
+            <PlaneInflightIcon size={20} className="text-cyan-400" />
             <span className="mt-1.5 font-mono text-[10px] font-black tracking-wide text-white uppercase">
               {currentFlightPhase}
             </span>
@@ -269,11 +283,8 @@ export const Sidebar = ({
             <span className="mb-1.5 font-mono text-[9px] font-black text-slate-400 uppercase">
               Speed
             </span>
-            <span
-              id="side-spd"
-              className="font-mono text-base leading-none font-black tracking-tight text-white"
-            >
-              ---
+            <span className="font-mono text-base leading-none font-black tracking-tight text-white">
+              {displayValues.speed}
             </span>
             <span className="mt-0.5 font-mono text-[8px] font-black tracking-widest text-cyan-400/80 uppercase">
               KNOTS GS
@@ -295,7 +306,7 @@ export const Sidebar = ({
                 : "text-slate-400 hover:text-white"
             }`}
           >
-            <TbInfoCircle size={14} /> LIVE DATA
+            <InfoCircleIcon size={14} /> LIVE DATA
           </button>
           <button
             onClick={() => {
@@ -308,7 +319,7 @@ export const Sidebar = ({
                 : "text-slate-400 hover:text-white"
             }`}
           >
-            <TbHistory size={14} /> LOGBOOK
+            <HistoryIcon size={14} /> LOGBOOK
           </button>
         </div>
       </nav>
@@ -327,10 +338,10 @@ export const Sidebar = ({
                 value={aircraft.arrival || "---"}
                 sub="DEST"
               />
-              <StatBox label="V-Speed" id="side-vs" value="---" sub="FPM" />
-              <StatBox label="Heading" id="side-hdg" value="---" sub="MAG" />
-              <StatBox label="Squawk" id="side-sqk" value="---" sub="XPDR" />
-              <StatBox label="Alt AGL" id="side-agl" value="---" sub="FEET" />
+              <StatBox label="V-Speed" value={displayValues.vspeed} sub="FPM" />
+              <StatBox label="Heading" value={displayValues.heading} sub="MAG" />
+              <StatBox label="Squawk" value={displayValues.squawk} sub="XPDR" />
+              <StatBox label="Alt AGL" value={displayValues.altAGL} sub="FEET" />
             </div>
             {renderFlightPlan()}
           </div>
@@ -380,12 +391,10 @@ export const Sidebar = ({
 const StatBox = ({
   label,
   value,
-  id,
   sub,
 }: {
   label: string;
   value: string;
-  id?: string;
   sub: string;
 }) => (
   <div className="group rounded-2xl border border-white/10 bg-black/40 p-4 shadow-lg transition-all hover:bg-black/60">
@@ -393,10 +402,7 @@ const StatBox = ({
       {label}
     </div>
     <div className="flex items-baseline gap-1.5">
-      <div
-        id={id}
-        className="truncate font-mono text-lg font-black tracking-tighter text-white"
-      >
+      <div className="truncate font-mono text-lg font-black tracking-tighter text-white">
         {value}
       </div>
       <span className="font-mono text-[9px] font-black tracking-tighter text-cyan-400 uppercase opacity-80">

@@ -20,7 +20,7 @@ import { useAircraftSearch } from "~/hooks/useAircraftSearch";
 import { useUtcTime } from "~/hooks/useUtcTime";
 import { useTimer } from "~/hooks/useTimer";
 import { useAirportChart } from "~/hooks/useAirportCharts";
-import { isPro } from "~/app/actions/is-pro";
+import { useProStatus } from "~/hooks/useProStatus";
 
 import { ConnectionStatusIndicator } from "~/components/atc/connectionStatusIndicator";
 import { SearchBar } from "~/components/atc/searchbar";
@@ -33,7 +33,6 @@ import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
 import Loading from "~/components/loading";
 import { ProBadge } from "~/components/ui/pro-badge";
 import { UpgradeIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
-import { Router } from "next/router";
 
 const DynamicMapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
@@ -48,10 +47,9 @@ export default function ATCPage() {
   const isMobile = useMobileDetection();
 
   const { aircrafts, isLoading, connectionStatus } = useAircraftStream();
-  const { airports } = useAirportData();
+  const { airports, fetchAirports } = useAirportData();
 
-  const [isProUser, setIsProUser] = useState(false);
-  const [proLoading, setProLoading] = useState(true);
+  const { isProUser, isLoading: proLoading } = useProStatus();
 
   const [selectedAircraft, setSelectedAircraft] =
     useState<PositionUpdate | null>(null);
@@ -100,6 +98,7 @@ export default function ATCPage() {
   const { searchTerm, setSearchTerm, searchResults } = useAircraftSearch(
     aircrafts,
     airports,
+    fetchAirports,
   );
 
   const time = useUtcTime();
@@ -109,11 +108,6 @@ export default function ATCPage() {
     ((ac: PositionUpdate, zoom?: boolean) => void) | null
   >(null);
 
-  useEffect(() => {
-    isPro()
-      .then(setIsProUser)
-      .finally(() => setProLoading(false));
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

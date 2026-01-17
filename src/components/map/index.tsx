@@ -5,8 +5,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import { type PositionUpdate } from "~/lib/aircraft-store";
-import { isPro, isAdmin } from "~/app/actions/is-pro";
 import { useMobileDetection } from "~/hooks/useMobileDetection";
+import { useProStatus } from "~/hooks/useProStatus";
 
 import { useMapInitialization } from "./useMapInitialization";
 import { useFlightPlanDrawing } from "./useFlightPlanDrawing";
@@ -59,9 +59,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   historyPath,
 }) => {
   const isMobile = useMobileDetection();
-  const [isProUser, setIsProUser] = useState(false);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [proLoading, setProLoading] = useState(true);
+  const { isProUser, isAdminUser, isLoading: proLoading } = useProStatus();
 
   const canUseRadarMode = isProUser;
   const canUseAdvancedWeather = isProUser;
@@ -98,14 +96,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const clearHistoryPolylineRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    Promise.all([isPro(), isAdmin()])
-      .then(([pro, admin]) => {
-        setIsProUser(pro);
-        setIsAdminUser(admin);
-      })
-      .finally(() => setProLoading(false));
-  }, []);
 
   const toggleRadarMode = useCallback(() => {
     if (!canUseRadarMode) return;
@@ -220,6 +210,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     drawFlightPlan,
     onAircraftSelect: onAircraftSelectRef.current,
     showTags,
+    mapReady: mapRefs.mapReady,
   });
 
   useSelectedAirportHandling({
