@@ -62,14 +62,31 @@ export default function ATCPage() {
   );
   const [isViewingHistory, setIsViewingHistory] = useState(false);
 
+  // Check if callsign param is a full flight number (e.g., EK213) vs just a prefix (e.g., EK)
+  const callsignParam = searchParams.get("callsign");
+  const isFullFlightNumberParam = callsignParam && /^[A-Z]+\d+.*$/i.test(callsignParam.trim());
+
+  // State for full flight number filter (can be cleared with Escape)
+  const [fullFlightFilter, setFullFlightFilter] = useState<string | null>(() => {
+    if (isFullFlightNumberParam && callsignParam) {
+      return callsignParam.trim().toUpperCase();
+    }
+    return null;
+  });
+
   const [selectedCallsigns, setSelectedCallsigns] = useState<Set<string>>(() => {
-    const callsignParam = searchParams.get("callsign");
+    // If it's a full flight number, don't use prefix filtering
+    if (isFullFlightNumberParam) return new Set();
+
     if (callsignParam) {
       const prefixes = callsignParam.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
       return new Set(prefixes);
     }
     return new Set();
   });
+
+  // Track if we've already auto-selected from URL param
+  const [autoSelectedFromUrl, setAutoSelectedFromUrl] = useState(false);
 
   const [activeRightPanel, setActiveRightPanel] = useState<RightPanel>(null);
 
@@ -100,16 +117,29 @@ export default function ATCPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (selectedCallsigns.size > 0) {
+
+    if (fullFlightFilter) {
+      params.set("callsign", fullFlightFilter);
+    } else if (selectedCallsigns.size > 0) {
       params.set("callsign", Array.from(selectedCallsigns).join(","));
     } else {
       params.delete("callsign");
     }
+
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
-  }, [selectedCallsigns]);
+  }, [selectedCallsigns, fullFlightFilter]);
 
   const filteredAircrafts = useMemo(() => {
+    // If we have a full flight number filter, only show that aircraft
+    if (fullFlightFilter) {
+      return aircrafts.filter(
+        (ac) =>
+          ac.callsign?.toUpperCase() === fullFlightFilter ||
+          ac.flightNo?.toUpperCase() === fullFlightFilter
+      );
+    }
+
     if (selectedCallsigns.size === 0) return aircrafts;
 
     const prefixRegex = /^[A-Z]+/;
@@ -119,7 +149,7 @@ export default function ATCPage() {
       const match = prefixRegex.exec(aircraft.flightNo.trim().toUpperCase());
       return match && selectedCallsigns.has(match[0]);
     });
-  }, [aircrafts, selectedCallsigns]);
+  }, [aircrafts, selectedCallsigns, fullFlightFilter]);
 
   const handleToggleCallsign = useCallback((prefix: string) => {
     setSelectedCallsigns((prev) => {
@@ -148,6 +178,38 @@ export default function ATCPage() {
 
     if (updated) setSelectedAircraft(updated);
   }, [aircrafts, isViewingHistory, selectedAircraft]);
+
+  // Auto-select aircraft from URL param if it's a full flight number
+  useEffect(() => {
+    if (!fullFlightFilter || autoSelectedFromUrl || aircrafts.length === 0) return;
+
+    const matchedAircraft = aircrafts.find(
+      (ac) =>
+        ac.callsign?.toUpperCase() === fullFlightFilter ||
+        ac.flightNo?.toUpperCase() === fullFlightFilter
+    );
+
+    if (matchedAircraft) {
+      setSelectedAircraft(matchedAircraft);
+      drawFlightPlanOnMapRef.current?.(matchedAircraft, true);
+      setAutoSelectedFromUrl(true);
+    }
+  }, [aircrafts, fullFlightFilter, autoSelectedFromUrl]);
+
+  // Escape key to clear filters and return to normal view
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (fullFlightFilter || selectedCallsigns.size > 0)) {
+        setFullFlightFilter(null);
+        setSelectedCallsigns(new Set());
+        setSelectedAircraft(null);
+        setAutoSelectedFromUrl(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [fullFlightFilter, selectedCallsigns]);
 
   function handleAircraftSelect(aircraft: PositionUpdate | null) {
     setIsViewingHistory(false);
