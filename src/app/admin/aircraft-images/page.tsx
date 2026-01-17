@@ -218,6 +218,7 @@ export default function AdminAircraftImagesPage() {
                     className="group overflow-hidden rounded-2xl border border-yellow-500/30 bg-black/40 backdrop-blur-xl"
                   >
                     <div className="relative aspect-video">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={image.imageUrl}
                         alt={`${image.airlineIata} ${image.aircraftType}`}
@@ -287,6 +288,7 @@ export default function AdminAircraftImagesPage() {
                     className="group overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition-all hover:border-cyan-500/30"
                   >
                     <div className="relative aspect-video">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={image.imageUrl}
                         alt={`${image.airlineIata} ${image.aircraftType}`}

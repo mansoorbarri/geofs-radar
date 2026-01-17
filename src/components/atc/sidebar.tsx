@@ -183,6 +183,7 @@ export const Sidebar = ({
       {/* Aircraft Photo */}
       {aircraftPhoto && (
         <div className="relative mx-4 mt-4 mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={aircraftPhoto.imageUrl}
             alt="Aircraft"

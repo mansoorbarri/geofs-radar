@@ -168,6 +168,8 @@ export const useMapInitialization = ({
       map.remove();
       mapInstance.current = null;
     };
+    // Intentionally excluding setState functions as they are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapContainerId, onMapClick, canUseRadarMode]);
 
   return {

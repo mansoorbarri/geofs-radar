@@ -121,27 +121,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [canUseAdvancedWeather]);
 
-  const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
-    const target = e.originalEvent.target as HTMLElement;
+  const handleMapClick = useCallback(
+    (e: L.LeafletMouseEvent) => {
+      const target = e.originalEvent.target as HTMLElement;
 
-    if (
-      target.closest(".leaflet-marker-icon") ||
-      target.closest(".leaflet-control") ||
-      target.closest(".leaflet-popup-pane")
-    ) {
-      return;
-    }
+      if (
+        target.closest(".leaflet-marker-icon") ||
+        target.closest(".leaflet-control") ||
+        target.closest(".leaflet-popup-pane")
+      ) {
+        return;
+      }
 
-    mapRefs.flightPlanLayerGroup.current?.clearLayers();
-    mapRefs.historyLayerGroup.current?.clearLayers();
-    clearHistoryPolylineRef.current?.();
+      mapRefs.flightPlanLayerGroup.current?.clearLayers();
+      mapRefs.historyLayerGroup.current?.clearLayers();
+      clearHistoryPolylineRef.current?.();
 
-    currentSelectedAircraftRef.current = null;
-    setSelectedAircraftId(null);
+      currentSelectedAircraftRef.current = null;
+      setSelectedAircraftId(null);
 
-    onAircraftSelectRef.current(null);
-    setIsSettingsOpen(false);
-  }, []);
+      onAircraftSelectRef.current(null);
+      setIsSettingsOpen(false);
+    },
+    // These refs are stable and don't need to trigger re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

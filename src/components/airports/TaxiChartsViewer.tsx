@@ -72,6 +72,7 @@ export function TaxiChartViewer({ chart, onClose }: Props) {
                   wrapperClass="!w-full !h-full"
                   contentClass="flex h-full w-full items-center justify-center"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={chart.taxi_chart_url}
                     alt={`Taxi chart for ${chart.name}`}

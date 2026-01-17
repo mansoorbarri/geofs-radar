@@ -60,6 +60,7 @@ export const useAircraftStream = () => {
     };
 
     startWatchdog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scheduleReconnect = useCallback(() => {
@@ -82,7 +83,7 @@ export const useAircraftStream = () => {
         scheduleReconnect();
       }
     }, 10000);
-  }, [scheduleReconnect, scheduleReconnect]);
+  }, [scheduleReconnect]);
 
   useEffect(() => {
     connectToStream();
