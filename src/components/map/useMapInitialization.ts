@@ -3,6 +3,7 @@ import L from "leaflet";
 import {
   HeadingModeControl,
   RadarModeControl,
+  LockedRadarModeControl,
   OpenAIPControl,
   OSMControl,
   RadarSettingsControl,
@@ -143,6 +144,8 @@ export const useMapInitialization = ({
         map.addControl(radarControl);
         setRadarControlRef.current = radarControl;
       } else {
+        const lockedRadarControl = new LockedRadarModeControl({});
+        map.addControl(lockedRadarControl);
         setRadarControlRef.current = null;
       }
 

@@ -31,6 +31,7 @@ import { ControlDock } from "~/components/atc/controlDock";
 import { FIDSPanel } from "~/components/atc/FIDSPanel";
 import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
 import Loading from "~/components/loading";
+import { ProBadge } from "~/components/ui/pro-badge";
 import { UpgradeIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
 import { Router } from "next/router";
 
@@ -447,15 +448,10 @@ export default function ATCPage() {
                 Taxi Chart
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  analytics.taxiChartPremiumClicked();
-                  router.push("/pricing");
-                }}
-                className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-1.5 text-[10px] text-yellow-400"
-              >
-                Taxi Charts (Premium)
-              </button>
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
+                <span className="text-[10px] text-white/60">Taxi Charts</span>
+                <ProBadge />
+              </div>
             ))}
 
             <button

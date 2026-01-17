@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Switch } from "~/components/ui/switch";
+import { ProBadge } from "~/components/ui/pro-badge";
 import { analytics } from "~/lib/posthog";
 import { useRouter } from "next/navigation";
 import { Plane, Shield } from "lucide-react";
@@ -111,18 +112,14 @@ function SettingsToggle({
   disabled?: boolean;
 }) {
   return (
-    <label
+    <div
       className={`flex items-center justify-between text-sm ${
-        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+        disabled ? "opacity-60" : ""
       }`}
     >
-      <span>
+      <span className="flex items-center gap-2">
         {label}
-        {disabled && (
-          <span className="ml-2 text-[10px] text-yellow-500 uppercase">
-            PRO
-          </span>
-        )}
+        {disabled && <ProBadge />}
       </span>
 
       <Switch
@@ -131,6 +128,6 @@ function SettingsToggle({
         onCheckedChange={onChange}
         className="data-[state=checked]:bg-cyan-500 data-[state=unchecked]:bg-gray-600"
       />
-    </label>
+    </div>
   );
 }

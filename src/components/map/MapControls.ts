@@ -152,6 +152,41 @@ export class RadarModeControl extends L.Control {
   }
 }
 
+export class LockedRadarModeControl extends L.Control {
+  public options = { position: "topleft" as L.ControlPosition };
+  public _container: HTMLDivElement | null = null;
+  private _boundClick: () => void;
+
+  constructor(options: L.ControlOptions) {
+    super(options);
+    this._boundClick = () => {
+      analytics.upgradeButtonClicked("radar_mode_control");
+      window.location.href = "/pricing";
+    };
+  }
+
+  onAdd(): HTMLDivElement {
+    const container = L.DomUtil.create("div");
+    container.className =
+      "relative w-[36px] h-[36px] top-15 flex items-center justify-center text-white/40 text-[18px] font-semibold border border-yellow-500/30 rounded-md bg-black/70 shadow-[0_0_6px_rgba(234,179,8,0.25)] cursor-pointer transition-all duration-200 hover:bg-yellow-500/10 hover:shadow-[0_0_10px_rgba(234,179,8,0.4)] hover:border-yellow-500/60";
+    container.title = "Radar Mode (PRO)";
+    container.innerHTML = `
+      <span style="opacity: 0.4">&#128223;</span>
+      <span style="position: absolute; top: -6px; right: -6px; background: rgba(234, 179, 8, 0.2); color: #facc15; font-size: 8px; padding: 1px 4px; border-radius: 4px; font-weight: bold;">PRO</span>
+    `;
+    L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
+    L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
+    L.DomEvent.on(container, "click", this._boundClick);
+    this._container = container;
+    return container;
+  }
+
+  onRemove() {
+    if (this._container)
+      L.DomEvent.off(this._container, "click", this._boundClick);
+  }
+}
+
 export class OSMControl extends L.Control {
   public options = { position: "topleft" as L.ControlPosition };
   public _container: HTMLDivElement | null = null;
