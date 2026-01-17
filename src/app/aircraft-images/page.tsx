@@ -12,7 +12,7 @@ import { Upload, Plane, Check, Clock } from "lucide-react";
 import Loading from "~/components/loading";
 import Image from "next/image";
 import { UserAuth } from "~/components/atc/userAuth";
-import { UploadDropzone } from "~/lib/uploadthing";
+import { ImageUploader } from "~/components/ui/image-uploader";
 
 export default function AircraftImagesPage() {
   const router = useRouter();
@@ -287,21 +287,18 @@ export default function AircraftImagesPage() {
                       </button>
                     </div>
                   ) : (
-                    <UploadDropzone
-                      endpoint="aircraftImageUploader"
-                      onClientUploadComplete={(res) => {
-                        if (res?.[0]) {
-                          setFormData({
-                            ...formData,
-                            imageUrl: res[0].ufsUrl,
-                            imageKey: res[0].key,
-                          });
-                        }
+                    <ImageUploader
+                      onUploadComplete={(url, key) => {
+                        setFormData({
+                          ...formData,
+                          imageUrl: url,
+                          imageKey: key,
+                        });
+                        setError(null);
                       }}
-                      onUploadError={(error: Error) => {
-                        setError(error.message);
+                      onError={(errorMsg) => {
+                        setError(errorMsg);
                       }}
-                      className="border-white/10 bg-black/20 ut-button:bg-cyan-500 ut-button:hover:bg-cyan-600 ut-label:text-slate-400 ut-allowed-content:text-slate-500"
                     />
                   )}
                 </div>
