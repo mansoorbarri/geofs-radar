@@ -1,9 +1,10 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { db } from "~/server/db";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
+import { convex, api } from "~/server/convex";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 const utapi = new UTApi();
 
@@ -22,16 +23,42 @@ export interface AircraftImage {
   updatedAt: Date;
 }
 
-async function isPro(): Promise<boolean> {
+// Helper to convert Convex response (timestamps) to AircraftImage (Dates)
+function toAircraftImage(img: {
+  id: string;
+  airlineIata: string;
+  aircraftType: string;
+  imageUrl: string;
+  imageKey: string | null;
+  photographer: string | null;
+  isApproved: boolean;
+  uploadedBy: string;
+  approvedBy: string | null;
+  approvedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+}): AircraftImage {
+  return {
+    id: img.id as string,
+    airlineIata: img.airlineIata,
+    aircraftType: img.aircraftType,
+    imageUrl: img.imageUrl,
+    imageKey: img.imageKey,
+    photographer: img.photographer,
+    isApproved: img.isApproved,
+    uploadedBy: img.uploadedBy,
+    approvedBy: img.approvedBy,
+    approvedAt: img.approvedAt ? new Date(img.approvedAt) : null,
+    createdAt: new Date(img.createdAt),
+    updatedAt: new Date(img.updatedAt),
+  };
+}
+
+async function isProUser(): Promise<boolean> {
   const { userId } = await auth();
   if (!userId) return false;
 
-  const user = await db.user.findUnique({
-    where: { clerkId: userId },
-    select: { role: true },
-  });
-
-  return user?.role === "PRO";
+  return await convex.query(api.users.isPro, { clerkId: userId });
 }
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -45,14 +72,12 @@ export async function getAircraftImage(
   aircraftType: string
 ): Promise<AircraftImage | null> {
   try {
-    const image = await db.aircraftImage.findFirst({
-      where: {
-        airlineIata: airlineIata.toUpperCase(),
-        aircraftType: aircraftType.toUpperCase(),
-        isApproved: true,
-      },
+    const image = await convex.query(api.aircraftImages.getApprovedImage, {
+      airlineIata,
+      aircraftType,
     });
-    return image;
+    if (!image) return null;
+    return toAircraftImage(image);
   } catch (error) {
     console.error("Error fetching aircraft image:", error);
     return null;
@@ -62,11 +87,8 @@ export async function getAircraftImage(
 // Get all approved images (public)
 export async function getApprovedAircraftImages(): Promise<AircraftImage[]> {
   try {
-    const images = await db.aircraftImage.findMany({
-      where: { isApproved: true },
-      orderBy: [{ airlineIata: "asc" }, { aircraftType: "asc" }],
-    });
-    return images;
+    const images = await convex.query(api.aircraftImages.getApproved, {});
+    return images.map(toAircraftImage);
   } catch (error) {
     console.error("Error fetching approved aircraft images:", error);
     return [];
@@ -75,15 +97,12 @@ export async function getApprovedAircraftImages(): Promise<AircraftImage[]> {
 
 // Get pending images for approval (PRO only)
 export async function getPendingAircraftImages(): Promise<AircraftImage[]> {
-  const pro = await isPro();
+  const pro = await isProUser();
   if (!pro) return [];
 
   try {
-    const images = await db.aircraftImage.findMany({
-      where: { isApproved: false },
-      orderBy: { createdAt: "desc" },
-    });
-    return images;
+    const images = await convex.query(api.aircraftImages.getPending, {});
+    return images.map(toAircraftImage);
   } catch (error) {
     console.error("Error fetching pending aircraft images:", error);
     return [];
@@ -92,14 +111,12 @@ export async function getPendingAircraftImages(): Promise<AircraftImage[]> {
 
 // Get all images (PRO only - for admin view)
 export async function getAllAircraftImages(): Promise<AircraftImage[]> {
-  const pro = await isPro();
+  const pro = await isProUser();
   if (!pro) return [];
 
   try {
-    const images = await db.aircraftImage.findMany({
-      orderBy: [{ isApproved: "asc" }, { createdAt: "desc" }],
-    });
-    return images;
+    const images = await convex.query(api.aircraftImages.getAll, {});
+    return images.map(toAircraftImage);
   } catch (error) {
     console.error("Error fetching aircraft images:", error);
     return [];
@@ -121,30 +138,31 @@ export async function createAircraftImage(data: {
 
   try {
     // Check if an approved image already exists for this combination
-    const existingApproved = await db.aircraftImage.findFirst({
-      where: {
-        airlineIata: data.airlineIata.toUpperCase(),
-        aircraftType: data.aircraftType.toUpperCase(),
-        isApproved: true,
-      },
-    });
+    const existingApproved = await convex.query(
+      api.aircraftImages.checkApprovedExists,
+      {
+        airlineIata: data.airlineIata,
+        aircraftType: data.aircraftType,
+      }
+    );
 
     if (existingApproved) {
       return {
         success: false,
-        error: "An approved image already exists for this airline + aircraft combination",
+        error:
+          "An approved image already exists for this airline + aircraft combination",
       };
     }
 
     // Check if user already has a pending image for this combination
-    const existingPending = await db.aircraftImage.findFirst({
-      where: {
-        airlineIata: data.airlineIata.toUpperCase(),
-        aircraftType: data.aircraftType.toUpperCase(),
-        isApproved: false,
+    const existingPending = await convex.query(
+      api.aircraftImages.checkPendingByUser,
+      {
+        airlineIata: data.airlineIata,
+        aircraftType: data.aircraftType,
         uploadedBy: userId,
-      },
-    });
+      }
+    );
 
     if (existingPending) {
       return {
@@ -153,29 +171,22 @@ export async function createAircraftImage(data: {
       };
     }
 
-    const image = await db.aircraftImage.create({
-      data: {
-        airlineIata: data.airlineIata.toUpperCase(),
-        aircraftType: data.aircraftType.toUpperCase(),
-        imageUrl: data.imageUrl,
-        imageKey: data.imageKey || null,
-        photographer: data.photographer || null,
-        isApproved: false,
-        uploadedBy: userId,
-      },
+    const image = await convex.mutation(api.aircraftImages.create, {
+      airlineIata: data.airlineIata,
+      aircraftType: data.aircraftType,
+      imageUrl: data.imageUrl,
+      imageKey: data.imageKey,
+      photographer: data.photographer,
+      uploadedBy: userId,
     });
 
     revalidatePath("/aircraft-images");
     revalidatePath("/admin/aircraft-images");
-    return { success: true, image };
-  } catch (error: unknown) {
-    const prismaError = error as { code?: string };
-    if (prismaError?.code === "P2002") {
-      return {
-        success: false,
-        error: "An image for this combination is already pending review",
-      };
-    }
+    return {
+      success: true,
+      image: image ? toAircraftImage(image) : undefined,
+    };
+  } catch (error) {
     console.error("Error creating aircraft image:", error);
     return { success: false, error: "Failed to upload image" };
   }
@@ -185,7 +196,7 @@ export async function createAircraftImage(data: {
 export async function approveAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isPro();
+  const pro = await isProUser();
   if (!pro) {
     return { success: false, error: "Only PRO users can approve images" };
   }
@@ -197,8 +208,8 @@ export async function approveAircraftImage(
 
   try {
     // Get the image to approve
-    const imageToApprove = await db.aircraftImage.findUnique({
-      where: { id },
+    const imageToApprove = await convex.query(api.aircraftImages.getById, {
+      id: id as Id<"aircraftImages">,
     });
 
     if (!imageToApprove) {
@@ -206,14 +217,14 @@ export async function approveAircraftImage(
     }
 
     // Check if there's already an approved image for this combination
-    const existingApproved = await db.aircraftImage.findFirst({
-      where: {
+    const existingApproved = await convex.query(
+      api.aircraftImages.findExistingApproved,
+      {
         airlineIata: imageToApprove.airlineIata,
         aircraftType: imageToApprove.aircraftType,
-        isApproved: true,
-        id: { not: id },
-      },
-    });
+        excludeId: id as Id<"aircraftImages">,
+      }
+    );
 
     // If there's an existing approved image, delete it first
     if (existingApproved) {
@@ -224,19 +235,15 @@ export async function approveAircraftImage(
           console.error("Failed to delete old image from UploadThing:", e);
         }
       }
-      await db.aircraftImage.delete({
-        where: { id: existingApproved.id },
+      await convex.mutation(api.aircraftImages.remove, {
+        id: existingApproved.id as Id<"aircraftImages">,
       });
     }
 
     // Approve the new image
-    await db.aircraftImage.update({
-      where: { id },
-      data: {
-        isApproved: true,
-        approvedBy: userId,
-        approvedAt: new Date(),
-      },
+    await convex.mutation(api.aircraftImages.approve, {
+      id: id as Id<"aircraftImages">,
+      approvedBy: userId,
     });
 
     revalidatePath("/aircraft-images");
@@ -252,14 +259,14 @@ export async function approveAircraftImage(
 export async function rejectAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isPro();
+  const pro = await isProUser();
   if (!pro) {
     return { success: false, error: "Only PRO users can reject images" };
   }
 
   try {
-    const image = await db.aircraftImage.findUnique({
-      where: { id },
+    const image = await convex.query(api.aircraftImages.getById, {
+      id: id as Id<"aircraftImages">,
     });
 
     if (!image) {
@@ -275,8 +282,8 @@ export async function rejectAircraftImage(
       }
     }
 
-    await db.aircraftImage.delete({
-      where: { id },
+    await convex.mutation(api.aircraftImages.remove, {
+      id: id as Id<"aircraftImages">,
     });
 
     revalidatePath("/aircraft-images");
@@ -292,14 +299,14 @@ export async function rejectAircraftImage(
 export async function deleteAircraftImage(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const pro = await isPro();
+  const pro = await isProUser();
   if (!pro) {
     return { success: false, error: "Only PRO users can delete images" };
   }
 
   try {
-    const image = await db.aircraftImage.findUnique({
-      where: { id },
+    const image = await convex.query(api.aircraftImages.getById, {
+      id: id as Id<"aircraftImages">,
     });
 
     if (!image) {
@@ -315,8 +322,8 @@ export async function deleteAircraftImage(
       }
     }
 
-    await db.aircraftImage.delete({
-      where: { id },
+    await convex.mutation(api.aircraftImages.remove, {
+      id: id as Id<"aircraftImages">,
     });
 
     revalidatePath("/aircraft-images");

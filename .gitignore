@@ -48,3 +48,7 @@ yarn-error.log*
 ## INTERNAL
 todo.md
 /generated/prisma
+
+# SSE service
+sse/node_modules/
+sse/bun.lock

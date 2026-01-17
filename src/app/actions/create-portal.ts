@@ -2,20 +2,15 @@
 
 import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
-import { db } from "~/server/db";
+import { convex, api } from "~/server/convex";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  //   apiVersion: "2024-12-18.acacia",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function createPortalSession() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { clerkId: userId },
-    select: { stripeCustomerId: true },
-  });
+  const user = await convex.query(api.users.getByClerkId, { clerkId: userId });
 
   if (!user?.stripeCustomerId) {
     throw new Error("No Stripe customer found");

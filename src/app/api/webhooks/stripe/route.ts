@@ -1,11 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { db } from "~/server/db";
+import { convex, api } from "~/server/convex";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  //   apiVersion: "2024-12-18.acacia",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -21,7 +19,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
@@ -46,13 +44,11 @@ export async function POST(req: Request) {
 
         console.log("Updating user:", session.metadata.userId);
 
-        await db.user.update({
-          where: { clerkId: session.metadata.userId },
-          data: {
-            role: "PRO",
-            stripeCustomerId: session.customer as string,
-            stripeSubscriptionId: session.subscription as string,
-          },
+        await convex.mutation(api.users.updateByClerkId, {
+          clerkId: session.metadata.userId,
+          role: "PRO",
+          stripeCustomerId: session.customer as string,
+          stripeSubscriptionId: session.subscription as string,
         });
 
         console.log("✅ User upgraded to PRO successfully");
@@ -70,11 +66,9 @@ export async function POST(req: Request) {
           subscription.status === "active" &&
           !subscription.cancel_at_period_end;
 
-        await db.user.update({
-          where: { stripeCustomerId: subscription.customer as string },
-          data: {
-            role: shouldBeProUser ? "PRO" : "FREE",
-          },
+        await convex.mutation(api.users.updateByStripeCustomerId, {
+          stripeCustomerId: subscription.customer as string,
+          role: shouldBeProUser ? "PRO" : "FREE",
         });
 
         console.log(`✅ User role set to: ${shouldBeProUser ? "PRO" : "FREE"}`);
@@ -87,9 +81,9 @@ export async function POST(req: Request) {
         console.log("=== Subscription Deleted ===");
         console.log("Customer:", subscription.customer);
 
-        await db.user.update({
-          where: { stripeCustomerId: subscription.customer as string },
-          data: { role: "FREE" },
+        await convex.mutation(api.users.updateByStripeCustomerId, {
+          stripeCustomerId: subscription.customer as string,
+          role: "FREE",
         });
 
         console.log("User downgraded to FREE");
@@ -102,7 +96,7 @@ export async function POST(req: Request) {
     console.error("Webhook handler error:", err);
     return NextResponse.json(
       { error: "Webhook handler failed" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

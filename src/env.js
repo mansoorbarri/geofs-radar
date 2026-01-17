@@ -9,7 +9,6 @@ export const env = createEnv({
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
     CLERK_SECRET_KEY: z.string(),
-    DATABASE_URL: z.string().url(),
     CLERK_WEBHOOK_SECRET: z.string(),
     STRIPE_SECRET_KEY: z.string(),
     STRIPE_WEBHOOK_SECRET: z.string(),
@@ -23,8 +22,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_URL: z.string(),
+    NEXT_PUBLIC_CONVEX_URL: z.string().url(),
     NEXT_PUBLIC_OPENAIP_API_KEY: z.string(),
     NEXT_PUBLIC_AVWX_TOKEN: z.string(),
     NEXT_PUBLIC_OPENWEATHERMAP_API_KEY: z.string(),
@@ -39,6 +38,7 @@ export const env = createEnv({
   runtimeEnv: {
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
     NEXT_PUBLIC_OPENAIP_API_KEY: process.env.NEXT_PUBLIC_OPENAIP_API_KEY,
     NEXT_PUBLIC_AVWX_TOKEN: process.env.NEXT_PUBLIC_AVWX_TOKEN,
     NEXT_PUBLIC_OPENWEATHERMAP_API_KEY:
@@ -46,7 +46,6 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    DATABASE_URL: process.env.DATABASE_URL,
     CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
@@ -54,7 +53,6 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID,
     UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

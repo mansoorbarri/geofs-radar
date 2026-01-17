@@ -1,9 +1,16 @@
 const express = require("express");
 const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
+const { ConvexHttpClient } = require("convex/browser");
 
 const app = express();
-const prisma = new PrismaClient();
+
+// Initialize Convex client
+const convexUrl = process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL;
+if (!convexUrl) {
+  console.error("CONVEX_URL or NEXT_PUBLIC_CONVEX_URL environment variable is required");
+  process.exit(1);
+}
+const convex = new ConvexHttpClient(convexUrl);
 
 app.use(cors());
 app.use(express.json());
@@ -27,17 +34,15 @@ async function finalizeFlight(id) {
 
   try {
     if (session.coords.length > 2) {
-      await prisma.flight.create({
-        data: {
-          userId: session.userId,
-          callsign: session.callsign,
-          aircraftType: session.aircraftType,
-          depICAO: session.departure,
-          arrICAO: session.arrival,
-          routeData: session.coords,
-          startTime: session.startTime,
-          endTime: new Date(),
-        },
+      await convex.mutation("flights:create", {
+        userId: session.convexUserId,
+        callsign: session.callsign,
+        aircraftType: session.aircraftType,
+        depICAO: session.departure,
+        arrICAO: session.arrival,
+        routeData: session.coords,
+        startTime: session.startTime.getTime(),
+        endTime: Date.now(),
       });
     }
   } catch (e) {
@@ -52,20 +57,20 @@ app.post("/api/atc/position", async (req, res) => {
   if (data.id) {
     let role = "FREE"; // Default to FREE
     let airlineLogo = null;
-    let userId = null;
+    let convexUserId = null;
 
     if (data.googleId) {
       try {
         const searchId = String(data.googleId);
-        const user = await prisma.user.findUnique({
-          where: { googleId: searchId },
+        const user = await convex.query("users:getByGoogleId", {
+          googleId: searchId,
         });
 
         if (user) {
           role = user.role;
-          userId = user.id;
+          convexUserId = user._id;
           console.log(
-            `[AUTH] Found ${user.clerkId} | Role: ${role} | ID: ${userId}`
+            `[AUTH] Found ${user.clerkId} | Role: ${role} | ID: ${convexUserId}`
           );
         } else {
           // Explicitly default to FREE when user not found
@@ -81,10 +86,10 @@ app.post("/api/atc/position", async (req, res) => {
       }
     }
 
-    if (role === "PRO" && userId) {
+    if (role === "PRO" && convexUserId) {
       if (!flightSessions.has(data.id)) {
         flightSessions.set(data.id, {
-          userId: userId,
+          convexUserId: convexUserId,
           callsign: data.callsign || "Unknown",
           aircraftType: data.type || "Unknown",
           departure: data.departure || "???",
@@ -139,7 +144,9 @@ setInterval(() => {
   const now = Date.now();
   for (const [id, aircraft] of aircraftMap.entries()) {
     if (now - (aircraft.ts || 0) > 12000) {
-      console.log(`[TIMEOUT] ${id} timed out. Active sessions: ${flightSessions.has(id)}`);
+      console.log(
+        `[TIMEOUT] ${id} timed out. Active sessions: ${flightSessions.has(id)}`
+      );
       if (flightSessions.has(id)) {
         finalizeFlight(id);
       }

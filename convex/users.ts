@@ -1,0 +1,215 @@
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+
+// Get user by Clerk ID
+export const getByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+  },
+});
+
+// Get user by Google ID
+export const getByGoogleId = query({
+  args: { googleId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_googleId", (q) => q.eq("googleId", args.googleId))
+      .first();
+  },
+});
+
+// Get user by Stripe Customer ID
+export const getByStripeCustomerId = query({
+  args: { stripeCustomerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_stripeCustomerId", (q) =>
+        q.eq("stripeCustomerId", args.stripeCustomerId)
+      )
+      .first();
+  },
+});
+
+// Get user by email
+export const getByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+  },
+});
+
+// Check if user is PRO
+export const isPro = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+    return user?.role === "PRO";
+  },
+});
+
+// Create user
+export const create = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    googleId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("users", {
+      clerkId: args.clerkId,
+      email: args.email,
+      googleId: args.googleId,
+      role: "FREE",
+      isDeleted: false,
+    });
+  },
+});
+
+// Update user
+export const update = mutation({
+  args: {
+    id: v.id("users"),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+    googleId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    // Filter out undefined values
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+    await ctx.db.patch(id, filteredUpdates);
+  },
+});
+
+// Update user by Clerk ID
+export const updateByClerkId = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+    googleId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { clerkId, ...updates } = args;
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+      .first();
+
+    if (!user) return null;
+
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+    await ctx.db.patch(user._id, filteredUpdates);
+    return user._id;
+  },
+});
+
+// Update user by Stripe Customer ID
+export const updateByStripeCustomerId = mutation({
+  args: {
+    stripeCustomerId: v.string(),
+    role: v.optional(v.union(v.literal("FREE"), v.literal("PRO"))),
+  },
+  handler: async (ctx, args) => {
+    const { stripeCustomerId, ...updates } = args;
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_stripeCustomerId", (q) =>
+        q.eq("stripeCustomerId", stripeCustomerId)
+      )
+      .first();
+
+    if (!user) return null;
+
+    const filteredUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+    await ctx.db.patch(user._id, filteredUpdates);
+    return user._id;
+  },
+});
+
+// Soft delete user (for Clerk user.deleted event)
+export const softDelete = mutation({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (user) {
+      await ctx.db.patch(user._id, {
+        isDeleted: true,
+        deletedAt: Date.now(),
+        role: "FREE",
+      });
+    }
+  },
+});
+
+// Undelete and update user (for when deleted user signs up again)
+export const undeleteAndUpdate = mutation({
+  args: {
+    id: v.id("users"),
+    clerkId: v.string(),
+    email: v.string(),
+    googleId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      clerkId: args.clerkId,
+      email: args.email,
+      googleId: args.googleId,
+      isDeleted: false,
+      deletedAt: undefined,
+      role: "FREE",
+    });
+  },
+});
+
+// Find user by Clerk ID or email (for user.created webhook)
+export const findByClerkIdOrEmail = query({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // First try by clerkId
+    const byClerkId = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+    if (byClerkId) return byClerkId;
+
+    // Then try by email
+    return await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+  },
+});
