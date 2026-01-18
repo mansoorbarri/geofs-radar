@@ -141,27 +141,11 @@ export const useMapInitialization = ({
     // Signal that map and layers are ready
     setMapReady(true);
 
-    // Only add Leaflet controls on desktop (radar control handled in separate effect)
+    // Only add Heading control here - other controls are added in separate effect to ensure correct order
     if (!isMobile) {
       const headingControl = new HeadingModeControl({}, setIsHeadingMode);
       map.addControl(headingControl);
       setHeadingControlRef.current = headingControl;
-
-      // Radar control is added in a separate effect that watches canUseRadarMode
-
-      if (setIsOSMMode && setOSMControlRef) {
-        const osmControl = new OSMControl({}, setIsOSMMode);
-        map.addControl(osmControl);
-        setOSMControlRef.current = osmControl;
-      }
-
-      const openAIPControl = new OpenAIPControl({}, setIsOpenAIPEnabled);
-      map.addControl(openAIPControl);
-      setOpenAIPControlRef.current = openAIPControl;
-
-      const settingsControl = new RadarSettingsControl({}, setIsSettingsOpen);
-      map.addControl(settingsControl);
-      setSettingsControlRef.current = settingsControl;
     }
 
     map.on("click", onMapClick);
@@ -176,9 +160,10 @@ export const useMapInitialization = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapContainerId, onMapClick]);
 
-  // Separate effect to handle radar control updates when Pro status changes
+  // Separate effect to handle radar control and other controls
+  // This ensures correct order: Heading -> Radar -> OSM -> OpenAIP -> Settings
   const radarControlInstanceRef = useRef<L.Control | null>(null);
-  const controlsReorderedRef = useRef(false);
+  const otherControlsAddedRef = useRef(false);
 
   useEffect(() => {
     if (!mapInstance.current || isMobile) return;
@@ -204,26 +189,25 @@ export const useMapInitialization = ({
       setRadarControlRef.current = null;
     }
 
-    // Re-add other controls to ensure correct order (Heading -> Radar -> OSM -> OpenAIP -> Settings)
-    // Only do this once on initial load
-    if (!controlsReorderedRef.current) {
-      controlsReorderedRef.current = true;
+    // Add other controls after radar (only once)
+    if (!otherControlsAddedRef.current) {
+      otherControlsAddedRef.current = true;
 
-      // Remove and re-add OSM, OpenAIP, Settings to put them after Radar
-      if (setOSMControlRef?.current) {
-        map.removeControl(setOSMControlRef.current);
-        map.addControl(setOSMControlRef.current);
+      if (setIsOSMMode && setOSMControlRef) {
+        const osmControl = new OSMControl({}, setIsOSMMode);
+        map.addControl(osmControl);
+        setOSMControlRef.current = osmControl;
       }
-      if (setOpenAIPControlRef.current) {
-        map.removeControl(setOpenAIPControlRef.current);
-        map.addControl(setOpenAIPControlRef.current);
-      }
-      if (setSettingsControlRef.current) {
-        map.removeControl(setSettingsControlRef.current);
-        map.addControl(setSettingsControlRef.current);
-      }
+
+      const openAIPControl = new OpenAIPControl({}, setIsOpenAIPEnabled);
+      map.addControl(openAIPControl);
+      setOpenAIPControlRef.current = openAIPControl;
+
+      const settingsControl = new RadarSettingsControl({}, setIsSettingsOpen);
+      map.addControl(settingsControl);
+      setSettingsControlRef.current = settingsControl;
     }
-  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef, setOSMControlRef, setOpenAIPControlRef, setSettingsControlRef]);
+  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef, setIsOSMMode, setOSMControlRef, setIsOpenAIPEnabled, setOpenAIPControlRef, setIsSettingsOpen, setSettingsControlRef]);
 
   return {
     mapInstance,

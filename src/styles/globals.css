@@ -37,10 +37,10 @@
 /* Map control tooltips */
 .map-control-btn {
   position: relative;
+  overflow: visible !important;
 }
 
-.map-control-btn::after {
-  content: attr(data-tooltip);
+.map-tooltip {
   position: absolute;
   left: calc(100% + 8px);
   top: 50%;
@@ -61,7 +61,7 @@
   z-index: 9999;
 }
 
-.map-control-btn:hover::after {
+.map-control-btn:hover .map-tooltip {
   opacity: 1;
   visibility: visible;
 }
