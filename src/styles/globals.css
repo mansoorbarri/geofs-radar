@@ -27,62 +27,8 @@
   display: none !important;
 }
 
-/* Darken OpenStreetMap tiles and scale up slightly */
+/* Darken OpenStreetMap tiles */
 .osm-tiles {
   filter: brightness(0.5) contrast(1.2) saturate(0.8);
-  transform: scale(1.25);
-  transform-origin: top left;
 }
-
-/* Map control tooltips */
-.map-control-btn {
-  position: relative;
-  overflow: visible !important;
-  cursor: pointer !important;
-}
-
-.map-tooltip {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: #22d3ee;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
-  pointer-events: none;
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-  z-index: 9999;
-}
-
-.map-control-btn:hover .map-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Ensure Leaflet control containers don't clip tooltips */
-.leaflet-top.leaflet-left .leaflet-control {
-  overflow: visible;
-}
-
-/* Use flexbox to control button order */
-.leaflet-top.leaflet-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-/* Order: Heading (1) -> Radar (2) -> OSM (3) -> OpenAIP (4) -> Settings (5) */
-.leaflet-top.leaflet-left .leaflet-control:has(.heading-control) { order: 1; }
-.leaflet-top.leaflet-left .leaflet-control:has(.radar-control) { order: 2; }
-.leaflet-top.leaflet-left .leaflet-control:has(.osm-control) { order: 3; }
-.leaflet-top.leaflet-left .leaflet-control:has(.openaip-control) { order: 4; }
-.leaflet-top.leaflet-left .leaflet-control:has(.settings-control) { order: 5; }
 
