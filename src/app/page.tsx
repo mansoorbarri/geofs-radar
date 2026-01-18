@@ -30,6 +30,7 @@ import { UserAuth } from "~/components/atc/userAuth";
 import { ControlDock } from "~/components/atc/controlDock";
 import { FIDSPanel } from "~/components/atc/FIDSPanel";
 import { TaxiChartViewer } from "~/components/airports/TaxiChartsViewer";
+import { AtcPlayer } from "~/components/atc/AtcPlayer";
 import Loading from "~/components/loading";
 import { ProBadge } from "~/components/ui/pro-badge";
 import { UpgradeIcon, FlightsIcon, FilterIcon } from "~/utils/dockIcons";
@@ -89,6 +90,7 @@ export default function ATCPage() {
   const [activeRightPanel, setActiveRightPanel] = useState<RightPanel>(null);
 
   const [showTaxiChart, setShowTaxiChart] = useState(false);
+  const [showAtcPlayer, setShowAtcPlayer] = useState(false);
   const { chart } = useAirportChart(selectedAirport?.icao);
 
   const [showTimerPopup, setShowTimerPopup] = useState(false);
@@ -528,13 +530,34 @@ export default function ATCPage() {
             ))}
 
             <button
-              onClick={() => setSelectedAirport(undefined)}
+              onClick={() => setShowAtcPlayer(!showAtcPlayer)}
+              className={`rounded-lg border px-3 py-1.5 text-[10px] transition-colors ${
+                showAtcPlayer
+                  ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-300"
+                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+              } ${isMobile ? 'px-2 py-1 text-[9px]' : ''}`}
+            >
+              {isMobile ? '📻' : 'ATC Audio'}
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedAirport(undefined);
+                setShowAtcPlayer(false);
+              }}
               className={`rounded-lg border border-white/10 bg-white/5 text-white/60 ${isMobile ? 'px-2 py-1 text-[9px]' : 'px-3 py-1.5 text-[10px]'}`}
             >
               {isMobile ? '×' : 'Unselect'}
             </button>
           </div>
         </div>
+      )}
+
+      {showAtcPlayer && selectedAirport && (
+        <AtcPlayer
+          icao={selectedAirport.icao}
+          onClose={() => setShowAtcPlayer(false)}
+        />
       )}
 
       {selectedAircraft && (

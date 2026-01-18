@@ -17,6 +17,7 @@
         "convex": "^1.31.5",
         "cors": "^2.8.5",
         "express": "^5.2.1",
+        "hls.js": "^1.6.15",
         "leaflet": "^1.9.4",
         "leaflet-marker-rotation": "^0.4.0",
         "lucide-react": "^0.555.0",
@@ -735,6 +736,8 @@
     "has-tostringtag": ["has-tostringtag@1.0.2", "", { "dependencies": { "has-symbols": "1.1.0" } }, "sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw=="],
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
+
+    "hls.js": ["hls.js@1.6.15", "", {}, "sha512-E3a5VwgXimGHwpRGV+WxRTKeSp2DW5DI5MWv34ulL3t5UNmyJWCQ1KmLEHbYzcfThfXG8amBL+fCYPneGHC4VA=="],
 
     "http-errors": ["http-errors@2.0.1", "", { "dependencies": { "depd": "~2.0.0", "inherits": "~2.0.4", "setprototypeof": "~1.2.0", "statuses": "~2.0.2", "toidentifier": "~1.0.1" } }, "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ=="],
 
