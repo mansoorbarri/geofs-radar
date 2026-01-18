@@ -12,7 +12,7 @@ import {
   deleteAircraftImage,
   type AircraftImage,
 } from "~/app/actions/aircraft-images";
-import { Trash2, Check, X, Plane, Clock, CheckCircle, Search } from "lucide-react";
+import { Trash2, Check, X, Plane, Clock, CheckCircle, Search, Filter, ChevronDown } from "lucide-react";
 import Loading from "~/components/loading";
 import Image from "next/image";
 import { UserAuth } from "~/components/atc/userAuth";
@@ -27,17 +27,44 @@ export default function AdminAircraftImagesPage() {
   const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [airlineFilter, setAirlineFilter] = useState<string>("");
+  const [aircraftFilter, setAircraftFilter] = useState<string>("");
+
+  // Get unique airlines and aircraft types from all images
+  const allImages = [...pendingImages, ...approvedImages];
+  const uniqueAirlines = [...new Set(allImages.map((img) => img.airlineIata || img.airlineIcao).filter(Boolean))].sort();
+  const uniqueAircraftTypes = [...new Set(allImages.map((img) => img.aircraftType))].sort();
+
+  const hasActiveFilters = searchQuery || airlineFilter || aircraftFilter;
 
   const filterImages = (images: AircraftImage[]) => {
-    if (!searchQuery.trim()) return images;
-    const query = searchQuery.toLowerCase();
-    return images.filter(
-      (image) =>
-        image.airlineIata?.toLowerCase().includes(query) ||
-        image.airlineIcao?.toLowerCase().includes(query) ||
-        image.aircraftType.toLowerCase().includes(query) ||
-        image.photographer?.toLowerCase().includes(query)
-    );
+    return images.filter((image) => {
+      // Apply airline filter
+      if (airlineFilter && image.airlineIata !== airlineFilter && image.airlineIcao !== airlineFilter) {
+        return false;
+      }
+      // Apply aircraft type filter
+      if (aircraftFilter && image.aircraftType !== aircraftFilter) {
+        return false;
+      }
+      // Apply search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+          image.airlineIata?.toLowerCase().includes(query) ||
+          image.airlineIcao?.toLowerCase().includes(query) ||
+          image.aircraftType.toLowerCase().includes(query) ||
+          image.photographer?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      return true;
+    });
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setAirlineFilter("");
+    setAircraftFilter("");
   };
 
   const filteredPendingImages = filterImages(pendingImages);
@@ -191,8 +218,8 @@ export default function AdminAircraftImagesPage() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -202,6 +229,58 @@ export default function AdminAircraftImagesPage() {
               placeholder="Search by airline, aircraft type, or photographer..."
               className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-white placeholder-slate-500 outline-none transition-colors focus:border-cyan-500/50 focus:bg-white/10"
             />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm">Filters:</span>
+            </div>
+
+            {/* Airline Filter */}
+            <div className="relative">
+              <select
+                value={airlineFilter}
+                onChange={(e) => setAirlineFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-white/10 bg-white/5 py-2 pl-3 pr-8 text-sm text-white outline-none transition-colors focus:border-cyan-500/50 focus:bg-white/10"
+              >
+                <option value="" className="bg-slate-900">All Airlines</option>
+                {uniqueAirlines.map((airline) => (
+                  <option key={airline} value={airline} className="bg-slate-900">
+                    {airline}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            </div>
+
+            {/* Aircraft Type Filter */}
+            <div className="relative">
+              <select
+                value={aircraftFilter}
+                onChange={(e) => setAircraftFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-white/10 bg-white/5 py-2 pl-3 pr-8 text-sm text-white outline-none transition-colors focus:border-cyan-500/50 focus:bg-white/10"
+              >
+                <option value="" className="bg-slate-900">All Aircraft</option>
+                {uniqueAircraftTypes.map((type) => (
+                  <option key={type} value={type} className="bg-slate-900">
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            </div>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
           </div>
         </div>
 
@@ -216,7 +295,7 @@ export default function AdminAircraftImagesPage() {
             }`}
           >
             <Clock className="h-4 w-4" />
-            Pending ({filteredPendingImages.length}{searchQuery && filteredPendingImages.length !== pendingImages.length ? `/${pendingImages.length}` : ""})
+            Pending ({filteredPendingImages.length}{hasActiveFilters && filteredPendingImages.length !== pendingImages.length ? `/${pendingImages.length}` : ""})
           </button>
           <button
             onClick={() => setActiveTab("approved")}
@@ -227,7 +306,7 @@ export default function AdminAircraftImagesPage() {
             }`}
           >
             <CheckCircle className="h-4 w-4" />
-            Approved ({filteredApprovedImages.length}{searchQuery && filteredApprovedImages.length !== approvedImages.length ? `/${approvedImages.length}` : ""})
+            Approved ({filteredApprovedImages.length}{hasActiveFilters && filteredApprovedImages.length !== approvedImages.length ? `/${approvedImages.length}` : ""})
           </button>
         </div>
 
@@ -238,10 +317,10 @@ export default function AdminAircraftImagesPage() {
               <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl">
                 <Clock className="mx-auto mb-4 h-12 w-12 text-slate-600" />
                 <h3 className="mb-2 text-xl font-semibold text-white">
-                  {searchQuery ? "No Matching Images" : "No Pending Images"}
+                  {hasActiveFilters ? "No Matching Images" : "No Pending Images"}
                 </h3>
                 <p className="text-slate-400">
-                  {searchQuery ? "Try a different search term" : "All submissions have been reviewed"}
+                  {hasActiveFilters ? "Try adjusting your search or filters" : "All submissions have been reviewed"}
                 </p>
               </div>
             ) : (
@@ -319,10 +398,10 @@ export default function AdminAircraftImagesPage() {
               <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl">
                 <Plane className="mx-auto mb-4 h-12 w-12 text-slate-600" />
                 <h3 className="mb-2 text-xl font-semibold text-white">
-                  {searchQuery ? "No Matching Images" : "No Approved Images"}
+                  {hasActiveFilters ? "No Matching Images" : "No Approved Images"}
                 </h3>
                 <p className="text-slate-400">
-                  {searchQuery ? "Try a different search term" : "Approve some pending images to see them here"}
+                  {hasActiveFilters ? "Try adjusting your search or filters" : "Approve some pending images to see them here"}
                 </p>
               </div>
             ) : (
