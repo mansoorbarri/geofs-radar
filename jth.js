@@ -92,7 +92,7 @@
     return {
       id: geofs?.userRecord?.googleid || geofs?.userRecord?.callsign || finalCallsign,
       googleId: geofs?.userRecord?.googleid || null,
-      callsign: geofs?.userRecord?.callsign || finalCallsign,
+      // callsign: geofs?.userRecord?.callsign || finalCallsign,
       type: getAircraftName(),
       lat: snap.lat,
       lon: snap.lon,
@@ -100,7 +100,7 @@
       altMSL: Math.round(snap.altMSL || 0),
       heading: Math.round(snap.heading || 0),
       speed: Math.round(snap.speed || 0),
-      flightNo: flightInfo.flightNo,
+      callsign: flightInfo.flightNo,
       departure: flightInfo.departure,
       arrival: flightInfo.arrival,
       takeoffTime: takeoffTimeUTC,
