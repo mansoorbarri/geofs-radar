@@ -27,8 +27,10 @@
   display: none !important;
 }
 
-/* Darken OpenStreetMap tiles */
+/* Darken OpenStreetMap tiles and scale up slightly */
 .osm-tiles {
   filter: brightness(0.5) contrast(1.2) saturate(0.8);
+  transform: scale(1.25);
+  transform-origin: top left;
 }
 
