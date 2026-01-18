@@ -12,7 +12,7 @@ import {
   deleteAircraftImage,
   type AircraftImage,
 } from "~/app/actions/aircraft-images";
-import { Trash2, Check, X, Plane, Clock, CheckCircle } from "lucide-react";
+import { Trash2, Check, X, Plane, Clock, CheckCircle, Search } from "lucide-react";
 import Loading from "~/components/loading";
 import Image from "next/image";
 import { UserAuth } from "~/components/atc/userAuth";
@@ -26,6 +26,22 @@ export default function AdminAircraftImagesPage() {
   const [approvedImages, setApprovedImages] = useState<AircraftImage[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filterImages = (images: AircraftImage[]) => {
+    if (!searchQuery.trim()) return images;
+    const query = searchQuery.toLowerCase();
+    return images.filter(
+      (image) =>
+        image.airlineIata?.toLowerCase().includes(query) ||
+        image.airlineIcao?.toLowerCase().includes(query) ||
+        image.aircraftType.toLowerCase().includes(query) ||
+        image.photographer?.toLowerCase().includes(query)
+    );
+  };
+
+  const filteredPendingImages = filterImages(pendingImages);
+  const filteredApprovedImages = filterImages(approvedImages);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -175,6 +191,20 @@ export default function AdminAircraftImagesPage() {
           </p>
         </div>
 
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by airline, aircraft type, or photographer..."
+              className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-white placeholder-slate-500 outline-none transition-colors focus:border-cyan-500/50 focus:bg-white/10"
+            />
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="mb-6 flex gap-2">
           <button
@@ -186,7 +216,7 @@ export default function AdminAircraftImagesPage() {
             }`}
           >
             <Clock className="h-4 w-4" />
-            Pending ({pendingImages.length})
+            Pending ({filteredPendingImages.length}{searchQuery && filteredPendingImages.length !== pendingImages.length ? `/${pendingImages.length}` : ""})
           </button>
           <button
             onClick={() => setActiveTab("approved")}
@@ -197,22 +227,26 @@ export default function AdminAircraftImagesPage() {
             }`}
           >
             <CheckCircle className="h-4 w-4" />
-            Approved ({approvedImages.length})
+            Approved ({filteredApprovedImages.length}{searchQuery && filteredApprovedImages.length !== approvedImages.length ? `/${approvedImages.length}` : ""})
           </button>
         </div>
 
         {/* Pending Images */}
         {activeTab === "pending" && (
           <>
-            {pendingImages.length === 0 ? (
+            {filteredPendingImages.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl">
                 <Clock className="mx-auto mb-4 h-12 w-12 text-slate-600" />
-                <h3 className="mb-2 text-xl font-semibold text-white">No Pending Images</h3>
-                <p className="text-slate-400">All submissions have been reviewed</p>
+                <h3 className="mb-2 text-xl font-semibold text-white">
+                  {searchQuery ? "No Matching Images" : "No Pending Images"}
+                </h3>
+                <p className="text-slate-400">
+                  {searchQuery ? "Try a different search term" : "All submissions have been reviewed"}
+                </p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pendingImages.map((image) => (
+                {filteredPendingImages.map((image) => (
                   <div
                     key={image.id}
                     className="group overflow-hidden rounded-2xl border border-yellow-500/30 bg-black/40 backdrop-blur-xl"
@@ -281,15 +315,19 @@ export default function AdminAircraftImagesPage() {
         {/* Approved Images */}
         {activeTab === "approved" && (
           <>
-            {approvedImages.length === 0 ? (
+            {filteredApprovedImages.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl">
                 <Plane className="mx-auto mb-4 h-12 w-12 text-slate-600" />
-                <h3 className="mb-2 text-xl font-semibold text-white">No Approved Images</h3>
-                <p className="text-slate-400">Approve some pending images to see them here</p>
+                <h3 className="mb-2 text-xl font-semibold text-white">
+                  {searchQuery ? "No Matching Images" : "No Approved Images"}
+                </h3>
+                <p className="text-slate-400">
+                  {searchQuery ? "Try a different search term" : "Approve some pending images to see them here"}
+                </p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {approvedImages.map((image) => (
+                {filteredApprovedImages.map((image) => (
                   <div
                     key={image.id}
                     className="group overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition-all hover:border-cyan-500/30"
