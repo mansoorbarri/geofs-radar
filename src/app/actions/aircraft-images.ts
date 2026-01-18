@@ -10,7 +10,8 @@ const utapi = new UTApi();
 
 export interface AircraftImage {
   id: string;
-  airlineIata: string;
+  airlineIata: string | null;
+  airlineIcao: string | null;
   aircraftType: string;
   imageUrl: string;
   imageKey: string | null;
@@ -26,7 +27,8 @@ export interface AircraftImage {
 // Helper to convert Convex response (timestamps) to AircraftImage (Dates)
 function toAircraftImage(img: {
   id: string;
-  airlineIata: string;
+  airlineIata: string | null;
+  airlineIcao: string | null;
   aircraftType: string;
   imageUrl: string;
   imageKey: string | null;
@@ -41,6 +43,7 @@ function toAircraftImage(img: {
   return {
     id: img.id,
     airlineIata: img.airlineIata,
+    airlineIcao: img.airlineIcao,
     aircraftType: img.aircraftType,
     imageUrl: img.imageUrl,
     imageKey: img.imageKey,
@@ -74,13 +77,14 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 // Get approved image for display (used by the hook)
+// airlineCode can be either IATA (2-letter) or ICAO (3-letter)
 export async function getAircraftImage(
-  airlineIata: string,
+  airlineCode: string,
   aircraftType: string
 ): Promise<AircraftImage | null> {
   try {
     const image = await convex.query(api.aircraftImages.getApprovedImage, {
-      airlineIata,
+      airlineCode,
       aircraftType,
     });
     if (!image) return null;
@@ -131,8 +135,10 @@ export async function getAllAircraftImages(): Promise<AircraftImage[]> {
 }
 
 // Upload/create image (anyone signed in)
+// At least one of airlineIata or airlineIcao must be provided
 export async function createAircraftImage(data: {
-  airlineIata: string;
+  airlineIata?: string;
+  airlineIcao?: string;
   aircraftType: string;
   imageUrl: string;
   imageKey?: string;
@@ -143,12 +149,21 @@ export async function createAircraftImage(data: {
     return { success: false, error: "You must be signed in to upload images" };
   }
 
+  // Validate at least one airline code is provided
+  if (!data.airlineIata && !data.airlineIcao) {
+    return {
+      success: false,
+      error: "At least one airline code (IATA or ICAO) must be provided",
+    };
+  }
+
   try {
     // Check if an approved image already exists for this combination
     const existingApproved = await convex.query(
       api.aircraftImages.checkApprovedExists,
       {
         airlineIata: data.airlineIata,
+        airlineIcao: data.airlineIcao,
         aircraftType: data.aircraftType,
       }
     );
@@ -166,6 +181,7 @@ export async function createAircraftImage(data: {
       api.aircraftImages.checkPendingByUser,
       {
         airlineIata: data.airlineIata,
+        airlineIcao: data.airlineIcao,
         aircraftType: data.aircraftType,
         uploadedBy: userId,
       }
@@ -180,6 +196,7 @@ export async function createAircraftImage(data: {
 
     const image = await convex.mutation(api.aircraftImages.create, {
       airlineIata: data.airlineIata,
+      airlineIcao: data.airlineIcao,
       aircraftType: data.aircraftType,
       imageUrl: data.imageUrl,
       imageKey: data.imageKey,
@@ -227,7 +244,8 @@ export async function approveAircraftImage(
     const existingApproved = await convex.query(
       api.aircraftImages.findExistingApproved,
       {
-        airlineIata: imageToApprove.airlineIata,
+        airlineIata: imageToApprove.airlineIata ?? undefined,
+        airlineIcao: imageToApprove.airlineIcao ?? undefined,
         aircraftType: imageToApprove.aircraftType,
         excludeId: id as Id<"aircraftImages">,
       }

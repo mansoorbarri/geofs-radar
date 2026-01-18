@@ -22,6 +22,7 @@ export default function AircraftImagesPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [formData, setFormData] = useState({
     airlineIata: "",
+    airlineIcao: "",
     aircraftType: "",
     imageUrl: "",
     imageKey: "",
@@ -47,11 +48,16 @@ export default function AircraftImagesPage() {
       setError("Please upload an image first");
       return;
     }
+    if (!formData.airlineIata && !formData.airlineIcao) {
+      setError("Please provide at least one airline code (IATA or ICAO)");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
     const result = await createAircraftImage({
-      airlineIata: formData.airlineIata,
+      airlineIata: formData.airlineIata || undefined,
+      airlineIcao: formData.airlineIcao || undefined,
       aircraftType: formData.aircraftType,
       imageUrl: formData.imageUrl,
       imageKey: formData.imageKey || undefined,
@@ -62,7 +68,7 @@ export default function AircraftImagesPage() {
       setSuccess(true);
       setTimeout(() => {
         setShowUploadModal(false);
-        setFormData({ airlineIata: "", aircraftType: "", imageUrl: "", imageKey: "", photographer: "" });
+        setFormData({ airlineIata: "", airlineIcao: "", aircraftType: "", imageUrl: "", imageKey: "", photographer: "" });
         setSuccess(false);
       }, 2000);
     } else {
@@ -149,16 +155,23 @@ export default function AircraftImagesPage() {
                 <div className="relative aspect-video">
                   <Image
                     src={image.imageUrl}
-                    alt={`${image.airlineIata} ${image.aircraftType}`}
+                    alt={`${image.airlineIata || image.airlineIcao} ${image.aircraftType}`}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div className="p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
-                      {image.airlineIata}
-                    </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {image.airlineIata && (
+                      <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
+                        {image.airlineIata}
+                      </span>
+                    )}
+                    {image.airlineIcao && (
+                      <span className="rounded-md bg-blue-500/20 px-2 py-1 font-mono text-sm font-bold text-blue-400">
+                        {image.airlineIcao}
+                      </span>
+                    )}
                     <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-sm text-white">
                       {image.aircraftType}
                     </span>
@@ -185,7 +198,7 @@ export default function AircraftImagesPage() {
                 setShowUploadModal(false);
                 setError(null);
                 setSuccess(false);
-                setFormData({ airlineIata: "", aircraftType: "", imageUrl: "", imageKey: "", photographer: "" });
+                setFormData({ airlineIata: "", airlineIcao: "", aircraftType: "", imageUrl: "", imageKey: "", photographer: "" });
               }}
               className="absolute top-4 right-4 text-slate-400 transition-colors hover:text-white"
             >
@@ -215,10 +228,10 @@ export default function AircraftImagesPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="mb-2 block font-mono text-xs text-slate-400">
-                      AIRLINE IATA CODE
+                      IATA CODE
                     </label>
                     <input
                       type="text"
@@ -227,8 +240,23 @@ export default function AircraftImagesPage() {
                         setFormData({ ...formData, airlineIata: e.target.value.toUpperCase() })
                       }
                       placeholder="e.g., EK"
+                      maxLength={2}
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block font-mono text-xs text-slate-400">
+                      ICAO CODE
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.airlineIcao}
+                      onChange={(e) =>
+                        setFormData({ ...formData, airlineIcao: e.target.value.toUpperCase() })
+                      }
+                      placeholder="e.g., UAE"
                       maxLength={3}
-                      required
                       className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500/50"
                     />
                   </div>
@@ -250,6 +278,9 @@ export default function AircraftImagesPage() {
                     />
                   </div>
                 </div>
+                <p className="text-xs text-slate-500">
+                  Provide at least one airline code (IATA is 2 letters, ICAO is 3 letters)
+                </p>
 
                 <div>
                   <label className="mb-2 block font-mono text-xs text-slate-400">
@@ -289,6 +320,7 @@ export default function AircraftImagesPage() {
                   ) : (
                     <ImageUploader
                       airlineIata={formData.airlineIata}
+                      airlineIcao={formData.airlineIcao}
                       aircraftType={formData.aircraftType}
                       onUploadComplete={(url, key) => {
                         setFormData({

@@ -220,7 +220,7 @@ export default function AdminAircraftImagesPage() {
                     <div className="relative aspect-video">
                       <Image
                         src={image.imageUrl}
-                        alt={`${image.airlineIata} ${image.aircraftType}`}
+                        alt={`${image.airlineIata || image.airlineIcao} ${image.aircraftType}`}
                         fill
                         className="object-cover"
                       />
@@ -229,10 +229,17 @@ export default function AdminAircraftImagesPage() {
                       </div>
                     </div>
                     <div className="p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
-                          {image.airlineIata}
-                        </span>
+                      <div className="mb-3 flex items-center gap-2 flex-wrap">
+                        {image.airlineIata && (
+                          <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
+                            {image.airlineIata}
+                          </span>
+                        )}
+                        {image.airlineIcao && (
+                          <span className="rounded-md bg-blue-500/20 px-2 py-1 font-mono text-sm font-bold text-blue-400">
+                            {image.airlineIcao}
+                          </span>
+                        )}
                         <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-sm text-white">
                           {image.aircraftType}
                         </span>
@@ -290,7 +297,7 @@ export default function AdminAircraftImagesPage() {
                     <div className="relative aspect-video">
                       <Image
                         src={image.imageUrl}
-                        alt={`${image.airlineIata} ${image.aircraftType}`}
+                        alt={`${image.airlineIata || image.airlineIcao} ${image.aircraftType}`}
                         fill
                         className="object-cover"
                       />
@@ -303,10 +310,17 @@ export default function AdminAircraftImagesPage() {
                       </button>
                     </div>
                     <div className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
-                          {image.airlineIata}
-                        </span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {image.airlineIata && (
+                          <span className="rounded-md bg-cyan-500/20 px-2 py-1 font-mono text-sm font-bold text-cyan-400">
+                            {image.airlineIata}
+                          </span>
+                        )}
+                        {image.airlineIcao && (
+                          <span className="rounded-md bg-blue-500/20 px-2 py-1 font-mono text-sm font-bold text-blue-400">
+                            {image.airlineIcao}
+                          </span>
+                        )}
                         <span className="rounded-md bg-white/10 px-2 py-1 font-mono text-sm text-white">
                           {image.aircraftType}
                         </span>

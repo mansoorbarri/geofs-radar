@@ -36,7 +36,8 @@ export default defineSchema({
     .index("by_startTime", ["startTime"]),
 
   aircraftImages: defineTable({
-    airlineIata: v.string(),
+    airlineIata: v.optional(v.string()), // 2-letter IATA code (e.g., "EK")
+    airlineIcao: v.optional(v.string()), // 3-letter ICAO code (e.g., "UAE")
     aircraftType: v.string(),
     imageUrl: v.string(),
     imageKey: v.optional(v.string()), // UploadThing file key for deletion
@@ -47,11 +48,17 @@ export default defineSchema({
     approvedAt: v.optional(v.number()), // timestamp
   })
     .index("by_airlineIata", ["airlineIata"])
+    .index("by_airlineIcao", ["airlineIcao"])
     .index("by_aircraftType", ["aircraftType"])
     .index("by_isApproved", ["isApproved"])
     .index("by_uploadedBy", ["uploadedBy"])
-    .index("by_airline_aircraft_approved", [
+    .index("by_iata_aircraft_approved", [
       "airlineIata",
+      "aircraftType",
+      "isApproved",
+    ])
+    .index("by_icao_aircraft_approved", [
+      "airlineIcao",
       "aircraftType",
       "isApproved",
     ]),

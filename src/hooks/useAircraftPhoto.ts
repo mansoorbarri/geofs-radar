@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { getAircraftImage, type AircraftImage } from "~/app/actions/aircraft-images";
 
-// Extract airline IATA code from flight number (e.g., "EK90" -> "EK", "UAE90" -> "UAE")
+// Extract airline code from flight number/callsign
+// Supports both IATA (2-letter, e.g., "EK90" -> "EK") and ICAO (3-letter, e.g., "UAE90" -> "UAE")
 function extractAirlineCode(flightNo: string | undefined): string | null {
   if (!flightNo) return null;
   const regex = /^([A-Z]{2,3})/;

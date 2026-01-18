@@ -63,6 +63,7 @@ interface ImageUploaderProps {
   onUploadComplete: (url: string, key: string) => void;
   onError: (error: string) => void;
   airlineIata?: string;
+  airlineIcao?: string;
   aircraftType?: string;
 }
 
@@ -95,7 +96,7 @@ function getHumanReadableError(error: Error | string): string {
   return message.replace(/([A-Z])/g, " $1").trim() || "Upload failed. Please try again.";
 }
 
-export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraftType }: ImageUploaderProps) {
+export function ImageUploader({ onUploadComplete, onError, airlineIata, airlineIcao, aircraftType }: ImageUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -177,9 +178,9 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
   const handleUpload = async () => {
     if (!file) return;
 
-    // Require airline and aircraft type before upload
-    if (!airlineIata || !aircraftType) {
-      const errorMsg = "Please fill in the Airline IATA and Aircraft Type before uploading.";
+    // Require at least one airline code and aircraft type before upload
+    if ((!airlineIata && !airlineIcao) || !aircraftType) {
+      const errorMsg = "Please fill in at least one Airline code (IATA or ICAO) and Aircraft Type before uploading.";
       setLocalError(errorMsg);
       onError(errorMsg);
       return;
@@ -190,9 +191,10 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, aircraft
     setUploadProgress(0);
 
     try {
-      // Rename file to airline-aircraftType format (e.g., EK-A380.png)
+      // Rename file to airline-aircraftType format (prefer IATA, fallback to ICAO)
+      const airlineCode = airlineIata || airlineIcao;
       const extension = file.name.split('.').pop() || 'png';
-      const newFileName = `${airlineIata}-${aircraftType}.${extension}`;
+      const newFileName = `${airlineCode}-${aircraftType}.${extension}`;
       const renamedFile = new File([file], newFileName, { type: file.type });
 
       await startUpload([renamedFile]);
