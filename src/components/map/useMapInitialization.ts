@@ -128,6 +128,9 @@ export const useMapInitialization = ({
       minZoom: 3,
       noWrap: true,
       bounds: worldBounds,
+      className: "openaip-tiles",
+      tileSize: 512,
+      zoomOffset: -1,
     });
 
     satelliteHybridLayer.current.addTo(map);

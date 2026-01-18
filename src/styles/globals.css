@@ -27,3 +27,8 @@
   display: none !important;
 }
 
+/* Darken OpenAIP tiles */
+.openaip-tiles {
+  filter: brightness(0.7) contrast(1.1);
+}
+
