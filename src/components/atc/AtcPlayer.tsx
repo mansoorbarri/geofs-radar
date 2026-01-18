@@ -1,28 +1,33 @@
 "use client";
 
-import { Radio, Volume2, VolumeX, X, Loader2, AlertCircle, ExternalLink } from "lucide-react";
-import { useAtcAudio } from "~/hooks/useAtcAudio";
+import { Radio, X, ExternalLink, Volume2 } from "lucide-react";
+import { useState } from "react";
 
 interface AtcPlayerProps {
   icao: string;
   onClose: () => void;
 }
 
+const FEED_TYPES = [
+  { suffix: "twr", name: "Tower" },
+  { suffix: "app", name: "Approach" },
+  { suffix: "gnd", name: "Ground" },
+  { suffix: "del", name: "Delivery" },
+  { suffix: "dep", name: "Departure" },
+  { suffix: "atis", name: "ATIS" },
+  { suffix: "ctr", name: "Center" },
+];
+
 export function AtcPlayer({ icao, onClose }: AtcPlayerProps) {
-  const {
-    feeds,
-    currentFeed,
-    isPlaying,
-    isLoading,
-    error,
-    play,
-    stop,
-    setVolume,
-    volume,
-  } = useAtcAudio(icao);
+  const [selectedFeed, setSelectedFeed] = useState<string | null>(null);
+  const lowerIcao = icao.toLowerCase();
+
+  const embedUrl = selectedFeed
+    ? `https://www.liveatc.net/player/?icao=${lowerIcao}_${selectedFeed}`
+    : null;
 
   return (
-    <div className="fixed bottom-24 left-1/2 z-[10013] w-[320px] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/90 p-4 backdrop-blur-xl">
+    <div className="fixed bottom-24 left-1/2 z-[10013] w-[340px] -translate-x-1/2 rounded-2xl border border-white/10 bg-black/90 p-4 backdrop-blur-xl">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -38,80 +43,53 @@ export function AtcPlayer({ icao, onClose }: AtcPlayerProps) {
       </div>
 
       {/* Feed Selection */}
-      <div className="mb-3 grid grid-cols-3 gap-2">
-        {feeds.map((feed) => (
+      <div className="mb-3 grid grid-cols-4 gap-2">
+        {FEED_TYPES.map((feed) => (
           <button
-            key={feed.url}
-            onClick={() => (currentFeed?.url === feed.url && isPlaying ? stop() : play(feed))}
-            disabled={isLoading && currentFeed?.url === feed.url}
+            key={feed.suffix}
+            onClick={() => setSelectedFeed(feed.suffix)}
             className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-all ${
-              currentFeed?.url === feed.url && isPlaying
+              selectedFeed === feed.suffix
                 ? "bg-cyan-500/20 text-cyan-400 ring-1 ring-cyan-500/50"
-                : currentFeed?.url === feed.url && isLoading
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
             }`}
           >
-            {isLoading && currentFeed?.url === feed.url ? (
-              <Loader2 className="mx-auto h-3 w-3 animate-spin" />
-            ) : (
-              feed.name
-            )}
+            {feed.name}
           </button>
         ))}
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400">
-          <AlertCircle className="h-3 w-3 shrink-0" />
-          <span>{error}</span>
+      {/* Embed Player */}
+      {selectedFeed ? (
+        <div className="mb-3 overflow-hidden rounded-lg bg-black">
+          <iframe
+            src={embedUrl!}
+            width="100%"
+            height="80"
+            frameBorder="0"
+            scrolling="no"
+            allow="autoplay"
+            className="bg-black"
+          />
+          <p className="px-2 py-1.5 text-center text-[10px] text-slate-500">
+            If player doesn&apos;t load, feed may not exist for this airport
+          </p>
+        </div>
+      ) : (
+        <div className="mb-3 flex flex-col items-center justify-center rounded-lg bg-white/5 py-6 text-center">
+          <Volume2 className="mb-2 h-6 w-6 text-slate-600" />
+          <p className="text-xs text-slate-400">Select a feed type above</p>
         </div>
       )}
 
-      {/* Now Playing */}
-      {isPlaying && currentFeed && (
-        <div className="mb-3 flex items-center gap-2 rounded-lg bg-cyan-500/10 px-3 py-2">
-          <div className="flex gap-0.5">
-            <span className="h-3 w-0.5 animate-pulse rounded-full bg-cyan-400" style={{ animationDelay: "0ms" }} />
-            <span className="h-3 w-0.5 animate-pulse rounded-full bg-cyan-400" style={{ animationDelay: "150ms" }} />
-            <span className="h-3 w-0.5 animate-pulse rounded-full bg-cyan-400" style={{ animationDelay: "300ms" }} />
-          </div>
-          <span className="text-xs text-cyan-400">Playing {currentFeed.name}</span>
-        </div>
-      )}
-
-      {/* Volume Control */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
-          className="text-slate-400 transition-colors hover:text-white"
-        >
-          {volume === 0 ? (
-            <VolumeX className="h-4 w-4" />
-          ) : (
-            <Volume2 className="h-4 w-4" />
-          )}
-        </button>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
-          className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/10 accent-cyan-500 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400"
-        />
-      </div>
-
-      {/* Fallback Link */}
+      {/* LiveATC Link */}
       <a
         href={`https://www.liveatc.net/search/?icao=${icao}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+        className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
       >
-        <span>Open on LiveATC</span>
+        <span>Browse all {icao} feeds on LiveATC</span>
         <ExternalLink className="h-3 w-3" />
       </a>
     </div>
