@@ -38,6 +38,7 @@
 .map-control-btn {
   position: relative;
   overflow: visible !important;
+  cursor: pointer !important;
 }
 
 .map-tooltip {
@@ -64,5 +65,10 @@
 .map-control-btn:hover .map-tooltip {
   opacity: 1;
   visibility: visible;
+}
+
+/* Ensure Leaflet control containers don't clip tooltips */
+.leaflet-top.leaflet-left .leaflet-control {
+  overflow: visible;
 }
 

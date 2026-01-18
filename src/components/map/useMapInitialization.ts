@@ -166,7 +166,7 @@ export const useMapInitialization = ({
   const otherControlsAddedRef = useRef(false);
 
   useEffect(() => {
-    if (!mapInstance.current || isMobile) return;
+    if (!mapInstance.current || isMobile || !mapReady) return;
 
     const map = mapInstance.current;
 
@@ -207,7 +207,7 @@ export const useMapInitialization = ({
       map.addControl(settingsControl);
       setSettingsControlRef.current = settingsControl;
     }
-  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef, setIsOSMMode, setOSMControlRef, setIsOpenAIPEnabled, setOpenAIPControlRef, setIsSettingsOpen, setSettingsControlRef]);
+  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef, setIsOSMMode, setOSMControlRef, setIsOpenAIPEnabled, setOpenAIPControlRef, setIsSettingsOpen, setSettingsControlRef, mapReady]);
 
   return {
     mapInstance,
