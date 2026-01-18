@@ -54,6 +54,7 @@ export class RadarSettingsControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     applyMetarStyleButton(container, "Settings", "&#9881;");
+    container.classList.add("settings-control");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -93,6 +94,7 @@ export class HeadingModeControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     applyMetarStyleButton(container, "Heading Mode", "&#8599;");
+    container.classList.add("heading-control");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -133,6 +135,7 @@ export class RadarModeControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     applyMetarStyleButton(container, "Radar Mode", "&#128223;");
+    container.classList.add("radar-control");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -167,7 +170,7 @@ export class LockedRadarModeControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     container.className =
-      "map-control-btn relative w-[36px] h-[36px] top-15 flex items-center justify-center text-white/40 text-[18px] font-semibold border border-yellow-500/30 rounded-md bg-black/70 shadow-[0_0_6px_rgba(234,179,8,0.25)] cursor-pointer transition-all duration-200 hover:bg-yellow-500/10 hover:shadow-[0_0_10px_rgba(234,179,8,0.4)] hover:border-yellow-500/60";
+      "map-control-btn radar-control relative w-[36px] h-[36px] top-15 flex items-center justify-center text-white/40 text-[18px] font-semibold border border-yellow-500/30 rounded-md bg-black/70 shadow-[0_0_6px_rgba(234,179,8,0.25)] cursor-pointer transition-all duration-200 hover:bg-yellow-500/10 hover:shadow-[0_0_10px_rgba(234,179,8,0.4)] hover:border-yellow-500/60";
     container.innerHTML = `
       <span style="opacity: 0.4">&#128223;</span>
       <span style="position: absolute; top: -6px; right: -6px; background: rgba(234, 179, 8, 0.2); color: #facc15; font-size: 8px; padding: 1px 4px; border-radius: 4px; font-weight: bold;">PRO</span>
@@ -208,6 +211,7 @@ export class OSMControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     applyMetarStyleButton(container, "OpenStreetMap", "&#128506;");
+    container.classList.add("osm-control");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);
@@ -248,6 +252,7 @@ export class OpenAIPControl extends L.Control {
   onAdd(): HTMLDivElement {
     const container = L.DomUtil.create("div");
     applyMetarStyleButton(container, "OpenAIP Layer", "&#127758;");
+    container.classList.add("openaip-control");
     L.DomEvent.on(container, "click", L.DomEvent.stopPropagation);
     L.DomEvent.on(container, "click", L.DomEvent.preventDefault);
     L.DomEvent.on(container, "click", this._boundClick);

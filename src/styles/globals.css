@@ -72,3 +72,17 @@
   overflow: visible;
 }
 
+/* Use flexbox to control button order */
+.leaflet-top.leaflet-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Order: Heading (1) -> Radar (2) -> OSM (3) -> OpenAIP (4) -> Settings (5) */
+.leaflet-top.leaflet-left .leaflet-control:has(.heading-control) { order: 1; }
+.leaflet-top.leaflet-left .leaflet-control:has(.radar-control) { order: 2; }
+.leaflet-top.leaflet-left .leaflet-control:has(.osm-control) { order: 3; }
+.leaflet-top.leaflet-left .leaflet-control:has(.openaip-control) { order: 4; }
+.leaflet-top.leaflet-left .leaflet-control:has(.settings-control) { order: 5; }
+
