@@ -36,8 +36,8 @@ export default defineSchema({
     .index("by_startTime", ["startTime"]),
 
   aircraftImages: defineTable({
-    airlineIata: v.optional(v.string()), // 2-letter IATA code (e.g., "EK")
-    airlineIcao: v.optional(v.string()), // 3-letter ICAO code (e.g., "UAE")
+    airlineIata: v.string(), // 2-letter IATA code (e.g., "EK")
+    airlineIcao: v.string(), // 3-letter ICAO code (e.g., "UAE")
     aircraftType: v.string(),
     imageUrl: v.string(),
     imageKey: v.optional(v.string()), // UploadThing file key for deletion

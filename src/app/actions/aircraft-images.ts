@@ -10,8 +10,8 @@ const utapi = new UTApi();
 
 export interface AircraftImage {
   id: string;
-  airlineIata: string | null;
-  airlineIcao: string | null;
+  airlineIata: string;
+  airlineIcao: string;
   aircraftType: string;
   imageUrl: string;
   imageKey: string | null;
@@ -27,8 +27,8 @@ export interface AircraftImage {
 // Helper to convert Convex response (timestamps) to AircraftImage (Dates)
 function toAircraftImage(img: {
   id: string;
-  airlineIata: string | null;
-  airlineIcao: string | null;
+  airlineIata: string;
+  airlineIcao: string;
   aircraftType: string;
   imageUrl: string;
   imageKey: string | null;
@@ -135,10 +135,10 @@ export async function getAllAircraftImages(): Promise<AircraftImage[]> {
 }
 
 // Upload/create image (anyone signed in)
-// At least one of airlineIata or airlineIcao must be provided
+// Both airlineIata and airlineIcao are required
 export async function createAircraftImage(data: {
-  airlineIata?: string;
-  airlineIcao?: string;
+  airlineIata: string;
+  airlineIcao: string;
   aircraftType: string;
   imageUrl: string;
   imageKey?: string;
@@ -149,11 +149,11 @@ export async function createAircraftImage(data: {
     return { success: false, error: "You must be signed in to upload images" };
   }
 
-  // Validate at least one airline code is provided
-  if (!data.airlineIata && !data.airlineIcao) {
+  // Validate both airline codes are provided
+  if (!data.airlineIata || !data.airlineIcao) {
     return {
       success: false,
-      error: "At least one airline code (IATA or ICAO) must be provided",
+      error: "Both IATA and ICAO airline codes are required",
     };
   }
 
@@ -244,8 +244,8 @@ export async function approveAircraftImage(
     const existingApproved = await convex.query(
       api.aircraftImages.findExistingApproved,
       {
-        airlineIata: imageToApprove.airlineIata ?? undefined,
-        airlineIcao: imageToApprove.airlineIcao ?? undefined,
+        airlineIata: imageToApprove.airlineIata,
+        airlineIcao: imageToApprove.airlineIcao,
         aircraftType: imageToApprove.aircraftType,
         excludeId: id as Id<"aircraftImages">,
       }

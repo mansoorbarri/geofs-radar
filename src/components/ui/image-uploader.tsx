@@ -178,9 +178,9 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, airlineI
   const handleUpload = async () => {
     if (!file) return;
 
-    // Require at least one airline code and aircraft type before upload
-    if ((!airlineIata && !airlineIcao) || !aircraftType) {
-      const errorMsg = "Please fill in at least one Airline code (IATA or ICAO) and Aircraft Type before uploading.";
+    // Require both airline codes and aircraft type before upload
+    if (!airlineIata || !airlineIcao || !aircraftType) {
+      const errorMsg = "Please fill in both Airline codes (IATA and ICAO) and Aircraft Type before uploading.";
       setLocalError(errorMsg);
       onError(errorMsg);
       return;
@@ -191,10 +191,9 @@ export function ImageUploader({ onUploadComplete, onError, airlineIata, airlineI
     setUploadProgress(0);
 
     try {
-      // Rename file to airline-aircraftType format (prefer IATA, fallback to ICAO)
-      const airlineCode = airlineIata || airlineIcao;
+      // Rename file to IATA-ICAO-aircraftType format (e.g., EK-UAE-A380.jpg)
       const extension = file.name.split('.').pop() || 'png';
-      const newFileName = `${airlineCode}-${aircraftType}.${extension}`;
+      const newFileName = `${airlineIata}-${airlineIcao}-${aircraftType}.${extension}`;
       const renamedFile = new File([file], newFileName, { type: file.type });
 
       await startUpload([renamedFile]);

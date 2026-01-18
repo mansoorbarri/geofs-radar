@@ -48,16 +48,16 @@ export default function AircraftImagesPage() {
       setError("Please upload an image first");
       return;
     }
-    if (!formData.airlineIata && !formData.airlineIcao) {
-      setError("Please provide at least one airline code (IATA or ICAO)");
+    if (!formData.airlineIata || !formData.airlineIcao) {
+      setError("Both IATA and ICAO airline codes are required");
       return;
     }
     setSubmitting(true);
     setError(null);
 
     const result = await createAircraftImage({
-      airlineIata: formData.airlineIata || undefined,
-      airlineIcao: formData.airlineIcao || undefined,
+      airlineIata: formData.airlineIata,
+      airlineIcao: formData.airlineIcao,
       aircraftType: formData.aircraftType,
       imageUrl: formData.imageUrl,
       imageKey: formData.imageKey || undefined,
@@ -231,7 +231,7 @@ export default function AircraftImagesPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="mb-2 block font-mono text-xs text-slate-400">
-                      IATA CODE
+                      IATA CODE *
                     </label>
                     <input
                       type="text"
@@ -241,13 +241,14 @@ export default function AircraftImagesPage() {
                       }
                       placeholder="e.g., EK"
                       maxLength={2}
+                      required
                       className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500/50"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block font-mono text-xs text-slate-400">
-                      ICAO CODE
+                      ICAO CODE *
                     </label>
                     <input
                       type="text"
@@ -257,13 +258,14 @@ export default function AircraftImagesPage() {
                       }
                       placeholder="e.g., UAE"
                       maxLength={3}
+                      required
                       className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500/50"
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block font-mono text-xs text-slate-400">
-                      AIRCRAFT TYPE
+                      AIRCRAFT TYPE *
                     </label>
                     <input
                       type="text"
@@ -279,7 +281,7 @@ export default function AircraftImagesPage() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Provide at least one airline code (IATA is 2 letters, ICAO is 3 letters)
+                  IATA is 2 letters (e.g., EK), ICAO is 3 letters (e.g., UAE)
                 </p>
 
                 <div>
