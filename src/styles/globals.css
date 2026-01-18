@@ -34,3 +34,35 @@
   transform-origin: top left;
 }
 
+/* Map control tooltips */
+.map-control-btn {
+  position: relative;
+}
+
+.map-control-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #22d3ee;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  z-index: 9999;
+}
+
+.map-control-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+

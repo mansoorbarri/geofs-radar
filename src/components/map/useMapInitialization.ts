@@ -178,6 +178,7 @@ export const useMapInitialization = ({
 
   // Separate effect to handle radar control updates when Pro status changes
   const radarControlInstanceRef = useRef<L.Control | null>(null);
+  const controlsReorderedRef = useRef(false);
 
   useEffect(() => {
     if (!mapInstance.current || isMobile) return;
@@ -202,7 +203,27 @@ export const useMapInitialization = ({
       radarControlInstanceRef.current = lockedRadarControl;
       setRadarControlRef.current = null;
     }
-  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef]);
+
+    // Re-add other controls to ensure correct order (Heading -> Radar -> OSM -> OpenAIP -> Settings)
+    // Only do this once on initial load
+    if (!controlsReorderedRef.current) {
+      controlsReorderedRef.current = true;
+
+      // Remove and re-add OSM, OpenAIP, Settings to put them after Radar
+      if (setOSMControlRef?.current) {
+        map.removeControl(setOSMControlRef.current);
+        map.addControl(setOSMControlRef.current);
+      }
+      if (setOpenAIPControlRef.current) {
+        map.removeControl(setOpenAIPControlRef.current);
+        map.addControl(setOpenAIPControlRef.current);
+      }
+      if (setSettingsControlRef.current) {
+        map.removeControl(setSettingsControlRef.current);
+        map.addControl(setSettingsControlRef.current);
+      }
+    }
+  }, [canUseRadarMode, isMobile, setIsRadarMode, setRadarControlRef, setOSMControlRef, setOpenAIPControlRef, setSettingsControlRef]);
 
   return {
     mapInstance,
