@@ -33,3 +33,32 @@
   filter: brightness(0.5) contrast(1.2) saturate(0.8) !important;
 }
 
+/* Map control button tooltips */
+.map-control-btn {
+  position: relative;
+}
+
+.map-tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #22d3ee;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  z-index: 9999;
+}
+
+.map-control-btn:hover .map-tooltip {
+  opacity: 1;
+}
+
