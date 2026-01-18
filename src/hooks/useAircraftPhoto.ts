@@ -3,10 +3,10 @@ import { getAircraftImage, type AircraftImage } from "~/app/actions/aircraft-ima
 
 // In-memory cache for aircraft photos (persists across component instances)
 // Cache entry can be null (no image found) or AircraftPhotoData
-type CacheEntry = {
+interface CacheEntry {
   data: AircraftPhotoData | null;
   timestamp: number;
-};
+}
 
 const imageCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
