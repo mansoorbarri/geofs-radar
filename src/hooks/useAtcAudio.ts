@@ -20,18 +20,15 @@ interface UseAtcAudioReturn {
   volume: number;
 }
 
-// Common LiveATC feed suffixes to try
-const FEED_SUFFIXES = [
-  "", // Some airports just use ICAO directly
-  "_Twr",
-  "_App",
-  "_Gnd",
-  "_Del",
-  "_Dep",
-  "_ATIS",
-  "_Ctr",
-  "_1",
-  "_2",
+// Common LiveATC feed suffixes
+const FEED_TYPES = [
+  { suffix: "_Twr", name: "Tower" },
+  { suffix: "_App", name: "Approach" },
+  { suffix: "_Gnd", name: "Ground" },
+  { suffix: "_Del", name: "Delivery" },
+  { suffix: "_Dep", name: "Departure" },
+  { suffix: "_ATIS", name: "ATIS" },
+  { suffix: "_Ctr", name: "Center" },
 ];
 
 export function useAtcAudio(icao: string | undefined): UseAtcAudioReturn {
@@ -73,42 +70,40 @@ export function useAtcAudio(icao: string | undefined): UseAtcAudioReturn {
     async function probeFeeds() {
       const availableFeeds: AtcFeed[] = [];
 
-      // Try each suffix in parallel
-      const probePromises = FEED_SUFFIXES.map(async (suffix) => {
+      // Probe each feed type through our proxy
+      const probePromises = FEED_TYPES.map(async ({ suffix, name }) => {
         const feedId = `${upperIcao}${suffix}`;
-        const url = `https://www.liveatc.net/hlsfeed/${feedId}.m3u8`;
+        const proxyUrl = `/api/atc-stream/${feedId}`;
 
         try {
-          const response = await fetch(url, {
+          const response = await fetch(proxyUrl, {
             method: "HEAD",
             signal: controller.signal,
-            mode: "no-cors", // LiveATC doesn't have CORS headers
           });
-          // With no-cors, we can't read the response, but if it doesn't throw, it might exist
-          // We'll add it as a potential feed
-          return {
-            name: suffix ? suffix.replace("_", " ").trim() : "Main",
-            url,
-          };
+
+          if (response.ok) {
+            return { name, url: proxyUrl };
+          }
+          return null;
         } catch {
           return null;
         }
       });
 
       const results = await Promise.all(probePromises);
+      const validFeeds = results.filter((f): f is AtcFeed => f !== null);
 
-      // Since we can't verify with no-cors, add common feeds as options
-      // The player will show an error if they don't work
-      const commonFeeds: AtcFeed[] = [
-        { name: "Tower", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_Twr.m3u8` },
-        { name: "Approach", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_App.m3u8` },
-        { name: "Ground", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_Gnd.m3u8` },
-        { name: "Departure", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_Dep.m3u8` },
-        { name: "Center", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_Ctr.m3u8` },
-        { name: "ATIS", url: `https://www.liveatc.net/hlsfeed/${upperIcao}_ATIS.m3u8` },
-      ];
-
-      setFeeds(commonFeeds);
+      if (validFeeds.length > 0) {
+        setFeeds(validFeeds);
+      } else {
+        // If no feeds found, still show options (they may work)
+        setFeeds(
+          FEED_TYPES.map(({ suffix, name }) => ({
+            name,
+            url: `/api/atc-stream/${upperIcao}${suffix}`,
+          }))
+        );
+      }
     }
 
     probeFeeds();
