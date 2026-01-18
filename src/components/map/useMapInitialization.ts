@@ -100,7 +100,6 @@ export const useMapInitialization = ({
         maxZoom: 19,
         minZoom: 3,
         bounds: worldBounds,
-        className: "osm-tiles",
       },
     );
 
